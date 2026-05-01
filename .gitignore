@@ -1,0 +1,22 @@
+# Entornos y credenciales
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Claude local workspace
+.claude/
+
+# Dependencias
+/node_modules
+/vendor
+
+# IDEs
+.idea
+.vscode
+
+# Logs y cache
+*.log
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
