@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BigMat Logistics - Sales Module</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#cee5ff",
+                        "on-primary-container": "#959595",
+                        "on-secondary-fixed": "#001d32",
+                        "inverse-primary": "#c7c6c6",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "primary-fixed-dim": "#c7c6c6",
+                        "surface-container": "#eceef1",
+                        "secondary": "#206393",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3133",
+                        "on-tertiary-container": "#4c3f00",
+                        "tertiary-fixed": "#ffe16d",
+                        "surface": "#f8f9fc",
+                        "secondary-container": "#90c9ff",
+                        "on-secondary-container": "#035584",
+                        "surface-variant": "#e1e2e6",
+                        "on-tertiary-fixed": "#221b00",
+                        "outline": "#747878",
+                        "primary-container": "#2d2e2e",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-error": "#ffffff",
+                        "primary": "#181919",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#1b1c1c",
+                        "surface-container-low": "#f2f3f7",
+                        "primary-fixed": "#e3e2e2",
+                        "surface-dim": "#d8dadd",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "tertiary": "#705d00",
+                        "surface-bright": "#f8f9fc",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#5e5e5e",
+                        "outline-variant": "#c4c7c7",
+                        "on-secondary-fixed-variant": "#004a75",
+                        "on-surface-variant": "#444748",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#96ccff",
+                        "on-surface": "#191c1e",
+                        "on-background": "#191c1e",
+                        "tertiary-container": "#c9a900",
+                        "on-primary-fixed-variant": "#464747",
+                        "error": "#ba1a1a",
+                        "background": "#f8f9fc",
+                        "surface-container-high": "#e7e8eb",
+                        "surface-container-highest": "#e1e2e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "24px",
+                        "card-padding": "20px",
+                        "container-max": "1440px",
+                        "margin": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter"],
+                        "number-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "number-xl": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "number-md": ["16px", {"lineHeight": "20px", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "number-xl": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700"}],
+                        "headline-md": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Custom scrollbar for data tables to maintain industrial feel */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f2f3f7; }
+        ::-webkit-scrollbar-thumb { background: #c4c7c7; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #747878; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1, 'wght' 300; }
+        
+        /* Subtle elevation utilities based on design system */
+        .shadow-ambient { box-shadow: 0 4px 20px rgba(45, 46, 46, 0.08); }
+        .shadow-ambient-hover { box-shadow: 0 8px 30px rgba(45, 46, 46, 0.12); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-hidden flex h-screen">
+<!-- JSON Component: SideNavBar -->
+<nav class="flex flex-col fixed left-0 top-0 h-full z-50 bg-slate-50 dark:bg-slate-950 w-64 border-r border-slate-200 dark:border-slate-800">
+<!-- Header -->
+<div class="px-6 py-6 border-b border-slate-200 dark:border-slate-800 flex items-center gap-3">
+<div class="w-10 h-10 rounded bg-blue-600 flex items-center justify-center text-white shrink-0">
+<span class="material-symbols-outlined icon-fill">factory</span>
+</div>
+<div class="flex flex-col">
+<span class="text-lg font-bold text-slate-900 dark:text-white leading-tight">BigMat Enterprise</span>
+<span class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Industrial Logistics</span>
+</div>
+</div>
+<!-- Main Nav -->
+<div class="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/50 py-3 px-4 font-inter text-sm font-semibold flex items-center gap-3 scale-95 active:scale-100 transition-transform duration-100 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-sm border-l-4 border-blue-600 rounded-r-lg py-3 px-4 font-inter text-sm font-semibold flex items-center gap-3" href="#">
+<span class="material-symbols-outlined icon-fill">analytics</span>
+                Sales Module
+            </a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/50 py-3 px-4 font-inter text-sm font-semibold flex items-center gap-3 scale-95 active:scale-100 transition-transform duration-100 rounded-lg" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                Stock Module
+            </a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/50 py-3 px-4 font-inter text-sm font-semibold flex items-center gap-3 scale-95 active:scale-100 transition-transform duration-100 rounded-lg" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+                Customer Intel
+            </a>
+</div>
+<!-- CTA -->
+<div class="px-4 py-4">
+<button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded shadow-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                New Shipment
+            </button>
+</div>
+<!-- Footer Nav -->
+<div class="mt-auto border-t border-slate-200 dark:border-slate-800 p-2 space-y-1">
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/50 py-3 px-4 font-inter text-sm font-semibold flex items-center gap-3 scale-95 active:scale-100 transition-transform duration-100 rounded-lg" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+                Support
+            </a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900/50 py-3 px-4 font-inter text-sm font-semibold flex items-center gap-3 scale-95 active:scale-100 transition-transform duration-100 rounded-lg" href="#">
+<span class="material-symbols-outlined">tune</span>
+                Settings
+            </a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-64 flex flex-col h-screen overflow-hidden bg-surface">
+<!-- JSON Component: TopNavBar -->
+<header class="flex justify-between items-center w-full h-16 px-6 bg-white dark:bg-slate-900 border-b z-40 border-slate-200 dark:border-slate-800 shadow-sm shrink-0">
+<div class="flex items-center gap-4 w-1/3">
+<span class="text-xl font-black tracking-tight text-slate-800 dark:text-slate-100 font-inter antialiased">BigMat Logistics</span>
+</div>
+<div class="flex-1 flex justify-center w-1/3">
+<div class="relative w-full max-w-md hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-600 transition-shadow" placeholder="Search orders, clients, SKUs..." type="text"/>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 w-1/3">
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-full active:opacity-80 transition-all duration-150 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+</button>
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-full active:opacity-80 transition-all duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors rounded-full active:opacity-80 transition-all duration-150 mr-2">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
+<img alt="Manager Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a logistics manager in a bright industrial office setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFsWCKXbmSfqxhZ-CqVdIc3p8El6uo-PkDY-818fty94rsa6_lM4zV01E6zt2Gr7uyD_EW5PEwFO6hA7rAo5JPcj3KdxJWgKuwvw1mBw8IWliQxUao7YsNILQ7hy9LQPEVyFyTeTAEfCVF_W9UXAsXJb_-HzfWoEXuZ7DwJqRypLuRhlpHkeRXKZc1foLt15fr-b-VesEt54fX6VPvtJgQO-87XDdwfYWUh0MIuEdLDLMoVlGafFAZnXvaYz5opCuGItoEzh68G8O4"/>
+</div>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 overflow-y-auto p-gutter space-y-gutter">
+<!-- Page Header & Filter Bar -->
+<div class="flex flex-col gap-4">
+<div class="flex items-end justify-between">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface">Sales Performance</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Real-time metrics and comparative analysis for all regions.</p>
+</div>
+<button class="bg-surface-container-lowest border border-outline hover:bg-surface-container-low text-on-surface font-label-md text-label-md py-2 px-4 rounded transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                        Export Report
+                    </button>
+</div>
+<!-- Filters -->
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-lg flex flex-wrap gap-4 items-center shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">calendar_today</span>
+<select class="bg-transparent border-none text-on-surface font-body-md text-body-md focus:ring-0 cursor-pointer p-0 pr-6">
+<option>YTD 2024</option>
+<option>Q3 2024</option>
+<option>Last 12 Months</option>
+</select>
+</div>
+<div class="w-px h-6 bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">warehouse</span>
+<select class="bg-transparent border-none text-on-surface font-body-md text-body-md focus:ring-0 cursor-pointer p-0 pr-6">
+<option>All Warehouses</option>
+<option>Hub Alpha (North)</option>
+<option>Facility Beta (South)</option>
+</select>
+</div>
+<div class="w-px h-6 bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">category</span>
+<select class="bg-transparent border-none text-on-surface font-body-md text-body-md focus:ring-0 cursor-pointer p-0 pr-6">
+<option>All Families</option>
+<option>Structural Steel</option>
+<option>Cement &amp; Aggregates</option>
+</select>
+</div>
+<div class="w-px h-6 bg-outline-variant mx-2"></div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">person</span>
+<select class="bg-transparent border-none text-on-surface font-body-md text-body-md focus:ring-0 cursor-pointer p-0 pr-6">
+<option>All Commercials</option>
+<option>Direct Sales</option>
+<option>B2B Contracts</option>
+</select>
+</div>
+</div>
+</div>
+<!-- KPI Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-lg shadow-ambient hover:shadow-ambient-hover transition-shadow relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-secondary">payments</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-2">Total Revenue</h3>
+<div class="font-number-xl text-number-xl text-primary-container mb-1">$14.2M</div>
+<div class="flex items-center gap-1 text-emerald-600 font-number-md text-number-md">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+8.4%</span>
+<span class="text-outline text-xs font-normal ml-1">vs last period</span>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-lg shadow-ambient hover:shadow-ambient-hover transition-shadow relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-secondary">weight</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-2">Volume Moved</h3>
+<div class="font-number-xl text-number-xl text-primary-container mb-1">84.5k<span class="text-xl text-outline ml-1">Tons</span></div>
+<div class="flex items-center gap-1 text-emerald-600 font-number-md text-number-md">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+2.1%</span>
+<span class="text-outline text-xs font-normal ml-1">vs last period</span>
+</div>
+</div>
+<!-- KPI 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-lg shadow-ambient hover:shadow-ambient-hover transition-shadow relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-tertiary">sell</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-2">Avg Discount</h3>
+<div class="font-number-xl text-number-xl text-primary-container mb-1">4.2%</div>
+<div class="flex items-center gap-1 text-error font-number-md text-number-md">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+0.5%</span>
+<span class="text-outline text-xs font-normal ml-1">vs last period</span>
+</div>
+</div>
+<!-- KPI 4 -->
+<div class="bg-surface-container-lowest border border-outline-variant p-card-padding rounded-lg shadow-ambient hover:shadow-ambient-hover transition-shadow relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-secondary">monitoring</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-2">Gross Margin</h3>
+<div class="font-number-xl text-number-xl text-secondary mb-1">22.4%</div>
+<div class="flex items-center gap-1 text-emerald-600 font-number-md text-number-md">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+1.2%</span>
+<span class="text-outline text-xs font-normal ml-1">vs target</span>
+</div>
+</div>
+</div>
+<!-- Complex Layout: Chart & Table -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-gutter pb-margin">
+<!-- Chart Area (Spans 2 columns) -->
+<div class="xl:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg p-card-padding shadow-ambient flex flex-col h-[480px]">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary-container">Comparative Volume (Tons)</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Actuals vs Forecast per Quarter</p>
+</div>
+<div class="flex items-center gap-4 font-label-md text-label-md">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-sm bg-secondary"></div>
+<span class="text-on-surface">Actuals</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-sm bg-surface-dim border border-outline-variant"></div>
+<span class="text-on-surface">Forecast</span>
+</div>
+</div>
+</div>
+<!-- CSS Simulated Chart -->
+<div class="flex-1 relative flex items-end justify-between px-4 pb-8 pt-4 border-l border-b border-surface-variant mt-4">
+<!-- Y-Axis Labels -->
+<div class="absolute left-[-40px] top-0 bottom-8 flex flex-col justify-between text-xs text-outline font-number-md items-end w-8">
+<span>25k</span>
+<span>20k</span>
+<span>15k</span>
+<span>10k</span>
+<span>5k</span>
+<span>0</span>
+</div>
+<!-- Horizontal Grid Lines -->
+<div class="absolute inset-0 bottom-8 left-0 border-b border-surface-variant border-dashed top-[0%]"></div>
+<div class="absolute inset-0 bottom-8 left-0 border-b border-surface-variant border-dashed top-[20%]"></div>
+<div class="absolute inset-0 bottom-8 left-0 border-b border-surface-variant border-dashed top-[40%]"></div>
+<div class="absolute inset-0 bottom-8 left-0 border-b border-surface-variant border-dashed top-[60%]"></div>
+<div class="absolute inset-0 bottom-8 left-0 border-b border-surface-variant border-dashed top-[80%]"></div>
+<!-- Bar Groups -->
+<div class="relative w-16 h-full flex items-end justify-center gap-1 group z-10">
+<!-- Hover state vertical line -->
+<div class="absolute inset-y-0 w-full bg-tertiary/10 hidden group-hover:block -z-10 rounded"></div>
+<div class="w-6 bg-secondary h-[45%] rounded-t-sm transition-all hover:brightness-110"></div>
+<div class="w-6 bg-surface-dim border border-outline-variant h-[50%] rounded-t-sm"></div>
+<span class="absolute -bottom-6 text-xs text-on-surface-variant font-label-md">Q1</span>
+</div>
+<div class="relative w-16 h-full flex items-end justify-center gap-1 group z-10">
+<div class="absolute inset-y-0 w-full bg-tertiary/10 hidden group-hover:block -z-10 rounded"></div>
+<div class="w-6 bg-secondary h-[65%] rounded-t-sm transition-all hover:brightness-110"></div>
+<div class="w-6 bg-surface-dim border border-outline-variant h-[60%] rounded-t-sm"></div>
+<span class="absolute -bottom-6 text-xs text-on-surface-variant font-label-md">Q2</span>
+</div>
+<div class="relative w-16 h-full flex items-end justify-center gap-1 group z-10">
+<div class="absolute inset-y-0 w-full bg-tertiary/10 hidden group-hover:block -z-10 rounded"></div>
+<div class="w-6 bg-secondary h-[80%] rounded-t-sm transition-all hover:brightness-110"></div>
+<div class="w-6 bg-surface-dim border border-outline-variant h-[75%] rounded-t-sm"></div>
+<span class="absolute -bottom-6 text-xs text-on-surface-variant font-label-md">Q3</span>
+</div>
+<div class="relative w-16 h-full flex items-end justify-center gap-1 group z-10">
+<div class="absolute inset-y-0 w-full bg-tertiary/10 hidden group-hover:block -z-10 rounded"></div>
+<div class="w-6 bg-secondary h-[30%] rounded-t-sm transition-all hover:brightness-110 relative overflow-hidden">
+<div class="absolute inset-0 bg-surface-container-lowest/50 backdrop-blur-[1px]"></div>
+</div>
+<div class="w-6 bg-surface-dim border border-outline-variant h-[85%] rounded-t-sm"></div>
+<span class="absolute -bottom-6 text-xs text-on-surface-variant font-label-md text-secondary">Q4 (Curr)</span>
+</div>
+</div>
+</div>
+<!-- Top Selling Products Table (Spans 1 column) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-ambient flex flex-col h-[480px] overflow-hidden">
+<div class="p-card-padding border-b border-surface-variant flex justify-between items-center bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-primary-container">Top Performers</h2>
+<button class="text-secondary hover:text-on-secondary-container p-1 rounded-full hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+<div class="flex-1 overflow-auto">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-primary-container text-on-primary font-label-md text-label-md uppercase tracking-wider z-10 shadow-sm">
+<tr>
+<th class="p-3 font-medium">Family / SKU</th>
+<th class="p-3 font-medium text-right">Vol (T)</th>
+<th class="p-3 font-medium text-right">Rev</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors group">
+<td class="p-3">
+<div class="font-semibold text-on-surface">Rebar Grade 60</div>
+<div class="text-xs text-on-surface-variant">Structural Steel</div>
+</td>
+<td class="p-3 text-right font-number-md text-number-md">12.4k</td>
+<td class="p-3 text-right font-number-md text-number-md text-secondary">$3.2M</td>
+</tr>
+<tr class="bg-surface-container-low border-b border-surface-variant hover:bg-surface transition-colors group">
+<td class="p-3">
+<div class="font-semibold text-on-surface">Portland Type I</div>
+<div class="text-xs text-on-surface-variant">Cement</div>
+</td>
+<td class="p-3 text-right font-number-md text-number-md">45.1k</td>
+<td class="p-3 text-right font-number-md text-number-md text-secondary">$2.8M</td>
+</tr>
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors group">
+<td class="p-3">
+<div class="font-semibold text-on-surface">H-Beams W12</div>
+<div class="text-xs text-on-surface-variant">Structural Steel</div>
+</td>
+<td class="p-3 text-right font-number-md text-number-md">8.2k</td>
+<td class="p-3 text-right font-number-md text-number-md text-secondary">$1.9M</td>
+</tr>
+<tr class="bg-surface-container-low border-b border-surface-variant hover:bg-surface transition-colors group">
+<td class="p-3">
+<div class="font-semibold text-on-surface">Crushed Stone #57</div>
+<div class="text-xs text-on-surface-variant">Aggregates</div>
+</td>
+<td class="p-3 text-right font-number-md text-number-md">89.0k</td>
+<td class="p-3 text-right font-number-md text-number-md text-secondary">$1.4M</td>
+</tr>
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors group">
+<td class="p-3">
+<div class="font-semibold text-on-surface">Insulation EPS</div>
+<div class="text-xs text-on-surface-variant">Enclosure</div>
+</td>
+<td class="p-3 text-right font-number-md text-number-md">2.1k</td>
+<td class="p-3 text-right font-number-md text-number-md text-secondary">$850k</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 bg-surface-container-lowest border-t border-surface-variant text-center">
+<button class="text-secondary font-label-md text-label-md uppercase tracking-wider hover:underline">View Full Inventory</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

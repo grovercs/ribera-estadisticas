@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Logistics Intel - Clients</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1b1c1c",
+                        "surface-container-low": "#f2f3f7",
+                        "primary-container": "#2d2e2e",
+                        "surface-variant": "#e1e2e6",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "secondary-fixed-dim": "#96ccff",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#004a75",
+                        "outline-variant": "#c4c7c7",
+                        "tertiary": "#705d00",
+                        "secondary-fixed": "#cee5ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e1e2e6",
+                        "surface-container": "#eceef1",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#959595",
+                        "on-background": "#191c1e",
+                        "on-surface-variant": "#444748",
+                        "secondary": "#206393",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#464747",
+                        "on-secondary-container": "#035584",
+                        "surface-tint": "#5e5e5e",
+                        "primary-fixed": "#e3e2e2",
+                        "on-tertiary-fixed": "#221b00",
+                        "secondary-container": "#90c9ff",
+                        "surface-dim": "#d8dadd",
+                        "surface": "#f8f9fc",
+                        "surface-container-high": "#e7e8eb",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#c7c6c6",
+                        "on-tertiary-container": "#4c3f00",
+                        "surface-bright": "#f8f9fc",
+                        "tertiary-fixed": "#ffe16d",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "primary": "#181919",
+                        "inverse-surface": "#2e3133",
+                        "background": "#f8f9fc",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#c9a900",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "on-secondary-fixed": "#001d32",
+                        "inverse-on-surface": "#eff1f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin": "32px",
+                        "unit": "4px",
+                        "container-max": "1440px",
+                        "card-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "number-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "number-xl": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "number-md": ["16px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "number-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F4F5F5; /* Base Level */
+        }
+        .card-shadow {
+            box-shadow: 0 4px 20px rgba(45, 46, 46, 0.08);
+        }
+        /* Custom utilities based on style guidelines */
+        .border-cement { border-color: #E1E2E6; } /* approximation for cement gray */
+        .text-graphite { color: #2D2E2E; }
+        .text-steel { color: #4682B4; }
+        .bg-steel { background-color: #4682B4; }
+        .text-safety { color: #FFD700; }
+        .bg-safety { background-color: #FFD700; }
+        .bg-graphite { background-color: #2D2E2E; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md text-on-surface min-h-screen pb-24 lg:pb-0 lg:pl-64">
+<!-- NavigationDrawer (Web) -->
+<nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 no-shadow z-50">
+<div class="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate manager in a modern, brightly lit office environment. The lighting is crisp and clear, reflecting a modern, industrial corporate style. The image has high contrast, sharp details, and clean edges." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOZArlZQqMu72-2gmpzvrc8ZfEFZDfG0dyTy7FkWsz0Zh8hbNueR-kOUSb8R7D20iNPDpC8m4m2Ob_L2Jw0YGfE9J1gEbCYReO16tkNHJbnWFsU7b9McDB6dEUZHrCLHQhdPECCvC7eD6mUTy1w3Ru9lUN2L6tD8YDPHuFJH8_exjkFxsAhvu8HOXW-EVI3GdRr0JSnJc27W9roODFshBj7wvMs6WFOniJCH2Q-jimeel_7pcrjYCebrx6BtmEy2i--9Aj8528_09-"/>
+</div>
+<div>
+<h2 class="text-sm font-bold text-zinc-900 dark:text-zinc-100">Admin Portal</h2>
+<p class="text-xs text-zinc-500">Construction Logistics</p>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto py-4">
+<ul class="space-y-1 px-3">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium Inter text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                        Dashboard
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium Inter text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+                        Sales
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium Inter text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                        Inventory
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium Inter bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400 border-r-4 border-sky-700 cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="group" data-weight="fill" style="font-variation-settings: 'FILL' 1;">group</span>
+                        Clients
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex items-center justify-between px-4 h-16 bg-white dark:bg-zinc-900 text-sky-700 dark:text-sky-400 font-sans font-semibold tracking-tight shadow-sm z-40 border-b border-zinc-200 dark:border-zinc-800 lg:pl-68 lg:w-[calc(100%-16rem)]">
+<div class="flex items-center gap-4">
+<button class="lg:hidden p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors active:opacity-80 transition-all duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="text-lg font-black text-zinc-800 dark:text-zinc-100 uppercase tracking-wider">Logistics Intel</h1>
+</div>
+<button class="p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors active:opacity-80 transition-all duration-200 rounded-full">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 px-4 sm:px-6 lg:px-8 max-w-[1440px] mx-auto w-full">
+<!-- Header -->
+<div class="mb-8">
+<h2 class="font-headline-xl text-headline-xl text-graphite mb-2">Módulo de Inteligencia de Clientes</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Análisis avanzado y gestión de cartera de clientes.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<!-- CRM Stats (Summary) -->
+<div class="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+<!-- Stat 1 -->
+<div class="bg-surface-container-lowest border border-cement rounded-lg p-5 card-shadow">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-label-md text-graphite uppercase">Active</span>
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle">check_circle</span>
+</div>
+<div class="flex items-end gap-3">
+<span class="font-number-xl text-number-xl text-steel">120</span>
+<span class="font-body-md text-body-md text-outline mb-1">clientes</span>
+</div>
+</div>
+<!-- Stat 2 -->
+<div class="bg-surface-container-lowest border border-cement rounded-lg p-5 card-shadow">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-label-md text-graphite uppercase">Dormant</span>
+<span class="material-symbols-outlined text-outline" data-icon="snooze">snooze</span>
+</div>
+<div class="flex items-end gap-3">
+<span class="font-number-xl text-number-xl text-on-primary-container">15</span>
+<span class="font-body-md text-body-md text-outline mb-1">clientes</span>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="bg-surface-container-lowest border border-cement rounded-lg p-5 card-shadow border-l-4 border-l-tertiary-fixed-dim">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-label-md text-graphite uppercase">Dropping Sales</span>
+<span class="material-symbols-outlined text-tertiary-fixed-dim" data-icon="trending_down">trending_down</span>
+</div>
+<div class="flex items-end gap-3">
+<span class="font-number-xl text-number-xl text-on-primary-container">8</span>
+<span class="font-body-md text-body-md text-outline mb-1">clientes en riesgo</span>
+</div>
+</div>
+</div>
+<!-- Oportunidades Comerciales -->
+<div class="md:col-span-2 bg-surface-container-lowest border border-cement rounded-xl p-6 card-shadow flex flex-col h-full">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-graphite">Oportunidades Comerciales</h3>
+<button class="font-label-md text-label-md text-secondary hover:text-secondary-container transition-colors uppercase">Ver todo</button>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-4">Clientes inactivos &gt; 2 semanas con alto potencial.</p>
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-primary-container text-on-primary font-label-md text-label-md uppercase">
+<th class="p-3 rounded-tl-md">Cliente</th>
+<th class="p-3">Última Compra</th>
+<th class="p-3">Potencial</th>
+<th class="p-3 rounded-tr-md">Acción</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors">
+<td class="p-3 font-semibold text-graphite">Constructora Andes S.A.</td>
+<td class="p-3 text-on-surface-variant">Hace 18 días</td>
+<td class="p-3">
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full" style="width: 85%"></div>
+</div>
+</td>
+<td class="p-3">
+<button class="bg-steel text-on-primary px-3 py-1 rounded text-xs font-semibold hover:bg-secondary-container hover:text-on-secondary-container transition-colors">Contactar</button>
+</td>
+</tr>
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors bg-[#F9F9F9]">
+<td class="p-3 font-semibold text-graphite">Materiales del Norte</td>
+<td class="p-3 text-on-surface-variant">Hace 22 días</td>
+<td class="p-3">
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full" style="width: 70%"></div>
+</div>
+</td>
+<td class="p-3">
+<button class="bg-steel text-on-primary px-3 py-1 rounded text-xs font-semibold hover:bg-secondary-container hover:text-on-secondary-container transition-colors">Contactar</button>
+</td>
+</tr>
+<tr class="hover:bg-surface transition-colors">
+<td class="p-3 font-semibold text-graphite">Infraestructuras Global</td>
+<td class="p-3 text-on-surface-variant">Hace 15 días</td>
+<td class="p-3">
+<div class="w-full bg-surface-variant rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full" style="width: 60%"></div>
+</div>
+</td>
+<td class="p-3">
+<button class="bg-steel text-on-primary px-3 py-1 rounded text-xs font-semibold hover:bg-secondary-container hover:text-on-secondary-container transition-colors">Contactar</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Margen por Cliente -->
+<div class="bg-surface-container-lowest border border-cement rounded-xl p-6 card-shadow flex flex-col h-full">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-graphite">Margen por Cliente</h3>
+<span class="material-symbols-outlined text-outline" data-icon="leaderboard">leaderboard</span>
+</div>
+<div class="space-y-4 flex-1">
+<!-- Rank 1 -->
+<div class="flex items-center gap-3 p-3 rounded-lg bg-surface border border-surface-variant">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-bold text-sm">1</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-graphite truncate">Obras Cívicas S.L.</p>
+<p class="font-body-md text-body-md text-secondary font-semibold">24.5%</p>
+</div>
+</div>
+<!-- Rank 2 -->
+<div class="flex items-center gap-3 p-3 rounded-lg bg-surface border border-surface-variant">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-sm">2</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-graphite truncate">Acero y Cemento C.A.</p>
+<p class="font-body-md text-body-md text-secondary font-semibold">21.2%</p>
+</div>
+</div>
+<!-- Rank 3 -->
+<div class="flex items-center gap-3 p-3 rounded-lg bg-surface border border-surface-variant">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-sm">3</div>
+<div class="flex-1">
+<p class="font-label-md text-label-md text-graphite truncate">Desarrollos Urbanos</p>
+<p class="font-body-md text-body-md text-secondary font-semibold">19.8%</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Full Customer Details List -->
+<div class="bg-surface-container-lowest border border-cement rounded-xl p-6 card-shadow mb-8">
+<h3 class="font-headline-md text-headline-md text-graphite mb-6">Directorio de Clientes</h3>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-primary-container text-on-primary font-label-md text-label-md uppercase">
+<th class="p-4 rounded-tl-md">ID</th>
+<th class="p-4">Razón Social</th>
+<th class="p-4">Contacto Principal</th>
+<th class="p-4">Vol. Compras (YTD)</th>
+<th class="p-4">Estado</th>
+<th class="p-4 rounded-tr-md text-center">Acciones</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<!-- Row 1 Active -->
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors">
+<td class="p-4 text-outline font-number-md">#CLI-001</td>
+<td class="p-4 font-semibold text-graphite">Obras Cívicas S.L.</td>
+<td class="p-4 text-on-surface-variant">m.rodriguez@obrasciv.com</td>
+<td class="p-4 font-number-md">$450,200</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-[#E8F5E9] text-[#2E7D32] border border-[#A5D6A7]">
+<span class="w-2 h-2 rounded-full bg-[#2E7D32]"></span> Active
+                                </span>
+</td>
+<td class="p-4 text-center">
+<button class="text-outline hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 Warning -->
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors bg-[#F9F9F9]">
+<td class="p-4 text-outline font-number-md">#CLI-045</td>
+<td class="p-4 font-semibold text-graphite">Constructora Andes S.A.</td>
+<td class="p-4 text-on-surface-variant">compras@andes.sa</td>
+<td class="p-4 font-number-md">$120,500</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-[#FFF8E1] text-[#F57F17] border border-[#FFE082]">
+<span class="w-2 h-2 rounded-full bg-safety"></span> Warning
+                                </span>
+</td>
+<td class="p-4 text-center">
+<button class="text-outline hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 Inactive -->
+<tr class="border-b border-surface-variant hover:bg-surface transition-colors">
+<td class="p-4 text-outline font-number-md">#CLI-089</td>
+<td class="p-4 font-semibold text-graphite">Pilotes y Cimentaciones</td>
+<td class="p-4 text-on-surface-variant">admin@pilotes.com</td>
+<td class="p-4 font-number-md">$0</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-outline"></span> Inactive
+                                </span>
+</td>
+<td class="p-4 text-center">
+<button class="text-outline hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 Dropping -->
+<tr class="hover:bg-surface transition-colors bg-[#F9F9F9]">
+<td class="p-4 text-outline font-number-md">#CLI-112</td>
+<td class="p-4 font-semibold text-graphite">Acero Estructural C.A.</td>
+<td class="p-4 text-on-surface-variant">ventas@aceroest.com</td>
+<td class="p-4 font-number-md">$55,000</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-[#FFEBEE] text-[#C62828] border border-[#EF9A9A]">
+<span class="w-2 h-2 rounded-full bg-[#C62828]"></span> Dropping
+                                </span>
+</td>
+<td class="p-4 text-center">
+<button class="text-outline hover:text-secondary transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full h-16 z-50 flex justify-around items-center pb-safe bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)] border-zinc-200 dark:border-zinc-800">
+<button class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-800 tap-highlight-transparent active:scale-90 transition-transform duration-200 w-full h-full">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-800 tap-highlight-transparent active:scale-90 transition-transform duration-200 w-full h-full">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter mt-1">Sales</span>
+</button>
+<button class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500 active:bg-zinc-100 dark:active:bg-zinc-800 tap-highlight-transparent active:scale-90 transition-transform duration-200 w-full h-full">
+<span class="material-symbols-outlined" data-icon="warehouse">warehouse</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter mt-1">Stock</span>
+</button>
+<button class="flex flex-col items-center justify-center text-sky-700 dark:text-sky-400 scale-110 active:bg-zinc-100 dark:active:bg-zinc-800 tap-highlight-transparent active:scale-90 transition-transform duration-200 w-full h-full">
+<span class="material-symbols-outlined" data-icon="badge" data-weight="fill" style="font-variation-settings: 'FILL' 1;">badge</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter mt-1">Clients</span>
+</button>
+</nav>
+</body></html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Logistics Intel - Dashboard Principal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-primary-fixed": "#1b1c1c",
+                        "surface-container-low": "#f2f3f7",
+                        "primary-container": "#2d2e2e",
+                        "surface-variant": "#e1e2e6",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "secondary-fixed-dim": "#96ccff",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#004a75",
+                        "outline-variant": "#c4c7c7",
+                        "tertiary": "#705d00",
+                        "secondary-fixed": "#cee5ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e1e2e6",
+                        "surface-container": "#eceef1",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#959595",
+                        "on-background": "#191c1e",
+                        "on-surface-variant": "#444748",
+                        "secondary": "#206393",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#464747",
+                        "on-secondary-container": "#035584",
+                        "surface-tint": "#5e5e5e",
+                        "primary-fixed": "#e3e2e2",
+                        "on-tertiary-fixed": "#221b00",
+                        "secondary-container": "#90c9ff",
+                        "surface-dim": "#d8dadd",
+                        "surface": "#f8f9fc",
+                        "surface-container-high": "#e7e8eb",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#c7c6c6",
+                        "on-tertiary-container": "#4c3f00",
+                        "surface-bright": "#f8f9fc",
+                        "tertiary-fixed": "#ffe16d",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "primary": "#181919",
+                        "inverse-surface": "#2e3133",
+                        "background": "#f8f9fc",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#c9a900",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "on-secondary-fixed": "#001d32",
+                        "inverse-on-surface": "#eff1f4"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        gutter: "24px",
+                        margin: "32px",
+                        unit: "4px",
+                        "container-max": "1440px",
+                        "card-padding": "20px"
+                    },
+                    fontFamily: {
+                        "number-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "number-xl": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "number-md": ["16px", { lineHeight: "20px", fontWeight: "600" }],
+                        "headline-md": ["18px", { lineHeight: "24px", fontWeight: "600" }],
+                        "number-xl": ["36px", { lineHeight: "44px", letterSpacing: "-0.03em", fontWeight: "700" }],
+                        "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "headline-lg": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "600" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "headline-xl": ["32px", { lineHeight: "40px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }]
+                    }
+                }
+            }
+        };
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full flex items-center justify-between px-4 h-16 bg-surface-container-lowest z-40 border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-4">
+<button class="lg:hidden text-on-surface hover:bg-surface-container p-2 rounded-full transition-colors active:opacity-80 duration-200">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-secondary tracking-tight font-black uppercase">Logistics Intel</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-on-surface hover:bg-surface-container p-2 rounded-full transition-colors active:opacity-80 duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-label-md text-label-md font-bold ml-2">
+                AP
+            </div>
+</div>
+</header>
+<!-- NavigationDrawer (Desktop) -->
+<nav class="hidden lg:flex flex-col fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-surface-container-lowest border-r border-outline-variant z-30">
+<div class="p-6 border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center overflow-hidden">
+<span class="material-symbols-outlined text-outline text-3xl" data-icon="person">person</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Admin Portal</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Construction Logistics</p>
+</div>
+</div>
+</div>
+<div class="flex-1 py-4 flex flex-col gap-1 px-3">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary-container/30 text-secondary border-r-4 border-secondary cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="dashboard">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Sales</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label-md text-label-md">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container cursor-pointer transition-all duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-md text-label-md">Clients</span>
+</a>
+</div>
+</nav>
+<!-- BottomNavBar (Mobile) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full h-16 z-50 flex justify-around items-center pb-safe bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<a class="flex flex-col items-center justify-center text-secondary scale-110 tap-highlight-transparent active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined icon-fill" data-icon="analytics">analytics</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant tap-highlight-transparent active:scale-90 transition-transform duration-200 active:bg-surface-container rounded-lg p-1" href="#">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Sales</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant tap-highlight-transparent active:scale-90 transition-transform duration-200 active:bg-surface-container rounded-lg p-1" href="#">
+<span class="material-symbols-outlined" data-icon="warehouse">warehouse</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Stock</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant tap-highlight-transparent active:scale-90 transition-transform duration-200 active:bg-surface-container rounded-lg p-1" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Clients</span>
+</a>
+</nav>
+<!-- Main Canvas -->
+<main class="pt-20 pb-24 lg:pb-8 lg:pl-64 min-h-screen">
+<div class="max-w-[1440px] mx-auto px-4 lg:px-6 space-y-6">
+<!-- Header Section -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-primary">Overview Financiero</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Métricas clave y estado de operaciones en tiempo real.</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-primary rounded font-label-md text-label-md hover:bg-surface-container transition-colors shadow-sm">
+                        Exportar
+                    </button>
+<button class="px-4 py-2 bg-secondary text-on-secondary rounded font-label-md text-label-md hover:opacity-90 transition-opacity shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span>
+                        Filtros
+                    </button>
+</div>
+</div>
+<!-- Alertas Inteligentes (Highlight Section) -->
+<section class="bg-surface-container-lowest border border-tertiary-fixed rounded-lg p-5 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed"></div>
+<div class="flex items-start gap-4">
+<div class="p-2 bg-tertiary-fixed/20 rounded-full text-tertiary mt-1">
+<span class="material-symbols-outlined" data-icon="warning">warning</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-headline-md text-primary mb-2 flex items-center gap-2">
+                            Alertas Inteligentes
+                            <span class="bg-tertiary-fixed text-on-tertiary-fixed px-2 py-0.5 rounded text-xs font-bold">CRÍTICO</span>
+</h3>
+<ul class="space-y-2">
+<li class="flex items-center justify-between text-sm py-1 border-b border-outline-variant/50 last:border-0">
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                    3 ítems de Cemento Portland bajo el stock mínimo operativo.
+                                </span>
+<button class="text-secondary font-label-md text-label-md hover:underline">Revisar</button>
+</li>
+<li class="flex items-center justify-between text-sm py-1 border-b border-outline-variant/50 last:border-0">
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+                                    2 ventas corporativas detenidas por problemas logísticos en Zona Sur.
+                                </span>
+<button class="text-secondary font-label-md text-label-md hover:underline">Revisar</button>
+</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- KPI Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- KPI 1 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Ventas Totales</span>
+<span class="material-symbols-outlined text-outline" data-icon="payments">payments</span>
+</div>
+<div>
+<div class="font-number-xl text-number-xl text-secondary">$1.2M</div>
+<div class="flex items-center gap-1 mt-2 text-sm font-medium text-emerald-600">
+<span class="material-symbols-outlined text-[16px]" data-icon="arrow_upward">arrow_upward</span>
+                            +8% YoY
+                        </div>
+</div>
+</div>
+<!-- KPI 2 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Margen Bruto</span>
+<span class="material-symbols-outlined text-outline" data-icon="percent">percent</span>
+</div>
+<div>
+<div class="font-number-xl text-number-xl text-primary">24.0%</div>
+<div class="flex items-center gap-1 mt-2 text-sm font-medium text-on-surface-variant">
+                            Objetivo: 25.5%
+                        </div>
+</div>
+</div>
+<!-- KPI 3: Evolución Mensual -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Evolución Mensual</span>
+<span class="material-symbols-outlined text-outline" data-icon="ssid_chart">ssid_chart</span>
+</div>
+<div class="flex-1 flex items-end justify-center pt-4">
+<!-- Mini Chart Placeholder using CSS -->
+<div class="flex items-end gap-2 w-full h-16">
+<div class="bg-surface-container-high w-full h-[30%] rounded-t-sm"></div>
+<div class="bg-surface-container-high w-full h-[45%] rounded-t-sm"></div>
+<div class="bg-surface-container-high w-full h-[40%] rounded-t-sm"></div>
+<div class="bg-surface-container-high w-full h-[60%] rounded-t-sm"></div>
+<div class="bg-secondary/40 w-full h-[55%] rounded-t-sm"></div>
+<div class="bg-secondary w-full h-[80%] rounded-t-sm"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Charts Section -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Evolución de Ventas -->
+<div class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm flex flex-col">
+<div class="p-5 border-b border-outline-variant/50 flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary">Evolución de Ventas</h3>
+<div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant">
+<span class="flex items-center gap-1"><div class="w-3 h-3 bg-secondary rounded-sm"></div>2023</span>
+<span class="flex items-center gap-1"><div class="w-3 h-3 bg-surface-container-high border border-outline-variant rounded-sm"></div>2022</span>
+</div>
+</div>
+<div class="p-5 flex-1 min-h-[300px] relative">
+<!-- CSS representation of an Area Chart -->
+<div class="absolute inset-5 border-l border-b border-outline-variant/30 flex flex-col justify-between pb-6 pl-2">
+<!-- Y-Axis labels -->
+<div class="text-[10px] text-outline absolute -left-6 top-0">$1.5M</div>
+<div class="text-[10px] text-outline absolute -left-6 top-1/2 -translate-y-1/2">$0.7M</div>
+<div class="text-[10px] text-outline absolute -left-6 bottom-6">$0</div>
+<!-- Grid lines -->
+<div class="w-full h-px bg-outline-variant/20 absolute top-0"></div>
+<div class="w-full h-px bg-outline-variant/20 absolute top-1/2"></div>
+<!-- Area visualization -->
+<div class="absolute inset-0 bottom-6 left-2 overflow-hidden flex items-end">
+<!-- Previous Year (Gray Area) -->
+<div class="absolute bottom-0 w-full h-full bg-gradient-to-t from-surface-container-high/50 to-transparent flex items-end" style="clip-path: polygon(0 80%, 20% 75%, 40% 60%, 60% 70%, 80% 50%, 100% 55%, 100% 100%, 0 100%);"></div>
+<svg class="absolute bottom-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<polyline fill="none" points="0,80 20,75 40,60 60,70 80,50 100,55" stroke="#e1e2e6" stroke-width="2"></polyline>
+</svg>
+<!-- Current Year (Secondary Area) -->
+<div class="absolute bottom-0 w-full h-full bg-gradient-to-t from-secondary/20 to-transparent flex items-end" style="clip-path: polygon(0 90%, 20% 85%, 40% 50%, 60% 40%, 80% 20%, 100% 10%, 100% 100%, 0 100%);"></div>
+<svg class="absolute bottom-0 w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<polyline fill="none" points="0,90 20,85 40,50 60,40 80,20 100,10" stroke="#206393" stroke-width="2"></polyline>
+</svg>
+<!-- Hover Point Indicator -->
+<div class="absolute left-[80%] bottom-[20%] w-3 h-3 bg-surface-container-lowest border-2 border-tertiary-fixed rounded-full shadow-md z-10 -translate-x-1/2 translate-y-1/2"></div>
+<div class="absolute left-[80%] top-0 h-full w-px bg-tertiary-fixed border-dashed z-0"></div>
+</div>
+<!-- X-Axis Labels -->
+<div class="absolute bottom-0 left-2 w-full flex justify-between text-[10px] text-outline pt-2">
+<span>Ene</span>
+<span>Mar</span>
+<span>May</span>
+<span>Jul</span>
+<span>Sep</span>
+<span>Nov</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Top Familias -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm flex flex-col">
+<div class="p-5 border-b border-outline-variant/50">
+<h3 class="font-headline-md text-headline-md text-primary">Top Familias (Rentabilidad)</h3>
+</div>
+<div class="p-5 flex-1 flex flex-col justify-center gap-4">
+<!-- Bar 1 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface">Aceros y Perfiles</span>
+<span class="text-secondary font-bold">32%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<!-- Bar 2 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface">Cementos y Áridos</span>
+<span class="text-secondary font-bold">28%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full opacity-80" style="width: 70%"></div>
+</div>
+</div>
+<!-- Bar 3 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface">Aislamiento</span>
+<span class="text-secondary font-bold">18%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full opacity-60" style="width: 45%"></div>
+</div>
+</div>
+<!-- Bar 4 -->
+<div>
+<div class="flex justify-between font-label-md text-label-md mb-1">
+<span class="text-on-surface">Herramienta Pesada</span>
+<span class="text-secondary font-bold">12%</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-secondary h-2 rounded-full opacity-40" style="width: 30%"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Almacén Ranking List -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg shadow-sm overflow-hidden">
+<div class="p-5 border-b border-outline-variant bg-surface">
+<h3 class="font-headline-md text-headline-md text-primary">Almacén Ranking - Top Rendimiento</h3>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-primary text-on-primary font-label-md text-label-md">
+<th class="py-3 px-5 font-semibold">Almacén</th>
+<th class="py-3 px-5 font-semibold">Volumen Operado</th>
+<th class="py-3 px-5 font-semibold">Rotación</th>
+<th class="py-3 px-5 font-semibold text-right">Eficiencia</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md divide-y divide-outline-variant/30">
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-5 font-medium text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="warehouse">warehouse</span>
+                                    Centro Logístico Norte
+                                </td>
+<td class="py-3 px-5 text-on-surface-variant">4,250 Tons</td>
+<td class="py-3 px-5 text-on-surface-variant">12.4 d</td>
+<td class="py-3 px-5 text-right font-medium text-secondary">98%</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors bg-surface-container-lowest">
+<td class="py-3 px-5 font-medium text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="warehouse">warehouse</span>
+                                    Depósito Central (Capital)
+                                </td>
+<td class="py-3 px-5 text-on-surface-variant">3,890 Tons</td>
+<td class="py-3 px-5 text-on-surface-variant">14.1 d</td>
+<td class="py-3 px-5 text-right font-medium text-secondary">94%</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-5 font-medium text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="warehouse">warehouse</span>
+                                    Base Operativa Este
+                                </td>
+<td class="py-3 px-5 text-on-surface-variant">2,100 Tons</td>
+<td class="py-3 px-5 text-on-surface-variant">18.5 d</td>
+<td class="py-3 px-5 text-right font-medium text-secondary">89%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Logistics Intel - Stock y Logística</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1b1c1c",
+                        "surface-container-low": "#f2f3f7",
+                        "primary-container": "#2d2e2e",
+                        "surface-variant": "#e1e2e6",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "secondary-fixed-dim": "#96ccff",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#004a75",
+                        "outline-variant": "#c4c7c7",
+                        "tertiary": "#705d00",
+                        "secondary-fixed": "#cee5ff",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e1e2e6",
+                        "surface-container": "#eceef1",
+                        "outline": "#747878",
+                        "primary-fixed-dim": "#c7c6c6",
+                        "on-primary-container": "#959595",
+                        "on-background": "#191c1e",
+                        "on-surface-variant": "#444748",
+                        "secondary": "#206393",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed-variant": "#464747",
+                        "on-secondary-container": "#035584",
+                        "surface-tint": "#5e5e5e",
+                        "primary-fixed": "#e3e2e2",
+                        "on-tertiary-fixed": "#221b00",
+                        "secondary-container": "#90c9ff",
+                        "surface-dim": "#d8dadd",
+                        "surface": "#f8f9fc",
+                        "surface-container-high": "#e7e8eb",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#c7c6c6",
+                        "on-tertiary-container": "#4c3f00",
+                        "surface-bright": "#f8f9fc",
+                        "tertiary-fixed": "#ffe16d",
+                        "on-surface": "#191c1e",
+                        "on-primary": "#ffffff",
+                        "primary": "#181919",
+                        "inverse-surface": "#2e3133",
+                        "background": "#f8f9fc",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#c9a900",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "on-secondary-fixed": "#001d32",
+                        "inverse-on-surface": "#eff1f4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin": "32px",
+                        "unit": "4px",
+                        "container-max": "1440px",
+                        "card-padding": "20px"
+                    },
+                    "fontFamily": {
+                        "number-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "number-xl": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "number-md": ["16px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "number-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined[data-weight="fill"] {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-20 lg:pb-0 lg:pl-64">
+<!-- NavigationDrawer (Web) -->
+<nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 border-r border-outline-variant bg-surface-container-lowest text-on-surface">
+<div class="p-6 border-b border-outline-variant">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Logistics Intel</h1>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">Admin Portal</p>
+</div>
+<div class="flex-1 py-4 flex flex-col gap-2 px-3">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-md text-label-md">Sales</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-secondary-container text-on-secondary-container border-r-4 border-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" data-weight="fill">inventory_2</span>
+<span class="font-label-md text-label-md">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Clients</span>
+</a>
+</div>
+</nav>
+<!-- TopAppBar (Mobile) -->
+<header class="lg:hidden fixed top-0 w-full flex items-center justify-between px-4 h-16 bg-surface-container-lowest border-b border-outline-variant shadow-sm z-40">
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-headline-md text-headline-md text-on-surface">Logistics Intel</span>
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="p-gutter mt-16 lg:mt-0 max-w-container-max mx-auto space-y-gutter">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-margin">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">Módulo de Stock y Logística</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Visión general del inventario y alertas tempranas.</p>
+</div>
+<button class="bg-secondary text-on-secondary px-6 py-3 rounded-lg font-label-md text-label-md flex items-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">download</span>
+                Exportar Reporte
+            </button>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- KPI: Inventory Value (Col Span 12 or 4) -->
+<div class="md:col-span-4 bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding shadow-[0_4px_20px_rgba(45,46,46,0.08)] flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<h3 class="font-headline-md text-headline-md text-primary-container">Valor de Inventario</h3>
+<span class="material-symbols-outlined text-secondary">account_balance_wallet</span>
+</div>
+<div>
+<p class="font-number-xl text-number-xl text-on-surface">$3.4M</p>
+<p class="font-body-md text-body-md text-secondary mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                        +2.4% vs mes anterior
+                    </p>
+</div>
+</div>
+<!-- Gauge/Progress: Días hasta Rotura (Col Span 12 or 8) -->
+<div class="md:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding shadow-[0_4px_20px_rgba(45,46,46,0.08)]">
+<h3 class="font-headline-md text-headline-md text-primary-container mb-4">Días hasta Rotura (Críticos)</h3>
+<div class="space-y-6">
+<!-- Item 1 -->
+<div>
+<div class="flex justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface">Cemento Portland Tipo I</span>
+<span class="font-number-md text-number-md text-error">12 Días</span>
+</div>
+<div class="h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-error" style="width: 15%;"></div>
+</div>
+</div>
+<!-- Item 2 -->
+<div>
+<div class="flex justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface">Vigas de Acero (IPN 120)</span>
+<span class="font-number-md text-number-md text-tertiary-fixed-dim">28 Días</span>
+</div>
+<div class="h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-fixed-dim" style="width: 35%;"></div>
+</div>
+</div>
+<!-- Item 3 -->
+<div>
+<div class="flex justify-between mb-2">
+<span class="font-label-md text-label-md text-on-surface">Arena Fina x m3</span>
+<span class="font-number-md text-number-md text-secondary">45 Días</span>
+</div>
+<div class="h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary" style="width: 60%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Rotación de Stock Matrix (Col Span 12 or 8) -->
+<div class="md:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl p-card-padding shadow-[0_4px_20px_rgba(45,46,46,0.08)]">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-primary-container">Rotación de Stock</h3>
+<button class="text-secondary font-label-md text-label-md hover:underline">Ver Matriz Completa</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high text-on-surface font-label-md text-label-md border-b border-outline-variant">
+<th class="p-3 font-semibold">Producto</th>
+<th class="p-3 font-semibold">Categoría</th>
+<th class="p-3 font-semibold">Índice Rotación</th>
+<th class="p-3 font-semibold">Estado</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface-variant">
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface font-medium">Ladrillo Hueco 12x18x33</td>
+<td class="p-3">Mampostería</td>
+<td class="p-3 text-secondary font-number-md">Alta (4.2/mes)</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1 bg-secondary-container text-on-secondary-container px-2 py-1 rounded-md text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> OK
+                                    </span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors bg-[#F9F9F9]">
+<td class="p-3 text-on-surface font-medium">Clavos Punta París 2"</td>
+<td class="p-3">Ferretería</td>
+<td class="p-3 text-secondary font-number-md">Media (2.1/mes)</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1 bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-md text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px]">schedule</span> Estable
+                                    </span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant hover:bg-surface-container-low transition-colors">
+<td class="p-3 text-on-surface font-medium">Grafito en Polvo Especial</td>
+<td class="p-3">Aditivos</td>
+<td class="p-3 text-error font-number-md">Baja (0.3/mes)</td>
+<td class="p-3">
+<span class="inline-flex items-center gap-1 bg-error-container text-on-error-container px-2 py-1 rounded-md text-[10px] font-bold">
+<span class="material-symbols-outlined text-[12px]">warning</span> Lento
+                                    </span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Alert Center (Col Span 12 or 4) -->
+<div class="md:col-span-4 bg-tertiary-fixed-dim/10 border border-tertiary-fixed-dim rounded-xl p-card-padding shadow-[0_4px_20px_rgba(45,46,46,0.08)]">
+<div class="flex items-center gap-2 mb-4 text-tertiary">
+<span class="material-symbols-outlined">warning</span>
+<h3 class="font-headline-md text-headline-md">Alertas: Sin Movimiento (&gt;60 días)</h3>
+</div>
+<div class="space-y-3">
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant flex justify-between items-center hover:shadow-sm transition-shadow cursor-pointer">
+<div>
+<p class="font-label-md text-label-md text-on-surface">Pintura Epoxi Gris (20L)</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Ubicación: Pasillo C, Estante 4</p>
+</div>
+<span class="font-number-md text-number-md text-tertiary-fixed-dim">68 días</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant flex justify-between items-center hover:shadow-sm transition-shadow cursor-pointer">
+<div>
+<p class="font-label-md text-label-md text-on-surface">Malla Cima Q188</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Ubicación: Patio Exterior B</p>
+</div>
+<span class="font-number-md text-number-md text-tertiary-fixed-dim">85 días</span>
+</div>
+<div class="bg-surface-container-lowest p-3 rounded-lg border border-outline-variant flex justify-between items-center hover:shadow-sm transition-shadow cursor-pointer">
+<div>
+<p class="font-label-md text-label-md text-on-surface">Aditivo Hidrófugo</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-[12px]">Ubicación: Almacén Cerrado A</p>
+</div>
+<span class="font-number-md text-number-md text-error font-bold">112 días</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full h-16 z-50 flex justify-around items-center pb-safe bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-full h-full active:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">analytics</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-full h-full active:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">trending_up</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Sales</span>
+</a>
+<a class="flex flex-col items-center justify-center text-secondary w-full h-full active:bg-surface-container-low transition-colors scale-110" href="#">
+<span class="material-symbols-outlined text-[24px]" data-weight="fill">warehouse</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Stock</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant w-full h-full active:bg-surface-container-low transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">badge</span>
+<span class="font-label-md text-[10px] uppercase tracking-tighter mt-1">Clients</span>
+</a>
+</nav>
+</body></html>

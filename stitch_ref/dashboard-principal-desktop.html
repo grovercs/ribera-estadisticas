@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BigMat Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed": "#cee5ff",
+                        "on-primary-container": "#959595",
+                        "on-secondary-fixed": "#001d32",
+                        "inverse-primary": "#c7c6c6",
+                        "tertiary-fixed-dim": "#e9c400",
+                        "primary-fixed-dim": "#c7c6c6",
+                        "surface-container": "#eceef1",
+                        "secondary": "#206393",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3133",
+                        "on-tertiary-container": "#4c3f00",
+                        "tertiary-fixed": "#ffe16d",
+                        "surface": "#f8f9fc",
+                        "secondary-container": "#90c9ff",
+                        "on-secondary-container": "#035584",
+                        "surface-variant": "#e1e2e6",
+                        "on-tertiary-fixed": "#221b00",
+                        "outline": "#747878",
+                        "primary-container": "#2d2e2e",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#eff1f4",
+                        "on-error": "#ffffff",
+                        "primary": "#181919",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#1b1c1c",
+                        "surface-container-low": "#f2f3f7",
+                        "primary-fixed": "#e3e2e2",
+                        "surface-dim": "#d8dadd",
+                        "on-tertiary-fixed-variant": "#544600",
+                        "tertiary": "#705d00",
+                        "surface-bright": "#f8f9fc",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#5e5e5e",
+                        "outline-variant": "#c4c7c7",
+                        "on-secondary-fixed-variant": "#004a75",
+                        "on-surface-variant": "#444748",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#96ccff",
+                        "on-surface": "#191c1e",
+                        "on-background": "#191c1e",
+                        "tertiary-container": "#c9a900",
+                        "on-primary-fixed-variant": "#464747",
+                        "error": "#ba1a1a",
+                        "background": "#f8f9fc",
+                        "surface-container-high": "#e7e8eb",
+                        "surface-container-highest": "#e1e2e6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "24px",
+                        "card-padding": "20px",
+                        "container-max": "1440px",
+                        "margin": "32px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Inter"],
+                        "number-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "number-xl": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "number-md": ["16px", { "lineHeight": "20px", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "number-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+                        "headline-md": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Base styles from design system */
+        body { background-color: #f8f9fc; color: #191c1e; font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid #e1e2e6; box-shadow: 0 4px 20px rgba(45, 46, 46, 0.05); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased">
+<!-- SideNavBar (from JSON) -->
+<aside class="flex flex-col fixed left-0 top-0 h-full z-50 bg-slate-50 border-r border-slate-200 w-64 hidden md:flex font-inter text-sm font-semibold">
+<!-- Header -->
+<div class="flex items-center gap-3 p-6 border-b border-slate-200">
+<div class="w-10 h-10 rounded bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined">domain</span>
+</div>
+<div>
+<h1 class="text-lg font-bold text-slate-900 tracking-tight leading-tight">BigMat Enterprise</h1>
+<p class="text-xs text-slate-500 font-normal">Industrial Logistics</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-4 pt-6 pb-2">
+<button class="w-full flex items-center justify-center gap-2 bg-secondary text-on-secondary py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                New Shipment
+            </button>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+<!-- Active Tab -->
+<a class="flex items-center gap-3 bg-white text-blue-600 shadow-sm border-l-4 border-blue-600 rounded-r-lg py-3 px-4 active:scale-100 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<!-- Inactive Tabs -->
+<a class="flex items-center gap-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 py-3 px-4 rounded-r-lg active:scale-100 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Sales Module</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 py-3 px-4 rounded-r-lg active:scale-100 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span>Stock Module</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 py-3 px-4 rounded-r-lg active:scale-100 transition-transform duration-100" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span>Customer Intel</span>
+</a>
+</nav>
+<!-- Footer Tabs -->
+<div class="p-4 border-t border-slate-200 space-y-1">
+<a class="flex items-center gap-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 py-2 px-4 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">contact_support</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 text-slate-600 hover:text-slate-900 hover:bg-slate-100 py-2 px-4 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">tune</span>
+<span>Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col md:ml-64 relative min-w-0">
+<!-- TopNavBar (from JSON) -->
+<header class="flex justify-between items-center w-full h-16 px-6 bg-white border-b border-slate-200 shadow-sm z-40 flex-shrink-0 font-inter antialiased">
+<!-- Brand / Search (Mobile hidden brand to make room for search) -->
+<div class="flex items-center flex-1 gap-6">
+<h2 class="text-xl font-black tracking-tight text-slate-800 md:hidden">BigMat Logistics</h2>
+<!-- Search Bar Placeholder -->
+<div class="hidden md:flex items-center max-w-md w-full bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 transition-all">
+<span class="material-symbols-outlined text-slate-400 text-[20px] mr-2">search</span>
+<input class="bg-transparent border-none outline-none w-full text-sm text-slate-700 placeholder-slate-400 focus:ring-0 p-0" placeholder="Search orders, materials..." type="text"/>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4">
+<button class="text-slate-500 hover:bg-slate-50 p-2 rounded-full transition-colors active:opacity-80 duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-slate-500 hover:bg-slate-50 p-2 rounded-full transition-colors active:opacity-80 duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-slate-500 hover:bg-slate-50 p-2 rounded-full transition-colors active:opacity-80 duration-150">
+<span class="material-symbols-outlined">help</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-200 border border-slate-300 overflow-hidden ml-2 flex-shrink-0 cursor-pointer">
+<img alt="Manager Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a logistics manager, well-lit studio lighting, corporate attire, modern minimal background, realistic photographic style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmHTYi2tFw2WHTOjoVL-YlPJBNkWx4dboVG-Sdibhggnyq1lMg1v_3_NhvVT0H5SEULtj9fI9RfsBMMnjtw1ixP-UEby_fM3biIdCC8o3wdUduxjdnuPKgb8O-1y7N1naPAhsppIyEjrp_M14kKEzubGej6p3FWc8zT1aq8SmXSLPMiFz1bT3QSkzWIHvAdcPdHLnLpRywIxR6BKHe6gTFRQiZ8gPSSRfhRzHjAVHsVqM29kiRCVheWtOb4G_cfVAts8TnZnqLYaOI"/>
+</div>
+</div>
+</header>
+<!-- Canvas Area -->
+<main class="flex-1 overflow-y-auto p-gutter bg-background relative z-0">
+<div class="max-w-container-max mx-auto space-y-gutter">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface">Overview</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Daily operations and financial telemetry.</p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                            Export Report
+                        </button>
+</div>
+</div>
+<!-- Smart Alerts -->
+<div class="bg-tertiary-fixed border border-tertiary rounded-lg p-4 flex items-start gap-4 shadow-sm">
+<div class="mt-0.5 text-on-tertiary-fixed">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-headline-md text-on-tertiary-fixed mb-1">Operational Alerts</h3>
+<ul class="font-body-md text-body-md text-on-tertiary-fixed-variant space-y-1 list-disc list-inside">
+<li><strong>Steel Rebar 12mm</strong>: Stock under minimum threshold (Current: 14 tons).</li>
+<li><strong>Shipment #8842</strong>: Delayed at transit hub (Expected ETA: +4hrs).</li>
+</ul>
+</div>
+<button class="text-on-tertiary-fixed opacity-70 hover:opacity-100">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- KPI Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- KPI Card 1 -->
+<div class="glass-card rounded-xl p-card-padding flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Total Sales</span>
+<span class="material-symbols-outlined text-outline">payments</span>
+</div>
+<div>
+<div class="font-number-xl text-number-xl text-on-surface mb-1">$1.2M</div>
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span class="font-number-md text-number-md">+8.4% YoY</span>
+</div>
+</div>
+</div>
+<!-- KPI Card 2 -->
+<div class="glass-card rounded-xl p-card-padding flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Gross Margin</span>
+<span class="material-symbols-outlined text-outline">percent</span>
+</div>
+<div>
+<div class="font-number-xl text-number-xl text-on-surface mb-1">24.0%</div>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">horizontal_rule</span>
+<span class="font-number-md text-number-md text-sm font-normal">Stable</span>
+</div>
+</div>
+</div>
+<!-- KPI Card 3 -->
+<div class="glass-card rounded-xl p-card-padding flex flex-col justify-between border-l-4 border-l-secondary">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Active Shipments</span>
+<span class="material-symbols-outlined text-secondary">local_shipping</span>
+</div>
+<div>
+<div class="font-number-xl text-number-xl text-on-surface mb-1">142</div>
+<div class="flex items-center gap-1 text-outline">
+<span class="font-body-md text-body-md text-sm">3 flagged for review</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Chart Area -->
+<div class="glass-card rounded-xl p-card-padding">
+<div class="flex justify-between items-center mb-6">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Sales Evolution</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Volume vs Target (2022-2023)</p>
+</div>
+<div class="flex bg-surface-container rounded-lg p-1">
+<button class="px-3 py-1 bg-surface-container-lowest rounded shadow-sm font-label-md text-label-md text-on-surface">12M</button>
+<button class="px-3 py-1 text-on-surface-variant font-label-md text-label-md hover:text-on-surface">30D</button>
+</div>
+</div>
+<!-- Simulated Chart -->
+<div class="w-full h-64 relative border-b border-l border-outline-variant flex items-end pt-4 pr-2">
+<!-- Y Axis Labels -->
+<div class="absolute left-[-40px] top-0 h-full flex flex-col justify-between text-xs text-outline font-number-md py-4">
+<span>$1.5M</span>
+<span>$1.0M</span>
+<span>$0.5M</span>
+<span>$0</span>
+</div>
+<!-- Grid Lines -->
+<div class="absolute inset-0 flex flex-col justify-between pt-4 pb-0 pointer-events-none opacity-20">
+<div class="border-t border-outline"></div>
+<div class="border-t border-outline"></div>
+<div class="border-t border-outline"></div>
+<div class="border-t border-outline"></div>
+</div>
+<!-- SVG Line Chart Simulation -->
+<svg class="w-full h-full preserve-3d" preserveaspectratio="none" viewbox="0 0 100 50">
+<path d="M0,40 L10,35 L20,38 L30,25 L40,30 L50,15 L60,20 L70,10 L80,18 L90,5 L100,8" fill="none" stroke="#206393" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+<!-- Fill Area under curve -->
+<path d="M0,40 L10,35 L20,38 L30,25 L40,30 L50,15 L60,20 L70,10 L80,18 L90,5 L100,8 L100,50 L0,50 Z" fill="url(#blue-gradient)" opacity="0.1"></path>
+<defs>
+<lineargradient id="blue-gradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#206393"></stop>
+<stop offset="100%" stop-color="#ffffff" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+<!-- X Axis Labels -->
+<div class="flex justify-between mt-2 text-xs text-outline font-body-md px-2">
+<span>Jan</span>
+<span>Mar</span>
+<span>May</span>
+<span>Jul</span>
+<span>Sep</span>
+<span>Nov</span>
+</div>
+</div>
+<!-- Bottom Grid Area -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-gutter pb-8">
+<!-- Product Families -->
+<div class="xl:col-span-4 glass-card rounded-xl flex flex-col">
+<div class="p-card-padding border-b border-outline-variant">
+<h2 class="font-headline-md text-headline-md text-on-surface">Top Families</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-1">By Profitability Margin</p>
+</div>
+<div class="p-4 flex-1 flex flex-col gap-3">
+<!-- Item -->
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface transition-colors cursor-default">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div class="flex-1">
+<div class="font-number-md text-number-md text-on-surface text-sm">Structural Steel</div>
+<div class="font-body-md text-body-md text-xs text-on-surface-variant">Margin: 28%</div>
+</div>
+<div class="font-number-md text-number-md text-secondary">+$420k</div>
+</div>
+<!-- Item -->
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface transition-colors cursor-default">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">foundation</span>
+</div>
+<div class="flex-1">
+<div class="font-number-md text-number-md text-on-surface text-sm">Bulk Cement</div>
+<div class="font-body-md text-body-md text-xs text-on-surface-variant">Margin: 22%</div>
+</div>
+<div class="font-number-md text-number-md text-secondary">+$315k</div>
+</div>
+<!-- Item -->
+<div class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface transition-colors cursor-default">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">roofing</span>
+</div>
+<div class="flex-1">
+<div class="font-number-md text-number-md text-on-surface text-sm">Insulation Panels</div>
+<div class="font-body-md text-body-md text-xs text-on-surface-variant">Margin: 31%</div>
+</div>
+<div class="font-number-md text-number-md text-secondary">+$190k</div>
+</div>
+</div>
+</div>
+<!-- Warehouse Ranking Table -->
+<div class="xl:col-span-8 glass-card rounded-xl flex flex-col overflow-hidden">
+<div class="p-card-padding border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Warehouse Ranking</h2>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm mt-1">Throughput and rotation metrics.</p>
+</div>
+<button class="text-on-surface-variant hover:text-secondary p-1">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-primary-container text-on-primary font-label-md text-label-md uppercase">
+<th class="p-4 font-semibold w-1/3">Facility Name</th>
+<th class="p-4 font-semibold text-right">Tons Moved</th>
+<th class="p-4 font-semibold text-right">Rotation Rate</th>
+<th class="p-4 font-semibold text-center w-16">Status</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<tr class="border-b border-outline-variant bg-surface-container-lowest hover:bg-surface transition-colors">
+<td class="p-4 text-on-surface font-medium flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                                            Hub Alpha (North)
+                                        </td>
+<td class="p-4 text-right font-number-md text-on-surface-variant">14,250 t</td>
+<td class="p-4 text-right font-number-md text-on-surface-variant">4.2x / mo</td>
+<td class="p-4 text-center text-outline">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant bg-surface-container-low hover:bg-surface transition-colors">
+<td class="p-4 text-on-surface font-medium flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                                            Depot Bravo (East)
+                                        </td>
+<td class="p-4 text-right font-number-md text-on-surface-variant">9,800 t</td>
+<td class="p-4 text-right font-number-md text-on-surface-variant">3.8x / mo</td>
+<td class="p-4 text-center text-outline">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</td>
+</tr>
+<tr class="border-b border-outline-variant bg-surface-container-lowest hover:bg-surface transition-colors">
+<td class="p-4 text-on-surface font-medium flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed"></span>
+                                            Terminal Delta (Port)
+                                        </td>
+<td class="p-4 text-right font-number-md text-on-surface-variant">18,500 t</td>
+<td class="p-4 text-right font-number-md text-on-surface-variant text-error font-semibold">1.5x / mo</td>
+<td class="p-4 text-center text-error">
+<span class="material-symbols-outlined text-[20px]">error</span>
+</td>
+</tr>
+<tr class="bg-surface-container-low hover:bg-surface transition-colors">
+<td class="p-4 text-on-surface font-medium flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                                            Yard Charlie (South)
+                                        </td>
+<td class="p-4 text-right font-number-md text-on-surface-variant">5,400 t</td>
+<td class="p-4 text-right font-number-md text-on-surface-variant">2.9x / mo</td>
+<td class="p-4 text-center text-outline">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-3 border-t border-outline-variant bg-surface-container-lowest text-center">
+<button class="text-secondary font-label-md text-label-md hover:underline">View All Facilities</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
