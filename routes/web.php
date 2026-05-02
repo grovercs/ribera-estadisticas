@@ -6,6 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\FamilyController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ReportController;
 
 // Auth routes (public)
@@ -22,4 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/stock', [ProductController::class, 'index'])->name('stock');
     Route::get('/clients', [ClientController::class, 'index'])->name('clients');
     Route::get('/reports/comparison', [ReportController::class, 'comparison'])->name('reports.comparison');
+    Route::get('/families', [FamilyController::class, 'index'])->name('families');
+    Route::get('/families/{cod_familia}', [FamilyController::class, 'show'])->name('families.show');
+    Route::get('/suppliers', [SupplierController::class, 'index'])->name('suppliers');
 });

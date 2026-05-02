@@ -60,23 +60,34 @@ class DashboardController extends Controller
 
         // Top productos por facturacion (desde lineas ERP, enriquecido con maestros)
         $topProducts = DB::table('erp_sale_lines')
-            ->join('erp_products', 'erp_sale_lines.cod_articulo', '=', 'erp_products.cod_articulo')
-            ->leftJoin('erp_stocks', 'erp_sale_lines.cod_articulo', '=', 'erp_stocks.cod_articulo')
-            ->select(
-                'erp_sale_lines.cod_articulo',
-                'erp_sale_lines.descripcion',
-                'erp_products.marca',
-                'erp_products.cod_familia',
-                'erp_products.cod_subfamilia',
-                DB::raw('SUM(erp_sale_lines.cantidad) as total_qty'),
-                DB::raw('SUM(erp_sale_lines.importe_impuestos) as total_revenue'),
-                DB::raw('SUM(erp_stocks.existencias) as stock_total')
-            )
-            ->whereNotNull('erp_sale_lines.cod_articulo')
-            ->groupBy('erp_sale_lines.cod_articulo', 'erp_sale_lines.descripcion', 'erp_products.marca', 'erp_products.cod_familia', 'erp_products.cod_subfamilia')
+            ->select('cod_articulo', 'descripcion', DB::raw('SUM(cantidad) as total_qty'), DB::raw('SUM(importe_impuestos) as total_revenue'))
+            ->whereNotNull('cod_articulo')
+            ->groupBy('cod_articulo', 'descripcion')
             ->orderByDesc('total_revenue')
             ->take(10)
             ->get();
+
+        $productCodes = $topProducts->pluck('cod_articulo')->toArray();
+
+        $productMasters = DB::table('erp_products')
+            ->whereIn('cod_articulo', $productCodes)
+            ->select('cod_articulo', 'marca', 'cod_familia', 'cod_subfamilia')
+            ->get()
+            ->keyBy('cod_articulo');
+
+        $productStocks = DB::table('erp_stocks')
+            ->whereIn('cod_articulo', $productCodes)
+            ->select('cod_articulo', DB::raw('SUM(existencias) as stock_total'))
+            ->groupBy('cod_articulo')
+            ->get()
+            ->keyBy('cod_articulo');
+
+        foreach ($topProducts as $product) {
+            $product->marca = $productMasters[$product->cod_articulo]->marca ?? null;
+            $product->cod_familia = $productMasters[$product->cod_articulo]->cod_familia ?? null;
+            $product->cod_subfamilia = $productMasters[$product->cod_articulo]->cod_subfamilia ?? null;
+            $product->stock_total = $productStocks[$product->cod_articulo]->stock_total ?? 0;
+        }
 
         return view('dashboard.index', compact(
             'totalSales', 'totalOrders', 'avgTicket', 'pendingAmount',

@@ -62,6 +62,14 @@
                 <span class="material-symbols-outlined">people</span>
                 <span>Clientes</span>
             </a>
+            <a href="{{ route('families') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('families*') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
+                <span class="material-symbols-outlined">category</span>
+                <span>Familias</span>
+            </a>
+            <a href="{{ route('suppliers') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('suppliers') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
+                <span class="material-symbols-outlined">local_shipping</span>
+                <span>Proveedores</span>
+            </a>
             <a href="{{ route('reports.comparison') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('reports.comparison') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
                 <span class="material-symbols-outlined">query_stats</span>
                 <span>Comparativa Histórica</span>

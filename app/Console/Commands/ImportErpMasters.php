@@ -8,13 +8,14 @@ use App\Models\ErpProduct;
 use App\Models\ErpSeller;
 use App\Models\ErpStock;
 use App\Models\ErpSubfamily;
+use App\Models\ErpSupplier;
 use App\Models\ErpWarehouse;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class ImportErpMasters extends Command
 {
-    protected $signature = 'app:import-erp-masters {--table= : Importar solo una tabla (families,subfamilies,sellers,warehouses,products,clients,stocks)}';
+    protected $signature = 'app:import-erp-masters {--table= : Importar solo una tabla (families,subfamilies,sellers,warehouses,products,clients,stocks,suppliers)}';
 
     protected $description = 'Importa maestros desde el ERP SQL Server a MySQL';
 
@@ -30,6 +31,7 @@ class ImportErpMasters extends Command
             'products'    => ['model' => ErpProduct::class,    'erpTable' => 'articulos',       'pk' => 'cod_articulo'],
             'clients'     => ['model' => ErpClient::class,     'erpTable' => 'clientes',        'pk' => 'cod_cliente'],
             'stocks'      => ['model' => ErpStock::class,      'erpTable' => 'stocks',          'pk' => ['cod_almacen', 'cod_articulo']],
+            'suppliers'   => ['model' => ErpSupplier::class,   'erpTable' => 'proveedores',     'pk' => 'cod_proveedor'],
         ];
 
         foreach ($tables as $name => $config) {
@@ -79,7 +81,7 @@ class ImportErpMasters extends Command
         $bar = $this->output->createProgressBar($total);
         $bar->start();
 
-        $chunkSize = 2000;
+        $chunkSize = 500;
         $offset = 0;
         $now = now();
 
