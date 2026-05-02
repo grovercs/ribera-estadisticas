@@ -34,3 +34,9 @@ Thumbs.db
 
 # Composer phar
 composer.phar
+
+# Temporary files
+c.txt
+cookies.txt
+jar.txt
+hosts

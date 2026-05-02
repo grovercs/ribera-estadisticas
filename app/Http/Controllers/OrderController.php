@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
+use App\Models\ErpSale;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with(['client', 'items.product'])
-            ->orderBy('order_date', 'desc')
+        $orders = ErpSale::withCount('saleLines')
+            ->orderBy('fecha_venta', 'desc')
             ->paginate(20);
 
         return view('sales.index', compact('orders'));

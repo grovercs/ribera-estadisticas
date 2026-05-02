@@ -114,6 +114,21 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        'erp' => [
+            'driver' => 'sqlsrv',
+            'url' => env('ERP_DB_URL'),
+            'host' => env('ERP_DB_HOST', 'localhost'),
+            'port' => env('ERP_DB_PORT', '1433'),
+            'database' => env('ERP_DB_DATABASE', 'ERP_DB'),
+            'username' => env('ERP_DB_USERNAME', 'sa'),
+            'password' => env('ERP_DB_PASSWORD', ''),
+            'charset' => env('ERP_DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'encrypt' => env('ERP_DB_ENCRYPT', 'no'),
+            'trust_server_certificate' => env('ERP_DB_TRUST_SERVER_CERTIFICATE', 'true'),
+        ],
+
     ],
 
     /*

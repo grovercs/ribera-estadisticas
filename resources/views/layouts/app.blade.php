@@ -62,6 +62,10 @@
                 <span class="material-symbols-outlined">people</span>
                 <span>Clientes</span>
             </a>
+            <a href="{{ route('reports.comparison') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('reports.comparison') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
+                <span class="material-symbols-outlined">query_stats</span>
+                <span>Comparativa Histórica</span>
+            </a>
         </nav>
 
         <!-- Footer -->
