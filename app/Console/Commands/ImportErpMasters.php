@@ -91,10 +91,11 @@ class ImportErpMasters extends Command
             $chunk = [];
             foreach ($rows as $row) {
                 $data = (array) $row;
-                // Convertir smalldatetime a datetime string
                 foreach ($data as $key => $value) {
                     if ($value instanceof \DateTime) {
                         $data[$key] = $value->format('Y-m-d H:i:s');
+                    } elseif (is_string($value)) {
+                        $data[$key] = trim($value);
                     }
                 }
                 $data['created_at'] = $now;

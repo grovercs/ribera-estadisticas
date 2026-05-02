@@ -42,20 +42,40 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Top clientes por gasto (desde ventas ERP)
-        $topClients = ErpSale::select('razon_social', DB::raw('SUM(importe_impuestos) as total_spent'))
-            ->groupBy('razon_social')
+        // Top clientes por gasto (desde ventas ERP, enriquecido con maestros)
+        $topClients = ErpSale::query()
+            ->join('erp_clients', 'erp_sales.cod_cliente', '=', 'erp_clients.cod_cliente')
+            ->leftJoin('erp_sellers', 'erp_clients.cod_vendedor', '=', 'erp_sellers.cod_vendedor')
+            ->select(
+                'erp_clients.razon_social',
+                'erp_clients.poblacion',
+                'erp_clients.provincia',
+                'erp_sellers.nombre as vendedor',
+                DB::raw('SUM(erp_sales.importe_impuestos) as total_spent')
+            )
+            ->groupBy('erp_sales.cod_cliente', 'erp_clients.razon_social', 'erp_clients.poblacion', 'erp_clients.provincia', 'erp_sellers.nombre')
             ->orderByDesc('total_spent')
-            ->take(5)
+            ->take(10)
             ->get();
 
-        // Top productos por facturacion (desde lineas ERP)
+        // Top productos por facturacion (desde lineas ERP, enriquecido con maestros)
         $topProducts = DB::table('erp_sale_lines')
-            ->select('cod_articulo', 'descripcion', DB::raw('SUM(cantidad) as total_qty'), DB::raw('SUM(importe_impuestos) as total_revenue'))
-            ->whereNotNull('cod_articulo')
-            ->groupBy('cod_articulo', 'descripcion')
+            ->join('erp_products', 'erp_sale_lines.cod_articulo', '=', 'erp_products.cod_articulo')
+            ->leftJoin('erp_stocks', 'erp_sale_lines.cod_articulo', '=', 'erp_stocks.cod_articulo')
+            ->select(
+                'erp_sale_lines.cod_articulo',
+                'erp_sale_lines.descripcion',
+                'erp_products.marca',
+                'erp_products.cod_familia',
+                'erp_products.cod_subfamilia',
+                DB::raw('SUM(erp_sale_lines.cantidad) as total_qty'),
+                DB::raw('SUM(erp_sale_lines.importe_impuestos) as total_revenue'),
+                DB::raw('SUM(erp_stocks.existencias) as stock_total')
+            )
+            ->whereNotNull('erp_sale_lines.cod_articulo')
+            ->groupBy('erp_sale_lines.cod_articulo', 'erp_sale_lines.descripcion', 'erp_products.marca', 'erp_products.cod_familia', 'erp_products.cod_subfamilia')
             ->orderByDesc('total_revenue')
-            ->take(5)
+            ->take(10)
             ->get();
 
         return view('dashboard.index', compact(

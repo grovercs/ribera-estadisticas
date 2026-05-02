@@ -265,7 +265,7 @@ class ImportErpCsv extends Command
         if ($v === null) {
             return null;
         }
-        $v = trim((string) $v, '"');
+        $v = trim((string) $v, " \t\n\r\0\x0B\"");
         if ($v === '') {
             return null;
         }

@@ -110,6 +110,9 @@
                 <thead>
                     <tr class="border-b border-[#e1e2e6]">
                         <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Cliente</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Población</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Provincia</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Vendedor</th>
                         <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Facturación</th>
                     </tr>
                 </thead>
@@ -117,6 +120,9 @@
                     @foreach($topClients as $client)
                         <tr class="border-b border-[#f2f3f7] hover:bg-[#f8f9fc] transition-colors">
                             <td class="py-3 px-4 font-medium text-[#191c1e]">{{ $client->razon_social }}</td>
+                            <td class="py-3 px-4 text-[#747878]">{{ $client->poblacion ?? '-' }}</td>
+                            <td class="py-3 px-4 text-[#747878]">{{ $client->provincia ?? '-' }}</td>
+                            <td class="py-3 px-4 text-[#747878]">{{ $client->vendedor ?? '-' }}</td>
                             <td class="py-3 px-4 text-right text-[#206393] font-semibold">{{ number_format($client->total_spent, 2, ',', '.') }} €</td>
                         </tr>
                     @endforeach
@@ -134,6 +140,9 @@
                     <tr class="border-b border-[#e1e2e6]">
                         <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Código</th>
                         <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Producto</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Marca</th>
+                        <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Familia</th>
+                        <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Stock</th>
                         <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Cantidad</th>
                         <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Facturación</th>
                     </tr>
@@ -143,6 +152,9 @@
                         <tr class="border-b border-[#f2f3f7] hover:bg-[#f8f9fc] transition-colors">
                             <td class="py-3 px-4 font-mono text-[#206393]">{{ $product->cod_articulo }}</td>
                             <td class="py-3 px-4 font-medium text-[#191c1e]">{{ $product->descripcion }}</td>
+                            <td class="py-3 px-4 text-[#747878]">{{ $product->marca ?? '-' }}</td>
+                            <td class="py-3 px-4 text-[#747878]">{{ $product->cod_familia }}{{ $product->cod_subfamilia ? ' / ' . $product->cod_subfamilia : '' }}</td>
+                            <td class="py-3 px-4 text-right">{{ number_format($product->stock_total, 0, ',', '.') }}</td>
                             <td class="py-3 px-4 text-right">{{ number_format($product->total_qty, 0, ',', '.') }}</td>
                             <td class="py-3 px-4 text-right text-[#206393] font-semibold">{{ number_format($product->total_revenue, 2, ',', '.') }} €</td>
                         </tr>
