@@ -74,6 +74,14 @@
                 <span class="material-symbols-outlined">query_stats</span>
                 <span>Comparativa Histórica</span>
             </a>
+            <a href="{{ route('financial') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('financial') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
+                <span class="material-symbols-outlined">finance</span>
+                <span>Análisis Financiero</span>
+            </a>
+            <a href="{{ route('store-dashboard') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('store-dashboard') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
+                <span class="material-symbols-outlined">storefront</span>
+                <span>Cuadro de Mando</span>
+            </a>
         </nav>
 
         <!-- Footer -->
