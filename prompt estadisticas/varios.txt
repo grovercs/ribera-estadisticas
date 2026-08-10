@@ -1,0 +1,83 @@
+quiero filtros globales para que pueda trabajar con menos datos y la pagina no se vuelva tan lenta, tambien hay erorres en la pestaña stock, no sirve de nada tener las ventaas si no podemos hacer nada con ellas quiero que busques algun repositorio que te haga una experta en analis de datos en estadisticas dirigidas a empresas y que puedas plasmarlo en una estructura de web com un BI añadelo como extra a la lista, la pestaña comparativa da error
+
+Bnsft12672@Esxi 
+
+Gravitacion2024$%@.Gravitacion2025$%@
+
+PS C:\WINDOWS\system32>   sqlcmd -S "192.168.1.215\INTEGRAL" -U vc -P Gadmin1234 -d INTEGRAL -Q "
+>>   SELECT DISTINCT tipo_venta FROM hist_ventas_cabecera ORDER BY tipo_venta;
+>>   "
+tipo_venta
+----------
+         0
+         1
+         2
+         3
+         4
+         5
+         6
+
+(7 rows affected)
+
+
+PS C:\WINDOWS\system32> PS C:\WINDOWS\system32>sqlcmd -S "192.168.1.215\INTEGRAL" -U vc -P Gadmin1234 -d INTEGRAL -Q "
+>>   SELECT
+>>       v.cod_almacen,
+>>       COUNT(DISTINCT v.cod_venta) as tickets,
+>>       SUM(l.importe_impuestos) as importe
+>>   FROM hist_ventas_cabecera v
+>>   INNER JOIN hist_ventas_linea l
+>>       ON l.cod_venta = v.cod_venta AND l.tipo_venta = v.tipo_venta
+>>   WHERE v.tipo_venta = 'F'
+>>       AND YEAR(v.fecha_venta) = 2026
+>>       AND ISNULL(v.anulada, '') <> 'S'
+>>   GROUP BY v.cod_almacen
+>>   ORDER BY v.cod_almacen;
+>>   "
+Get-Process : No se puede procesar el parámetro porque el nombre de parámetro 'P' es ambiguo. Las posibles
+coincidencias son: -PipelineVariable -Name -Id.
+En línea: 1 Carácter: 65
++ ... \WINDOWS\system32>sqlcmd -S "192.168.1.215\INTEGRAL" -U vc -P Gadmin1 ...
++                                                                ~~
+    + CategoryInfo          : InvalidArgument: (:) [Get-Process], ParameterBindingException
+    + FullyQualifiedErrorId : AmbiguousParameter,Microsoft.PowerShell.Commands.GetProcessCommand
+
+Limpiando caché... ¡Caché limpiada! === CONFIGURACIÓN ACTUAL === ERP_DB_HOST: 192.168.1.215\\INTEGRAL ERP_DB_DATABASE: INTEGRAL ERP_DB_USERNAME: vc
+
+=== CONFIGURACIÓN ERP === Host: 192.168.200.105 Port: 1433 Database: INTEGRAL Username: sa Password: 630*** === PRUEBA DE CONEXIÓN === ERROR: SQLSTATE[08001]: [Microsoft][ODBC Driver 17 for SQL Server]TCP Provider: Tiempo de espera de la operación de espera agotado. (Connection: erp, Host: 192.168.200.105, Port: 1433, Database: INTEGRAL, SQL: SELECT @@SERVERNAME as server)
+
+
+1. Entra en el Proyecto.
+2. Mira arriba a la derecha, donde aparece el nombre del proyecto.
+3. Pulsa los tres puntitos “...”.
+4. Entra en “Project settings” / “Configuración del proyecto”.
+5. Busca el campo de “Instructions” / “Instrucciones”.
+6. Pega ahí las instrucciones.
+7. Guarda.
+
+
+Este proyecto trata de la app Hotel Daily Control para hoteles de Tossa.
+
+La app está hecha en React/Vite, desplegada en Netlify desde GitHub y conectada a Supabase. Responder siempre en español, con tono práctico y directo. Priorizar comandos CMD para Windows. Antes de cambiar código, explicar brevemente qué se va a tocar. Mantener la app responsive y pensada para recepción, dirección y operativa hotelera.
+
+Ruta local del proyecto:
+C:\Proyectos\antigravity\hoteles-tossa\hoteles-tossa-mvp\hoteles-tossa
+
+URL de producción:
+https://hoteles-tossa.netlify.app/
+
+Recordar que el flujo de despliegue es:
+cambiar código local → npm run build → git add → git commit → git push origin main → Netlify despliega automáticamente.
+
+Prioridades pendientes:
+seguridad, login, roles, RLS segura, backups automáticos, auditoría, conexión futura con Cloudbeds y pulir la experiencia de recepción.
+
+cuando creas un edificio deberia salta un modar par guardar el catalogo porque ya lo he hecho varias veces si guardarlo y creia que era un error 
+
+he dado al boton de cargar hoy en el checklist operativo diario y me ha slido un edificio general y ya no existe este edificio
+
+
+
+
+
+

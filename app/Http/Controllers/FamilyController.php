@@ -9,11 +9,51 @@ class FamilyController extends Controller
 {
     public function index(Request $request)
     {
-        // Sin caché por ahora - problemas de serialización
         $search = $request->input('search');
         $sortBy = $request->input('sort', 'revenue');
 
-        // Obtener familias
+        // Filtros de fecha: por defecto año en curso completo
+        $currentYear = (int) date('Y');
+        $currentMonth = (int) date('m');
+
+        $yearFrom = $request->input('year_from', $currentYear);
+        $yearTo = $request->input('year_to', $currentYear);
+        $monthFrom = $request->input('month_from', 1);
+        $monthTo = $request->input('month_to', $currentMonth);
+
+        // Normalizar
+        $yearFrom = is_numeric($yearFrom) ? (int) $yearFrom : $currentYear;
+        $yearTo = is_numeric($yearTo) ? (int) $yearTo : $currentYear;
+        $monthFrom = is_numeric($monthFrom) ? (int) $monthFrom : 1;
+        $monthTo = is_numeric($monthTo) ? (int) $monthTo : $currentMonth;
+
+        if ($yearFrom > $yearTo) {
+            [$yearFrom, $yearTo] = [$yearTo, $yearFrom];
+        }
+
+        // Obtener años disponibles desde ERP
+        $availableYears = [];
+        $minYear = $currentYear - 3;
+        $maxYear = $currentYear;
+        try {
+            $rows = DB::connection('erp')->select("
+                SELECT DISTINCT YEAR(fecha_venta) as year
+                FROM hist_ventas_cabecera
+                WHERE fecha_venta IS NOT NULL
+                ORDER BY year ASC
+            ");
+            $availableYears = array_column($rows, 'year');
+            if (!empty($availableYears)) {
+                $minYear = (int) min($availableYears);
+                $maxYear = (int) max($availableYears);
+            }
+        } catch (\Exception $e) {
+            \Log::warning('FamilyController: no se pudieron obtener años del ERP: ' . $e->getMessage());
+        }
+
+        $yearRange = range($minYear, $maxYear);
+
+        // Maestros de familias desde MySQL local
         $query = DB::table('erp_families')->select('cod_familia', 'descripcion');
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -26,72 +66,201 @@ class FamilyController extends Controller
 
         if (empty($familyCodes)) {
             return view('families.index', [
-                'metrics' => [], 'totalProducts' => 0, 'totalStock' => 0, 'totalRevenue' => 0,
-                'totalSubfamilies' => 0, 'topFamilies' => [], 'search' => $search, 'sortBy' => $sortBy,
+                'metrics' => collect(),
+                'totalProducts' => 0,
+                'totalStock' => 0,
+                'totalRevenue' => 0,
+                'totalRevenuePrev' => 0,
+                'totalRevenueGrowth' => 0,
+                'totalSubfamilies' => 0,
+                'topFamilies' => collect(),
+                'search' => $search,
+                'sortBy' => $sortBy,
+                'yearFrom' => $yearFrom,
+                'yearTo' => $yearTo,
+                'monthFrom' => $monthFrom,
+                'monthTo' => $monthTo,
+                'minYear' => $minYear,
+                'maxYear' => $maxYear,
+                'yearRange' => $yearRange,
             ]);
         }
 
-        // Subquery pre-agregada para productos
+        // Métricas de maestros desde MySQL local
         $productsSubq = DB::table('erp_products')
             ->select('cod_familia', DB::raw('COUNT(*) as product_count'))
             ->groupBy('cod_familia');
 
-        // Subquery pre-agregada para stocks
         $stockSubq = DB::table('erp_stocks as s')
             ->join('erp_products as p', 's.cod_articulo', '=', 'p.cod_articulo')
             ->select('p.cod_familia', DB::raw('SUM(s.existencias) as stock_total'))
             ->groupBy('p.cod_familia');
 
-        // Subquery para revenue
-        $revenueSubq = DB::table('erp_sale_lines as sl')
-            ->join('erp_sales as s', function ($join) {
-                $join->on('sl.cod_venta', '=', 's.cod_venta')
-                    ->on('sl.tipo_venta', '=', 's.tipo_venta')
-                    ->on('sl.cod_empresa', '=', 's.cod_empresa')
-                    ->on('sl.cod_caja', '=', 's.cod_caja');
-            })
-            ->join('erp_products as p', 'sl.cod_articulo', '=', 'p.cod_articulo')
-            ->where(function ($q) {
-                $q->whereNull('s.anulada')->orWhere('s.anulada', '')->orWhere('s.anulada', 'N');
-            })
-            ->select('p.cod_familia', DB::raw('SUM(sl.importe_impuestos) as total_revenue'))
-            ->groupBy('p.cod_familia');
-
-        // Subquery para subfamilias
         $subfamilySubq = DB::table('erp_subfamilies')
             ->select('cod_familia', DB::raw('COUNT(*) as subfamily_count'))
             ->groupBy('cod_familia');
 
-        // Join con subqueries
-        $metrics = DB::table('erp_families as f')
+        $localMetrics = DB::table('erp_families as f')
             ->select('f.cod_familia', 'f.descripcion',
                 DB::raw('COALESCE(pc.product_count, 0) as product_count'),
                 DB::raw('COALESCE(sc.stock_total, 0) as stock_total'),
-                DB::raw('COALESCE(rc.total_revenue, 0) as total_revenue'),
                 DB::raw('COALESCE(sf.subfamily_count, 0) as subfamily_count')
             )
             ->leftJoinSub($productsSubq, 'pc', 'f.cod_familia', '=', 'pc.cod_familia')
             ->leftJoinSub($stockSubq, 'sc', 'f.cod_familia', '=', 'sc.cod_familia')
-            ->leftJoinSub($revenueSubq, 'rc', 'f.cod_familia', '=', 'rc.cod_familia')
             ->leftJoinSub($subfamilySubq, 'sf', 'f.cod_familia', '=', 'sf.cod_familia')
             ->whereIn('f.cod_familia', $familyCodes)
             ->orderBy('f.cod_familia')
-            ->get();
+            ->get()
+            ->keyBy('cod_familia');
+
+        // Facturación desde ERP SQL Server en tiempo real
+        $revenueCurrent = [];
+        $revenuePrev = [];
+        try {
+            [$revenueCurrent, $revenuePrev] = $this->fetchRevenueFromErp($familyCodes, $yearFrom, $yearTo, $monthFrom, $monthTo);
+        } catch (\Exception $e) {
+            \Log::error('FamilyController: error al consultar facturación ERP: ' . $e->getMessage());
+        }
+
+        // Combinar métricas
+        $metrics = [];
+        foreach ($families as $family) {
+            $local = $localMetrics[$family->cod_familia] ?? null;
+            $revCurrent = (float) ($revenueCurrent[$family->cod_familia] ?? 0);
+            $revPrev = (float) ($revenuePrev[$family->cod_familia] ?? 0);
+            $growth = $revPrev > 0 ? (($revCurrent - $revPrev) / $revPrev) * 100 : ($revCurrent > 0 ? 100 : 0);
+
+            $metrics[] = (object) [
+                'cod_familia' => $family->cod_familia,
+                'descripcion' => $family->descripcion ?: 'Sin descripción',
+                'product_count' => (int) ($local->product_count ?? 0),
+                'stock_total' => (float) ($local->stock_total ?? 0),
+                'subfamily_count' => (int) ($local->subfamily_count ?? 0),
+                'total_revenue' => $revCurrent,
+                'total_revenue_prev' => $revPrev,
+                'growth' => $growth,
+            ];
+        }
+
+        $metrics = collect($metrics);
 
         // Totales
         $totalProducts = $metrics->sum('product_count');
         $totalStock = $metrics->sum('stock_total');
         $totalRevenue = $metrics->sum('total_revenue');
+        $totalRevenuePrev = $metrics->sum('total_revenue_prev');
+        $totalRevenueGrowth = $totalRevenuePrev > 0
+            ? (($totalRevenue - $totalRevenuePrev) / $totalRevenuePrev) * 100
+            : ($totalRevenue > 0 ? 100 : 0);
         $totalSubfamilies = $metrics->sum('subfamily_count');
 
         // Ordenar
-        if ($sortBy === 'revenue') $metrics = $metrics->sortByDesc('total_revenue');
-        elseif ($sortBy === 'products') $metrics = $metrics->sortByDesc('product_count');
-        elseif ($sortBy === 'stock') $metrics = $metrics->sortByDesc('stock_total');
+        if ($sortBy === 'revenue') {
+            $metrics = $metrics->sortByDesc('total_revenue');
+        } elseif ($sortBy === 'products') {
+            $metrics = $metrics->sortByDesc('product_count');
+        } elseif ($sortBy === 'stock') {
+            $metrics = $metrics->sortByDesc('stock_total');
+        } elseif ($sortBy === 'growth') {
+            $metrics = $metrics->sortByDesc('growth');
+        }
 
         $topFamilies = $metrics->sortByDesc('total_revenue')->take(10);
 
-        return view('families.index', compact('metrics', 'totalProducts', 'totalStock', 'totalRevenue', 'totalSubfamilies', 'topFamilies', 'search', 'sortBy'));
+        return view('families.index', compact(
+            'metrics', 'totalProducts', 'totalStock', 'totalRevenue', 'totalRevenuePrev',
+            'totalRevenueGrowth', 'totalSubfamilies', 'topFamilies', 'search', 'sortBy',
+            'yearFrom', 'yearTo', 'monthFrom', 'monthTo', 'minYear', 'maxYear', 'yearRange'
+        ));
+    }
+
+    /**
+     * Obtiene la facturación por familia desde el ERP para el período actual y el anterior.
+     *
+     * @param string[] $familyCodes
+     * @param int      $yearFrom
+     * @param int      $yearTo
+     * @param int      $monthFrom
+     * @param int      $monthTo
+     *
+     * @return array{0: array<string, float>, 1: array<string, float>}
+     */
+    private function fetchRevenueFromErp(array $familyCodes, int $yearFrom, int $yearTo, int $monthFrom, int $monthTo): array
+    {
+        $erp = DB::connection('erp');
+        $placeholders = implode(',', array_fill(0, count($familyCodes), '?'));
+
+        // Período actual
+        $whereCurrent = $this->buildPeriodWhere($yearFrom, $yearTo, $monthFrom, $monthTo);
+        $paramsCurrent = array_merge(
+            [$yearFrom, $yearTo, $yearFrom, $yearFrom, $monthFrom, $yearTo, $yearTo, $monthTo],
+            $familyCodes
+        );
+
+        $rowsCurrent = $erp->select("
+            SELECT a.cod_familia, SUM(l.importe_impuestos) as total_revenue
+            FROM hist_ventas_linea l
+            INNER JOIN hist_ventas_cabecera v
+                ON l.cod_venta = v.cod_venta AND l.tipo_venta = v.tipo_venta
+                AND l.cod_empresa = v.cod_empresa AND l.cod_caja = v.cod_caja
+            INNER JOIN articulos a ON l.cod_articulo = a.cod_articulo
+            WHERE {$whereCurrent}
+                AND a.cod_familia IN ({$placeholders})
+                AND ISNULL(v.anulada, '') <> 'S'
+                AND l.cod_articulo IS NOT NULL
+            GROUP BY a.cod_familia
+        ", $paramsCurrent);
+
+        // Período anterior: mismo rango de meses/años desplazado N años atrás
+        $yearSpan = $yearTo - $yearFrom;
+        $prevYearFrom = $yearFrom - $yearSpan - 1;
+        $prevYearTo = $yearTo - $yearSpan - 1;
+
+        $wherePrev = $this->buildPeriodWhere($prevYearFrom, $prevYearTo, $monthFrom, $monthTo);
+        $paramsPrev = array_merge(
+            [$prevYearFrom, $prevYearTo, $prevYearFrom, $prevYearFrom, $monthFrom, $prevYearTo, $prevYearTo, $monthTo],
+            $familyCodes
+        );
+
+        $rowsPrev = $erp->select("
+            SELECT a.cod_familia, SUM(l.importe_impuestos) as total_revenue
+            FROM hist_ventas_linea l
+            INNER JOIN hist_ventas_cabecera v
+                ON l.cod_venta = v.cod_venta AND l.tipo_venta = v.tipo_venta
+                AND l.cod_empresa = v.cod_empresa AND l.cod_caja = v.cod_caja
+            INNER JOIN articulos a ON l.cod_articulo = a.cod_articulo
+            WHERE {$wherePrev}
+                AND a.cod_familia IN ({$placeholders})
+                AND ISNULL(v.anulada, '') <> 'S'
+                AND l.cod_articulo IS NOT NULL
+            GROUP BY a.cod_familia
+        ", $paramsPrev);
+
+        $current = [];
+        foreach ($rowsCurrent as $r) {
+            $current[$r->cod_familia] = (float) $r->total_revenue;
+        }
+
+        $prev = [];
+        foreach ($rowsPrev as $r) {
+            $prev[$r->cod_familia] = (float) $r->total_revenue;
+        }
+
+        return [$current, $prev];
+    }
+
+    /**
+     * Construye la cláusula WHERE para filtrar por rango de año/mes.
+     */
+    private function buildPeriodWhere(int $yearFrom, int $yearTo, int $monthFrom, int $monthTo): string
+    {
+        return "YEAR(v.fecha_venta) BETWEEN ? AND ?
+            AND (
+                (YEAR(v.fecha_venta) > ? OR (YEAR(v.fecha_venta) = ? AND MONTH(v.fecha_venta) >= ?))
+                AND
+                (YEAR(v.fecha_venta) < ? OR (YEAR(v.fecha_venta) = ? AND MONTH(v.fecha_venta) <= ?))
+            )";
     }
 
     public function show(string $cod_familia, Request $request)

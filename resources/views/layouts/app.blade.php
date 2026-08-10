@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8f9fc; color: #191c1e; }
         .glass-card {
@@ -26,6 +27,21 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
+        /* Flecha de <select> consistente y siempre visible: quita la nativa,
+           dibuja un chevron propio a la derecha y reserva el padding para que
+           el texto seleccionado nunca la tape. */
+        select {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23747878' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+            background-position: right 0.5rem center !important;
+            background-repeat: no-repeat !important;
+            background-size: 1.05rem !important;
+            padding-right: 1.9rem !important;
+        }
+        /* En Firefox hay que ocultar también la flecha nativa del <option> container. */
+        select::-ms-expand { display: none !important; }
     </style>
     @stack('styles')
 </head>
@@ -50,11 +66,11 @@
                 <span class="material-symbols-outlined">dashboard</span>
                 <span>Dashboard</span>
             </a>
-            <a href="{{ route('sales') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('sales') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
+            <a href="{{ route('sales.index') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('sales.*') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
                 <span class="material-symbols-outlined">analytics</span>
                 <span>Ventas</span>
             </a>
-            <a href="{{ route('stock') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('stock') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
+            <a href="{{ route('stock.index') }}" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 {{ request()->routeIs('stock.*') ? 'nav-active' : 'text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]' }}">
                 <span class="material-symbols-outlined">inventory_2</span>
                 <span>Stock</span>
             </a>
