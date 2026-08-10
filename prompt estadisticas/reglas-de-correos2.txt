@@ -1,0 +1,248 @@
+ Perfecto, Papacito. No instalo nada, no configuro nada, no creo archivos y no toco correo ni credenciales.
+
+    Plan de instalación de Himalaya CLI en Windows
+
+    Opción 1: Scoop
+
+    Qué es:
+    Scoop es un gestor de paquetes para Windows, parecido a apt/brew, pensado para instalar herramientas CLI sin ensuciar mucho el sistema.
+
+    Comandos necesarios:
+
+    Primero comprobar si Scoop existe:
+
+    powershell
+    scoop --version
+
+
+    Si no existe, instalación típica de Scoop:
+
+    powershell
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+    irm get.scoop.sh | iex
+
+
+    Después instalar Himalaya si está disponible en buckets de Scoop:
+
+    powershell
+    scoop search himalaya
+    scoop install himalaya
+
+
+    Si no aparece en bucket principal, habría que buscar si está en extras u otro bucket:
+
+    powershell
+    scoop bucket add extras
+    scoop search himalaya
+
+
+    Dónde quedaría instalado:
+    Normalmente en:
+
+    text
+    C:\Users\Usuario\scoop\apps\himalaya\
+
+
+    Y el ejecutable quedaría enlazado desde:
+
+    text
+    C:\Users\Usuario\scoop\shims\
+
+
+    Permisos de administrador:
+    Normalmente no requiere administrador.
+    Instala en el perfil del usuario.
+
+    Ventajas:
+    - Limpio.
+    - Fácil de actualizar.
+    - Fácil de desinstalar.
+    - No requiere compilar.
+    - No suele requerir permisos admin.
+    - Ideal para herramientas CLI en Windows.
+
+    Inconvenientes:
+    - Depende de que Himalaya esté disponible en Scoop o en algún bucket fiable.
+    - Requiere instalar Scoop si no está instalado.
+    - Añade otra herramienta de gestión al sistema.
+
+    Cómo desinstalar:
+
+    powershell
+    scoop uninstall himalaya
+
+
+    Actualizar:
+
+    powershell
+    scoop update himalaya
+
+
+    Valoración:
+    Es la opción más limpia si Himalaya está disponible en Scoop.
+
+
+    Opción 2: Cargo / Rust
+
+    Qué es:
+    Instalar Himalaya compilándolo desde el ecosistema Rust con cargo.
+
+    Comandos necesarios:
+
+    Primero comprobar si Rust/Cargo existe:
+
+    powershell
+    cargo --version
+    rustc --version
+
+
+    Si no está instalado, instalar Rust desde rustup:
+
+    powershell
+    winget install Rustlang.Rustup
+
+
+    O desde web oficial:
+
+    text
+    https://rustup.rs/
+
+
+    Después instalar Himalaya:
+
+    powershell
+    cargo install himalaya --locked
+
+
+    Dónde quedaría instalado:
+    Normalmente en:
+
+    text
+    C:\Users\Usuario\.cargo\bin\himalaya.exe
+
+
+    Permisos de administrador:
+    Normalmente no requiere administrador si Rust se instala para el usuario.
+    Con winget puede pedir permisos según configuración del sistema.
+
+    Ventajas:
+    - Método oficial del ecosistema Rust.
+    - No depende de que Scoop tenga paquete.
+    - Instala la versión publicada en crates.io.
+    - Fácil de tener herramientas Rust actualizadas.
+
+    Inconvenientes:
+    - Requiere instalar Rust/Cargo.
+    - Puede tardar bastante porque compila.
+    - Ocupa más espacio.
+    - Puede requerir herramientas de compilación de Windows si alguna dependencia lo necesita.
+    - Menos limpio si solo queremos una herramienta concreta.
+
+    Cómo desinstalar Himalaya:
+
+    powershell
+    cargo uninstall himalaya
+
+
+    Cómo desinstalar Rust si ya no se quiere:
+
+    powershell
+    rustup self uninstall
+
+
+    Valoración:
+    Buena opción si ya tienes Rust instalado. Si no, me parece demasiado pesada solo para probar Himalaya.
+
+
+    Opción 3: Binario precompilado
+
+    Qué es:
+    Descargar un .exe ya compilado desde releases oficiales del proyecto, si existe binario Windows práctico.
+
+    Comandos aproximados:
+    Primero habría que ir a releases oficiales de Himalaya/Pimalaya y comprobar si hay binario Windows:
+
+    text
+    https://github.com/pimalaya/himalaya/releases
+
+
+    Si hay .zip o .exe para Windows:
+    1. Descargarlo.
+    2. Extraerlo, por ejemplo en:
+
+    text
+    C:\Users\Usuario\tools\himalaya\
+
+
+    3. Añadir esa carpeta al PATH del usuario.
+    4. Comprobar:
+
+    powershell
+    himalaya --version
+
+
+    Dónde quedaría instalado:
+    Depende de dónde lo pongamos. Recomendación:
+
+    text
+    C:\Users\Usuario\tools\himalaya\
+
+
+    Permisos de administrador:
+    No requiere administrador si se instala en carpeta del usuario y se modifica el PATH del usuario.
+
+    Ventajas:
+    - No requiere Rust.
+    - No requiere Scoop.
+    - Instalación simple si el binario existe.
+    - Fácil de borrar manualmente.
+
+    Inconvenientes:
+    - Hay que verificar manualmente que el binario sea oficial.
+    - Actualización manual.
+    - Añadir PATH manualmente puede ser algo más incómodo.
+    - Más riesgo de descargar un archivo equivocado si no se hace desde release oficial.
+    - Desinstalación manual.
+
+    Cómo desinstalar:
+    1. Borrar carpeta:
+
+    text
+    C:\Users\Usuario\tools\himalaya\
+
+
+    2. Quitar esa ruta del PATH de usuario.
+
+    Valoración:
+    Buena opción si existe binario Windows oficial claro y queremos evitar gestores de paquetes, pero menos cómoda para actualizar.
+
+
+    Recomendación para tu caso
+
+    Mi recomendación más limpia para Windows sería:
+
+    1. Primero: Scoop, si Himalaya está disponible ahí.
+    2. Segunda opción: binario precompilado oficial, si existe release Windows clara.
+    3. Última opción: Cargo/Rust, solo si ya tienes Rust instalado o si las otras opciones no sirven.
+
+    Orden recomendado seguro:
+
+    Paso 1, sin instalar nada todavía:
+
+    powershell
+    scoop --version
+    cargo --version
+
+
+    Solo para saber qué tienes disponible.
+
+    Paso 2, comprobar disponibilidad:
+    - Si Scoop está instalado: scoop search himalaya
+    - Si no está instalado, valorar si quieres instalar Scoop.
+    - Si no queremos Scoop, revisar releases oficiales.
+
+    La opción que yo elegiría inicialmente:
+    Scoop, porque instala en usuario, es fácil de desinstalar y evita tocar credenciales/correo.
+
+    Importante:
+    Instalar Himalaya solo instala la herramienta. No configura cuentas, no conecta al correo y no toca credenciales hasta que creemos config.toml o ejecutemos configuración de cuenta.

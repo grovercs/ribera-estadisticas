@@ -1,0 +1,282 @@
+ Perfecto, Papacito. No configuro nada, no modifico archivos y no intento conexión al correo.
+
+    Plan técnico seguro para correo en Hermes/ARA
+
+    1. Herramienta recomendada
+
+    Recomiendo usar Himalaya CLI.
+
+    Motivo:
+    - Es una herramienta de terminal para IMAP/SMTP.
+    - Permite listar correos, leer mensajes y preparar respuestas.
+    - Soporta varias cuentas.
+    - Se puede usar bajo demanda, sin automatizar nada al principio.
+    - Encaja bien con Hermes porque ARA puede ejecutar comandos controlados y resumir resultados.
+
+    Alternativa posible:
+    - Google Workspace / Gmail API si fuera solo Gmail, pero para varias cuentas mixtas Gmail + dominios/hosting, Himalaya con IMAP/SMTP es más general.
+
+    Mi recomendación inicial:
+    Himalaya solo lectura al principio, configurado con una cuenta de prueba.
+
+    2. Ventajas y riesgos
+
+    Ventajas:
+    - Sirve para Gmail, hosting propio y cuentas IMAP/SMTP normales.
+    - Permite trabajar con varias cuentas después.
+    - Se puede limitar el uso inicial a listar últimos correos no leídos.
+    - ARA puede preparar resúmenes y borradores sin enviar nada.
+    - No obliga a mover, borrar ni marcar correos.
+
+    Riesgos:
+    - Una mala configuración podría guardar credenciales de forma insegura.
+    - Algunos comandos podrían marcar correos como leídos si se usan para leer el mensaje completo.
+    - Los comandos de envío existen, así que hay que bloquearlos por norma hasta confirmación explícita.
+    - Adjuntos pueden contener virus, datos privados o archivos grandes; al principio no se abrirían.
+    - Si se usa Gmail, normalmente hará falta contraseña de aplicación u OAuth según el método elegido.
+
+    Regla operativa:
+    Primera fase = solo listar/enumerar correos no leídos y resumir bajo demanda.
+    Nada de enviar, borrar, mover, marcar como leído ni abrir adjuntos.
+
+    3. Datos necesarios
+
+    Para una cuenta de prueba necesitaremos, cuando tú lo autorices:
+
+    Datos generales:
+    - Nombre de la cuenta o alias local, por ejemplo: prueba
+    - Dirección de correo
+    - Nombre visible, si se va a preparar envío más adelante
+
+    Datos IMAP para leer:
+    - Servidor IMAP
+    - Puerto IMAP
+    - Seguridad: TLS/SSL normalmente
+    - Usuario/login
+    - Método de autenticación
+
+    Datos SMTP solo si más adelante queremos preparar/envío real:
+    - Servidor SMTP
+    - Puerto SMTP
+    - Seguridad: STARTTLS o TLS
+    - Usuario/login
+    - Método de autenticación
+
+    Para Gmail:
+    - Probablemente contraseña de aplicación si la cuenta tiene 2FA.
+    - Nunca deberías pegarla directamente aquí en el chat si podemos evitarlo.
+
+    Para hosting/dominio propio:
+    - Datos IMAP/SMTP del proveedor.
+    - Usuario completo, normalmente el email completo.
+    - Contraseña o contraseña específica de buzón.
+
+    4. Dónde se guardarían las credenciales
+
+    Himalaya usa normalmente este archivo de configuración:
+
+    C:\Users\Usuario\.config\himalaya\config.toml
+
+    Pero NO recomiendo guardar la contraseña directamente en ese archivo.
+
+    Opciones seguras, de más recomendable a menos:
+
+    Opción A, recomendada:
+    Guardar la contraseña en un gestor seguro o keyring, y que Himalaya la lea mediante un comando.
+
+    Ejemplo conceptual:
+    backend.auth.cmd = "comando-que-devuelve-la-contraseña"
+
+    Ventaja:
+    - config.toml no contiene la contraseña.
+    - Si alguien ve el archivo, no ve el secreto.
+
+    Opción B:
+    Usar pass / gestor compatible si está disponible.
+
+    Ventaja:
+    - Estándar en entornos CLI.
+    Riesgo:
+    - En Windows puede requerir más configuración.
+
+    Opción C:
+    Variable de entorno local o archivo protegido fuera de Git.
+
+    Ventaja:
+    - Simple.
+    Riesgo:
+    - Hay que proteger bien el archivo o entorno.
+
+    Opción D, no recomendada:
+    Contraseña en texto plano dentro de config.toml.
+
+    No la recomiendo salvo caso excepcional y temporal, y aun así con permisos y exclusión clara de Git.
+
+    Importante:
+    Antes de usar una contraseña de aplicación, te explicaré exactamente:
+    - dónde se guardaría,
+    - quién podría leerla,
+    - cómo revocarla,
+    - cómo evitar que se suba a GitHub,
+    - cómo eliminarla si no seguimos.
+
+    5. Cómo evitar que se suban a GitHub
+
+    Medidas obligatorias:
+
+    - No guardar credenciales dentro de C:\proyectos\hermes-laboratorio.
+    - No guardar credenciales dentro de ningún repositorio Git.
+    - Mantener config.toml y cualquier archivo sensible fuera del repo.
+    - Añadir patrones de seguridad a .gitignore si alguna vez hiciera falta en un repo:
+      - .env
+      - *.env
+      - auth.json
+      - config.yaml
+      - config.toml
+      - credentials*
+      - secrets*
+      - tokens*
+    - Antes de cualquier commit, ejecutar:
+      git status
+    - Antes de cualquier push, revisar que no aparecen archivos sensibles.
+    - Nunca mostrar en pantalla contraseñas, tokens ni claves.
+
+    Ubicación segura preferida:
+    C:\Users\Usuario\.config\himalaya\config.toml
+
+    No dentro de:
+    C:\proyectos\hermes-laboratorio
+    C:\proyectos\hermes
+    ningún proyecto web
+    ningún repositorio Git
+
+    6. Primera prueba solo lectura con últimos 10 no leídos
+
+    Cuando lo acordemos, la prueba debería ser así:
+
+    Fase 1: comprobar instalación
+    Sin credenciales todavía:
+    himalaya --version
+
+    Fase 2: crear configuración mínima
+    Solo tras tu confirmación.
+    Configurar una cuenta de prueba con IMAP.
+    SMTP puede quedar sin usar al principio o configurado más tarde.
+
+    Fase 3: listar carpetas
+    Solo lectura:
+    himalaya --account prueba folder list
+
+    Fase 4: listar últimos 10 no leídos
+    Objetivo:
+    - Solo INBOX.
+    - Solo no leídos.
+    - Máximo 10.
+    - Sin adjuntos.
+    - Sin mover.
+    - Sin borrar.
+    - Sin marcar como leído.
+    - Sin enviar.
+
+    Comando aproximado a validar según versión de Himalaya:
+    himalaya --account prueba envelope list --folder INBOX --page-size 10 --output json
+
+    Luego habría que filtrar por no leídos según cómo Himalaya exponga flags/seen en esa cuenta.
+
+    Precaución importante:
+    Para no marcar como leído, al principio conviene trabajar solo con “envelopes” o cabeceras/listado:
+    - remitente
+    - asunto
+    - fecha
+    - flags
+    - id interno
+
+    Evitar inicialmente:
+    himalaya message read ID
+
+    Porque leer el cuerpo completo podría marcar como leído dependiendo del servidor/configuración.
+
+    Si para hacer un resumen real hiciera falta contenido del cuerpo, primero habría que comprobar si Himalaya/IMAP puede hacer fetch sin marcar Seen. Si no se garantiza, la primera fase se limitaría a clasificación por cabeceras/asunto/remitente/fecha.
+
+    Formato de salida que usaría ARA
+
+    Para cada correo importante:
+
+    - Remitente:
+    - Asunto:
+    - Fecha/hora:
+    - Categoría:
+      Urgente / Clientes-soporte técnico / Presupuestos-oportunidades / Facturas-pagos / Informativo / Newsletters-poco importante
+    - Prioridad:
+      Alta / Media / Baja
+    - Motivo de la prioridad:
+    - Acción recomendada:
+    - Borrador de respuesta si procede:
+
+    Regla:
+    El borrador es solo texto sugerido. No se envía nada sin tu confirmación explícita.
+
+    7. Cómo desactivar o eliminar la configuración
+
+    Si no te convence, se puede desactivar de forma segura.
+
+    Opciones:
+
+    A. Desactivar sin borrar:
+    - Renombrar config.toml a config.toml.disabled
+    - Así Himalaya deja de usar la configuración, pero queda copia local.
+
+    B. Eliminar cuenta concreta:
+    - Editar config.toml y quitar solo el bloque de esa cuenta.
+    - Mantener otras cuentas si existieran.
+
+    C. Eliminar credencial:
+    Depende del método:
+    - Si era contraseña de aplicación Gmail: revocarla desde la cuenta Google.
+    - Si era gestor de contraseñas/keyring: borrar esa entrada.
+    - Si era variable/archivo local: eliminar esa variable o archivo.
+    - Si estaba en hosting: cambiar/revocar contraseña desde el panel del hosting.
+
+    D. Verificar:
+    - Ejecutar un comando de cuenta/listado para confirmar que ya no conecta.
+    - Revisar que no quedó nada dentro de repositorios Git.
+
+    Plan de fases recomendado
+
+    Fase 0, ahora:
+    - Acordar diseño.
+    - No tocar nada.
+
+    Fase 1:
+    - Verificar si Himalaya está instalado.
+    - No configurar todavía.
+
+    Fase 2:
+    - Elegir cuenta de prueba.
+    - Definir método seguro para guardar credencial.
+    - Preparar configuración mínima IMAP.
+    - Confirmarte exactamente qué archivo se tocaría.
+
+    Fase 3:
+    - Configurar solo con tu confirmación.
+    - Probar listado de carpetas.
+
+    Fase 4:
+    - Probar últimos 10 no leídos solo con cabeceras.
+    - No abrir adjuntos.
+    - No marcar leído.
+    - No enviar.
+    - No mover.
+    - No borrar.
+
+    Fase 5:
+    - ARA resume bajo demanda usando el formato acordado.
+
+    Fase 6:
+    - Si funciona bien, añadir varias cuentas con alias separados.
+
+    Mi recomendación final
+
+    Usar Himalaya CLI con configuración fuera de Git, credenciales mediante keyring/gestor/comando seguro, y empezar con una cuenta de prueba solo IMAP.
+
+    Primera prueba real debería limitarse a listar cabeceras de los últimos 10 no leídos. Antes de leer cuerpos completos, hay que confirmar que no se marcan como leídos.

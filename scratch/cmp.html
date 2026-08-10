@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparación Avanzada - Ribera Estadísticas</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fc; color: #191c1e; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid #e1e2e6;
+            box-shadow: 0 4px 20px rgba(45, 46, 46, 0.05);
+        }
+        .nav-active {
+            background: #ffffff;
+            color: #206393;
+            border-left: 4px solid #206393;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        /* Flecha de <select> consistente y siempre visible: quita la nativa,
+           dibuja un chevron propio a la derecha y reserva el padding para que
+           el texto seleccionado nunca la tape. */
+        select {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%23747878' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
+            background-position: right 0.5rem center !important;
+            background-repeat: no-repeat !important;
+            background-size: 1.05rem !important;
+            padding-right: 1.9rem !important;
+        }
+        /* En Firefox hay que ocultar también la flecha nativa del <option> container. */
+        select::-ms-expand { display: none !important; }
+    </style>
+    </head>
+<body class="flex h-screen overflow-hidden antialiased">
+
+    <!-- Sidebar -->
+    <aside class="flex flex-col fixed left-0 top-0 h-full z-50 bg-[#f8f9fc] border-r border-[#e1e2e6] w-64 hidden md:flex text-sm font-semibold">
+        <!-- Header -->
+        <div class="flex items-center gap-3 p-6 border-b border-[#e1e2e6]">
+            <div class="w-10 h-10 rounded bg-[#181919] flex items-center justify-center text-white">
+                <span class="material-symbols-outlined">domain</span>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-[#191c1e] tracking-tight leading-tight">Ribera</h1>
+                <p class="text-xs text-[#747878] font-normal">Estadísticas</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+            <a href="http://localhost/ribera-estadisticas/public/index.php" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Dashboard</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/sales" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">analytics</span>
+                <span>Ventas</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/stock" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">inventory_2</span>
+                <span>Stock</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/clients" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">people</span>
+                <span>Clientes</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/families" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">category</span>
+                <span>Familias</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/suppliers" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">local_shipping</span>
+                <span>Proveedores</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/reports/comparison" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">query_stats</span>
+                <span>Comparativa Histórica</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/financial" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">finance</span>
+                <span>Análisis Financiero</span>
+            </a>
+            <a href="http://localhost/ribera-estadisticas/public/index.php/store-dashboard" class="flex items-center gap-3 py-3 px-4 rounded-r-lg transition-all duration-100 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7]">
+                <span class="material-symbols-outlined">storefront</span>
+                <span>Cuadro de Mando</span>
+            </a>
+        </nav>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-[#e1e2e6] space-y-1">
+            <form action="http://localhost/ribera-estadisticas/public/index.php/logout" method="POST">
+                <input type="hidden" name="_token" value="" autocomplete="off">                <button type="submit" class="w-full flex items-center gap-3 text-[#747878] hover:text-[#191c1e] hover:bg-[#f2f3f7] py-2 px-4 rounded-lg transition-colors text-left">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span>Cerrar sesión</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col md:ml-64 relative min-w-0">
+        <!-- Top Bar -->
+        <header class="flex justify-between items-center w-full h-16 px-6 bg-white border-b border-[#e1e2e6] shadow-sm z-40 flex-shrink-0">
+            <div class="flex items-center flex-1 gap-6">
+                <h2 class="text-xl font-black tracking-tight text-[#191c1e] md:hidden">Ribera</h2>
+                <div class="hidden md:flex items-center max-w-md w-full bg-[#f8f9fc] border border-[#e1e2e6] rounded-full px-4 py-1.5">
+                    <span class="material-symbols-outlined text-[#747878] text-[20px] mr-2">search</span>
+                    <input class="bg-transparent border-none outline-none w-full text-sm text-[#191c1e] placeholder-[#747878] p-0" placeholder="Buscar..." type="text">
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden md:block">
+                    <p class="text-sm font-semibold text-[#191c1e]">Usuario</p>
+                    <p class="text-xs text-[#747878]"></p>
+                </div>
+                <div class="h-8 w-8 rounded-full bg-[#206393] text-white flex items-center justify-center font-bold text-sm">
+                    U
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto p-6 bg-[#f8f9fc] relative z-0">
+            <div class="max-w-[1440px] mx-auto space-y-6">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-[32px] font-bold text-[#191c1e] tracking-tight">Comparación Avanzada</h1>
+            <p class="text-sm text-[#747878] mt-1">Análisis financiero interactivo con métricas de gestión</p>
+        </div>
+    </div>
+
+    <!-- Panel de Filtros -->
+    <div class="glass-card rounded-xl p-5 mb-6">
+        <form method="GET" action="http://localhost/ribera-estadisticas/public/index.php/reports/comparison" class="flex flex-wrap gap-4">
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-semibold text-[#747878] uppercase mb-1">Año Inicio</label>
+                <select name="year1" class="w-full border border-[#e1e2e6] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#206393]">
+                                            <option value="2011" >2011</option>
+                                            <option value="2012" >2012</option>
+                                            <option value="2013" >2013</option>
+                                            <option value="2014" >2014</option>
+                                            <option value="2015" >2015</option>
+                                            <option value="2016" >2016</option>
+                                            <option value="2017" >2017</option>
+                                            <option value="2018" >2018</option>
+                                            <option value="2019" >2019</option>
+                                            <option value="2020" >2020</option>
+                                            <option value="2021" >2021</option>
+                                            <option value="2022" >2022</option>
+                                            <option value="2023" >2023</option>
+                                            <option value="2024" >2024</option>
+                                            <option value="2025" selected>2025</option>
+                                            <option value="2026" >2026</option>
+                                    </select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-semibold text-[#747878] uppercase mb-1">Año Fin</label>
+                <select name="year2" class="w-full border border-[#e1e2e6] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#206393]">
+                                            <option value="2011" >2011</option>
+                                            <option value="2012" >2012</option>
+                                            <option value="2013" >2013</option>
+                                            <option value="2014" >2014</option>
+                                            <option value="2015" >2015</option>
+                                            <option value="2016" >2016</option>
+                                            <option value="2017" >2017</option>
+                                            <option value="2018" >2018</option>
+                                            <option value="2019" >2019</option>
+                                            <option value="2020" >2020</option>
+                                            <option value="2021" >2021</option>
+                                            <option value="2022" >2022</option>
+                                            <option value="2023" >2023</option>
+                                            <option value="2024" >2024</option>
+                                            <option value="2025" >2025</option>
+                                            <option value="2026" selected>2026</option>
+                                    </select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-semibold text-[#747878] uppercase mb-1">Familia</label>
+                <select name="family" class="w-full border border-[#e1e2e6] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#206393]">
+                    <option value="">Todas</option>
+                                            <option value="3170" >
+                            * 4070 *  LINEA BLANCA - ELECTROD.
+                        </option>
+                                            <option value="3175" >
+                            * 4075 * LINEA BLANCA - CAMPANAS
+                        </option>
+                                            <option value="3900" >
+                            * 4115 * RECAMBIOS ELECTRODOMESTICOS
+                        </option>
+                                            <option value="966" >
+                            3 CLAVELES
+                        </option>
+                                            <option value="2630" >
+                            ACCESORIOS BAÑO
+                        </option>
+                                            <option value="3070" >
+                            ACCESORIOS BAÑO
+                        </option>
+                                            <option value="4060" >
+                            ACCESORIOS BAÑO
+                        </option>
+                                            <option value="2310" >
+                            ACCESORIOS FUEGOS, ESTUFAS Y CALDERAS
+                        </option>
+                                            <option value="2125" >
+                            ADHESIVOS INDUSTRIAL
+                        </option>
+                                            <option value="2120" >
+                            ADHESIVOS Y ADITIVOS
+                        </option>
+                                            <option value="1300" >
+                            ADHESIVOS Y ADITIVOS
+                        </option>
+                                            <option value="2165" >
+                            AIRE Y VENTILACION
+                        </option>
+                                            <option value="1050" >
+                            AISLANTES E IMPERMEABILIZANTES
+                        </option>
+                                            <option value="1051" >
+                            AISLANTES FONTANERIA
+                        </option>
+                                            <option value="950" >
+                            ALAMBRES TERUEL
+                        </option>
+                                            <option value="5060" >
+                            ALFOMBRAS
+                        </option>
+                                            <option value="1999" >
+                            ALMACEN CODIGOS LIBRES
+                        </option>
+                                            <option value="1900" >
+                            ALMACEN VARIOS
+                        </option>
+                                            <option value="970" >
+                            ALTUNA - BIKAIN
+                        </option>
+                                            <option value="983" >
+                            AMIG
+                        </option>
+                                            <option value="2200" >
+                            ANIMALES
+                        </option>
+                                            <option value="937" >
+                            APOLO
+                        </option>
+                                            <option value="2210" >
+                            AUTOMOVIL
+                        </option>
+                                            <option value="2013" >
+                            BARNICES Y LASURES - BRICOL
+                        </option>
+                                            <option value="2014" >
+                            BARNICES Y LASURES - PROFES
+                        </option>
+                                            <option value="BASU" >
+                            BASURA
+                        </option>
+                                            <option value="4020" >
+                            BATERIAS, OLLAS, CAZUELAS Y SARTENES
+                        </option>
+                                            <option value="915" >
+                            BLACK&amp;DECKER-DEWALT-PIRANHA
+                        </option>
+                                            <option value="982" >
+                            BONFILEX
+                        </option>
+                                            <option value="973" >
+                            BOPE
+                        </option>
+                                            <option value="913" >
+                            BOSCH - SKIL - DREMEL
+                        </option>
+                                            <option value="2081" >
+                            BOSCH ACCESORIOS
+                        </option>
+                                            <option value="2080" >
+                            BOSCH MAQUINARIA
+                        </option>
+                                            <option value="943" >
+                            BTV
+                        </option>
+                                            <option value="2350" >
+                            BUZONES Y CAJAS FUERTES
+                        </option>
+                                            <option value="2175" >
+                            CADENAS Y SUJECCIONES
+                        </option>
+                                            <option value="1453" >
+                            CALDERAS DE GAS
+                        </option>
+                                            <option value="2160" >
+                            CALEFACCION
+                        </option>
+                                            <option value="1455" >
+                            CALENTADORES A GAS
+                        </option>
+                                            <option value="976" >
+                            CAMPINGAZ
+                        </option>
+                                            <option value="981" >
+                            CELO
+                        </option>
+                                            <option value="3000" >
+                            CERAMICA Y GRES
+                        </option>
+                                            <option value="2410" >
+                            CERRAJERIA
+                        </option>
+                                            <option value="1200" >
+                            CERRAMIENTOS Y VALLAS
+                        </option>
+                                            <option value="923" >
+                            CEYS
+                        </option>
+                                            <option value="963" >
+                            CINTACOR
+                        </option>
+                                            <option value="1086" >
+                            COBRE Y LATON
+                        </option>
+                                            <option value="3140" >
+                            COCINA - ENCIMERAS
+                        </option>
+                                            <option value="3130" >
+                            COCINAS
+                        </option>
+                                            <option value="3150" >
+                            COCINAS - COLOCACIÓN
+                        </option>
+                                            <option value="6010" >
+                            CODIGOS GENERICOS
+                        </option>
+                                            <option value="5050" >
+                            COLCHONES Y ACCESORIOS
+                        </option>
+                                            <option value="92" >
+                            COMERCIAL  R. (AISLAN-GRANITO)
+                        </option>
+                                            <option value="2301" >
+                            CONSUMIBLES FUEGOS
+                        </option>
+                                            <option value="909" >
+                            CORDISPLAY
+                        </option>
+                                            <option value="5999" >
+                            DECOR CODIGOS LIBRES
+                        </option>
+                                            <option value="5030" >
+                            DECORACION
+                        </option>
+                                            <option value="941" >
+                            DINTEX
+                        </option>
+                                            <option value="5070" >
+                            DROGUERIA - FRAGANCIAS
+                        </option>
+                                            <option value="901" >
+                            EHLIS (FAMILIA ANULADA * NO UTILIZAR)
+                        </option>
+                                            <option value="2020" >
+                            ELECTRICIDAD
+                        </option>
+                                            <option value="984" >
+                            ENERIZ
+                        </option>
+                                            <option value="400" >
+                            ENTRADAS AUTOMATICAS
+                        </option>
+                                            <option value="3999" >
+                            EXPOSICION CODIGOS LIBRES
+                        </option>
+                                            <option value="922" >
+                            FELTON
+                        </option>
+                                            <option value="2999" >
+                            FERRETERIA CODIGOS LIBRES
+                        </option>
+                                            <option value="2390" >
+                            FERRETERIA VARIOS
+                        </option>
+                                            <option value="929" >
+                            FIASA
+                        </option>
+                                            <option value="938" >
+                            FISCHER
+                        </option>
+                                            <option value="1080" >
+                            FONTANERIA Y CALEFACCION
+                        </option>
+                                            <option value="2250" >
+                            FONTANERIA Y GAS
+                        </option>
+                                            <option value="957" >
+                            FONTINI
+                        </option>
+                                            <option value="1100" >
+                            FORJADOS Y ENCOFRADOS
+                        </option>
+                                            <option value="4090" >
+                            FREGADEROS
+                        </option>
+                                            <option value="2320" >
+                            FUEGOS, ESTUFAS Y CALDERAS
+                        </option>
+                                            <option value="960" >
+                            GARDENA
+                        </option>
+                                            <option value="GEST" >
+                            GESTION
+                        </option>
+                                            <option value="1030" >
+                            GRANITOS, PIEDRAS Y PIZARRAS
+                        </option>
+                                            <option value="3050" >
+                            GRIFERIA
+                        </option>
+                                            <option value="1500" >
+                            HERRAMIENTAS CONSTRUCCION
+                        </option>
+                                            <option value="2090" >
+                            HERRAMIENTAS MANUALES
+                        </option>
+                                            <option value="4999" >
+                            HOGAR CODIGOS LIBRES
+                        </option>
+                                            <option value="944" >
+                            HOPAMA
+                        </option>
+                                            <option value="985" >
+                            IBEREMEC
+                        </option>
+                                            <option value="955" >
+                            IFAM
+                        </option>
+                                            <option value="4050" >
+                            ILUMINACION
+                        </option>
+                                            <option value="5100" >
+                            ILUMINACION
+                        </option>
+                                            <option value="2620" >
+                            ILUMINACION
+                        </option>
+                                            <option value="2030" >
+                            ILUMINACION
+                        </option>
+                                            <option value="2031" >
+                            ILUMINACION - BOMBILLAS
+                        </option>
+                                            <option value="2032" >
+                            ILUMINACION - PILAS
+                        </option>
+                                            <option value="969" >
+                            INOXIBAR
+                        </option>
+                                            <option value="920" >
+                            IRAZOLA
+                        </option>
+                                            <option value="964" >
+                            IRIS
+                        </option>
+                                            <option value="927" >
+                            ISIDREARNAU-AVENDI
+                        </option>
+                                            <option value="2520" >
+                            JARDINERIA - COMPLEMENTOS
+                        </option>
+                                            <option value="2510" >
+                            JARDINERIA - MAQUINAS
+                        </option>
+                                            <option value="902" >
+                            KRAFFT
+                        </option>
+                                            <option value="2056" >
+                            LABORAL (CALZADO)
+                        </option>
+                                            <option value="2055" >
+                            LABORAL (GUANTES)
+                        </option>
+                                            <option value="2057" >
+                            LABORAL (ROPA)
+                        </option>
+                                            <option value="965" >
+                            LACOR
+                        </option>
+                                            <option value="2690" >
+                            LIMPIEZA
+                        </option>
+                                            <option value="4100" >
+                            LIMPIEZA
+                        </option>
+                                            <option value="4075" >
+                            LINEA BLANCA - CAMPANAS
+                        </option>
+                                            <option value="4070" >
+                            LINEA BLANCA - ELECTRODOMESTICOS
+                        </option>
+                                            <option value="4032" >
+                            LINEA MARRON (CABLES Y COMPLEMENTOS)
+                        </option>
+                                            <option value="2708" >
+                            LINEA MARRON (CABLES Y COMPLEMENTOS)
+                        </option>
+                                            <option value="2705" >
+                            LINEA MARRON (PEQUEÑOS APARATOS)
+                        </option>
+                                            <option value="4031" >
+                            LINEA MARRON (PEQUEÑOS APARATOS)
+                        </option>
+                                            <option value="4030" >
+                            LINEA MARRON (TELEVISORES)
+                        </option>
+                                            <option value="2700" >
+                            LINEA MARRON (TELEVISORES)
+                        </option>
+                                            <option value="2430" >
+                            MADERAS
+                        </option>
+                                            <option value="2070" >
+                            MAKITA ACCESORIOS
+                        </option>
+                                            <option value="2071" >
+                            MAKITA MAQUINARIA
+                        </option>
+                                            <option value="3090" >
+                            MAMPARAS
+                        </option>
+                                            <option value="989" >
+                            MANETAS
+                        </option>
+                                            <option value="2085" >
+                            MAQUINARIA Y ACCESORIOS - OTROS
+                        </option>
+                                            <option value="2420" >
+                            MARQUETERIA
+                        </option>
+                                            <option value="1400" >
+                            MATERIAL AUX. FUEGOS Y CHIMENEAS
+                        </option>
+                                            <option value="1010" >
+                            MATERIAL DE OBRA (OBRA BASTA)
+                        </option>
+                                            <option value="1020" >
+                            MATERIALES EN SACOS
+                        </option>
+                                            <option value="977" >
+                            MEKABLOCK
+                        </option>
+                                            <option value="2610" >
+                            MENAJE
+                        </option>
+                                            <option value="4010" >
+                            MENAJE
+                        </option>
+                                            <option value="5020" >
+                            MIMBRE
+                        </option>
+                                            <option value="2640" >
+                            MIMBRE
+                        </option>
+                                            <option value="5090" >
+                            MUEBLE
+                        </option>
+                                            <option value="2180" >
+                            MUEBLE KIT
+                        </option>
+                                            <option value="3080" >
+                            MUEBLES BAÑO
+                        </option>
+                                            <option value="2190" >
+                            NAVIDAD
+                        </option>
+                                            <option value="934" >
+                            NECO
+                        </option>
+                                            <option value="974" >
+                            NORTENE (INTERMAS -SEIFIL)
+                        </option>
+                                            <option value="OFER" >
+                            OFERTA
+                        </option>
+                                            <option value="2185" >
+                            ORDENACION
+                        </option>
+                                            <option value="6040" >
+                            OTRAS PARTIDAS
+                        </option>
+                                            <option value="2012" >
+                            OTRAS PINTURAS
+                        </option>
+                                            <option value="6999" >
+                            OTROS CODIGOS
+                        </option>
+                                            <option value="6016" >
+                            OTROS SERVICIOS
+                        </option>
+                                            <option value="4040" >
+                            PAE - PEQUEÑO ELECTRODOMESTICO
+                        </option>
+                                            <option value="3200" >
+                            PAPELES PINTADOS (Proveedor - Catálogo)
+                        </option>
+                                            <option value="3111" >
+                            PARKET - LAMINADO SINTETICO
+                        </option>
+                                            <option value="3112" >
+                            PARKET - VINILICOS
+                        </option>
+                                            <option value="3110" >
+                            PARKETS
+                        </option>
+                                            <option value="3114" >
+                            PARKETS - CORCHO
+                        </option>
+                                            <option value="3115" >
+                            PARKETS - MADERAS NATURALES - MULTICAPA
+                        </option>
+                                            <option value="3113" >
+                            PARKETS . BANBU
+                        </option>
+                                            <option value="3116" >
+                            PARKETS- MADERAS NATURALES - TARIMA
+                        </option>
+                                            <option value="2450" >
+                            PARQUETS
+                        </option>
+                                            <option value="916" >
+                            PFERD (CABALLITO)
+                        </option>
+                                            <option value="956" >
+                            PHILIPS ANTIGUOS
+                        </option>
+                                            <option value="3120" >
+                            PIEDRAS NATURALES
+                        </option>
+                                            <option value="3010" >
+                            PIEZAS CERAMICA Y GRES
+                        </option>
+                                            <option value="912" >
+                            PIHER
+                        </option>
+                                            <option value="2011" >
+                            PINTURAS - PROFESIONAL - INDUSTRIAL
+                        </option>
+                                            <option value="2010" >
+                            PINTURAS DECORACION
+                        </option>
+                                            <option value="921" >
+                            PINTURAS TITAN
+                        </option>
+                                            <option value="2172" >
+                            PISCINAS-ACCESORIOS-TRATAMIENTO AGUAS
+                        </option>
+                                            <option value="1040" >
+                            PLACA DE YESO LAMINADO Y DERIVADOS
+                        </option>
+                                            <option value="1084" >
+                            POLIETILENO- TUBERIA Y ACCESORIOS
+                        </option>
+                                            <option value="4120" >
+                            PRODUCTOS ALIMENTARIOS
+                        </option>
+                                            <option value="930" >
+                            PRODUCTOS FLOWER
+                        </option>
+                                            <option value="9999" >
+                            PRUEBA
+                        </option>
+                                            <option value="1150" >
+                            PUERTAS Y ACCESORIOS
+                        </option>
+                                            <option value="1081" >
+                            PVC- TUBERIA Y ACCESORIOS
+                        </option>
+                                            <option value="4115" >
+                            RECAMBIOS ELECTRODOMESTICOS
+                        </option>
+                                            <option value="4110" >
+                            RECAMBIOS PAE - ELECTRO
+                        </option>
+                                            <option value="6021" >
+                            REPARACIONES ALMACEN
+                        </option>
+                                            <option value="6025" >
+                            REPARACIONES DECOR
+                        </option>
+                                            <option value="6023" >
+                            REPARACIONES EXPOSICION
+                        </option>
+                                            <option value="6022" >
+                            REPARACIONES FERRETERIA
+                        </option>
+                                            <option value="6024" >
+                            REPARACIONES HOGAR
+                        </option>
+                                            <option value="925" >
+                            ROBELLO
+                        </option>
+                                            <option value="3030" >
+                            ROCA
+                        </option>
+                                            <option value="2050" >
+                            ROPA, SEG. LABORAL Y SEÑALIZACION
+                        </option>
+                                            <option value="945" >
+                            SAFER-ABC
+                        </option>
+                                            <option value="961" >
+                            SAN IGNACIO
+                        </option>
+                                            <option value="3020" >
+                            SANITARIOS
+                        </option>
+                                            <option value="6000" >
+                            SERVICIOS
+                        </option>
+                                            <option value="6011" >
+                            SERVICIOS ALMACEN
+                        </option>
+                                            <option value="6015" >
+                            SERVICIOS DECOR
+                        </option>
+                                            <option value="6013" >
+                            SERVICIOS EXPOSICION
+                        </option>
+                                            <option value="6012" >
+                            SERVICIOS FERRETERIA
+                        </option>
+                                            <option value="6014" >
+                            SERVICIOS HOGAR
+                        </option>
+                                            <option value="958" >
+                            SIMON BRICO
+                        </option>
+                                            <option value="5040" >
+                            SOFAS
+                        </option>
+                                            <option value="2176" >
+                            SOLUCIONES HOGAR
+                        </option>
+                                            <option value="971" >
+                            STANLEY
+                        </option>
+                                            <option value="1090" >
+                            TAPAS, REJILLAS, ANDAMIOS, CANALES, ...
+                        </option>
+                                            <option value="940" >
+                            TATAY
+                        </option>
+                                            <option value="931" >
+                            TAYG
+                        </option>
+                                            <option value="959" >
+                            TECENOR
+                        </option>
+                                            <option value="1060" >
+                            TEJADOS
+                        </option>
+                                            <option value="1450" >
+                            TERMOS ELÉCTRICOS A.C.S.
+                        </option>
+                                            <option value="980" >
+                            TESA
+                        </option>
+                                            <option value="5010" >
+                            TEXTIL
+                        </option>
+                                            <option value="2110" >
+                            TORNILLERIA
+                        </option>
+                                            <option value="2100" >
+                            TORNILLERIA Y COMPLEMENTOS
+                        </option>
+                                            <option value="6030" >
+                            TRANSPORTES VARIOS
+                        </option>
+                                            <option value="2015" >
+                            UTENSILIOS PINTURA
+                        </option>
+                                            <option value="962" >
+                            VALIRA
+                        </option>
+                                            <option value="894" >
+                            VARIOS FERRETERIA
+                        </option>
+                                            <option value="978" >
+                            VARIOS MENAJE
+                        </option>
+                                            <option value="1075" >
+                            VELUX - CORTINAS
+                        </option>
+                                            <option value="1070" >
+                            VELUX - VENTANAS. CERCOS Y ACCESORIOS
+                        </option>
+                                            <option value="942" >
+                            VENY PINART
+                        </option>
+                                            <option value="914" >
+                            VIRUTEX
+                        </option>
+                                            <option value="924" >
+                            XYLAZEL
+                        </option>
+                                            <option value="910" >
+                            ZUBIONDO
+                        </option>
+                                    </select>
+            </div>
+            <div class="flex-1 min-w-[200px]">
+                <label class="block text-xs font-semibold text-[#747878] uppercase mb-1">Subfamilia</label>
+                <select name="subfamily" id="subfamilySelect" class="w-full border border-[#e1e2e6] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#206393]" disabled>
+                    <option value="">Todas</option>
+                                    </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" name="compare" value="1" class="w-full px-6 py-2 bg-[#206393] text-white rounded-lg text-sm font-semibold hover:bg-[#1a4f78] transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">filter_list</span>
+                    Analizar
+                </button>
+            </div>
+        </form>
+    </div>
+
+            <!-- KPIs Financieros -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+            <div class="glass-card rounded-xl p-4 border-l-4 border-[#206393]">
+                <div class="text-xs font-semibold text-[#747878] uppercase">Ventas 2025</div>
+                <div class="text-xl font-bold text-[#191c1e] mt-1">22.297.311 €</div>
+                <div class="text-xs text-[#747878] mt-1">58,669 ops</div>
+            </div>
+            <div class="glass-card rounded-xl p-4 border-l-4 border-[#206393]">
+                <div class="text-xs font-semibold text-[#747878] uppercase">Ventas 2026</div>
+                <div class="text-xl font-bold text-[#191c1e] mt-1">12.771.392 €</div>
+                <div class="text-xs text-[#747878] mt-1">26,448 ops</div>
+            </div>
+            <div class="glass-card rounded-xl p-4 border-l-4 border-red-500">
+                <div class="text-xs font-semibold text-[#747878] uppercase">Δ Ventas</div>
+                <div class="text-xl font-bold mt-1 text-red-600">
+                    -42.7%
+                </div>
+                <div class="text-xs text-[#747878] mt-1">vs 2025</div>
+            </div>
+            <div class="glass-card rounded-xl p-4 border-l-4 border-green-500">
+                <div class="text-xs font-semibold text-[#747878] uppercase">Δ Ticket</div>
+                <div class="text-xl font-bold mt-1 text-green-600">
+                    +25.8%
+                </div>
+                <div class="text-xs text-[#747878] mt-1">297.70 €</div>
+            </div>
+            <div class="glass-card rounded-xl p-4 border-l-4 border-red-500">
+                <div class="text-xs font-semibold text-[#747878] uppercase">Δ Clientes</div>
+                <div class="text-xl font-bold mt-1 text-red-600">
+                    -36.2%
+                </div>
+                <div class="text-xs text-[#747878] mt-1">3,301 activos</div>
+            </div>
+            <div class="glass-card rounded-xl p-4 border-l-4 border-purple-500">
+                <div class="text-xs font-semibold text-[#747878] uppercase">Concentración</div>
+                <div class="text-xl font-bold mt-1 text-purple-600">25.4%</div>
+                <div class="text-xs text-[#747878] mt-1">Top 10 productos</div>
+            </div>
+        </div>
+
+        <!-- Gráfico de Evolución Mensual -->
+        <div class="glass-card rounded-xl p-5 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-[#191c1e]">Evolución de Ventas</h2>
+                <div class="flex gap-2">
+                    <button onclick="setChartType('bar')" class="px-3 py-1 text-xs border rounded hover:bg-gray-50">Barras</button>
+                    <button onclick="setChartType('line')" class="px-3 py-1 text-xs border rounded hover:bg-gray-50">Líneas</button>
+                </div>
+            </div>
+            <div style="position: relative; height: 300px;">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráfico por Familias (comparativa year1 vs year2) -->
+        <div class="glass-card rounded-xl p-5 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                <h2 class="text-xl font-semibold text-[#191c1e]">Familias: comparativa 2025 vs 2026</h2>
+                <div class="flex items-center gap-3 text-xs">
+                    <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-[#747878] opacity-40"></span> 2025</span>
+                    <span class="flex items-center gap-1.5"><span class="inline-block w-3 h-3 rounded bg-[#206393]"></span> 2026</span>
+                    <span class="text-[#747878]">· Top 15 por facturación 2026</span>
+                    <button type="button" id="famSortToggle" class="px-2 py-1 bg-white border border-[#e1e2e6] rounded-lg text-[11px] font-semibold text-[#191c1e] hover:bg-[#206393] hover:text-white transition-colors" data-mode="revenue">Ordenar: por facturación</button>
+                </div>
+            </div>
+            <div style="position: relative; height: 400px;">
+                <canvas id="familyChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Tabla Detallada de Productos -->
+        <div class="glass-card rounded-xl p-5 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-[#191c1e]">Análisis de Productos</h2>
+                <div class="flex gap-2 text-xs">
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded">Crecimiento positivo</span>
+                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded">Crecimiento negativo</span>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b-2 border-[#e1e2e6]">
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">#</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Producto</th>
+                            <th class="text-left py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Familia</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">2025</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">2026</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Δ</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Ticket 2026</th>
+                            <th class="text-right py-3 px-4 text-xs font-semibold text-[#747878] uppercase">Ops 2026</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">1</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="Vigueta Pretensada VP-18 de L-3,20m">
+                                        Vigueta Pretensada VP-18 de L-3,20m
+                                    </div>
+                                    <div class="text-xs text-[#747878]">ALMACEN</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">PUERTAS Y ACCESORIOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    915.147 €
+                                    <div class="text-xs">69,829 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    941.487 €
+                                    <div class="text-xs">44,183 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +2.9%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    5.034,69 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    187
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">2</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="ZOCALO PARECIDO A MANTARO">
+                                        ZOCALO PARECIDO A MANTARO
+                                    </div>
+                                    <div class="text-xs text-[#747878]">BRICO</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">FERRETERIA VARIOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    1.169.256 €
+                                    <div class="text-xs">13,257 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    707.392 €
+                                    <div class="text-xs">19,320 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-red-600 font-medium">
+                                    -39.5%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    1.911,87 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    370
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">3</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2 Pizarra CUPA 5 EXCELLENCE 32X22  (36p\m2)">
+                                        M2 Pizarra CUPA 5 EXCELLENCE 32X22  (36p...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">7890</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">TEJADOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    269.119 €
+                                    <div class="text-xs">6,457 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    318.083 €
+                                    <div class="text-xs">6,183 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +18.2%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    18.710,74 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    17
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">4</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2. Pizarra CUPA 5 ARD. 20x30 (43p/m2 útil)">
+                                        M2. Pizarra CUPA 5 ARD. 20x30 (43p/m2 út...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">75007881</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">TEJADOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    341.001 €
+                                    <div class="text-xs">10,685 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    283.008 €
+                                    <div class="text-xs">8,833 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-red-600 font-medium">
+                                    -17.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    2.050,78 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    138
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">5</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="SUMISNISTRO E INSTALACIÓN ENCIMERA DE COCINA Y FRONTAL EN GRANITO NEGRO ZIMBAWE MATE">
+                                        SUMISNISTRO E INSTALACIÓN ENCIMERA DE CO...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">MARMOLES</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">PIEDRAS NATURALES</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    243.933 €
+                                    <div class="text-xs">92 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    257.351 €
+                                    <div class="text-xs">456 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +5.5%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    4.679,11 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    55
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">6</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="SALGAR SPIRIT MUEBLES SUSP. 2 CAJONES 800*540*450 mm. MOON GREY  119429">
+                                        SALGAR SPIRIT MUEBLES SUSP. 2 CAJONES 80...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">MUEBLES</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">CODIGOS GENERICOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    427.710 €
+                                    <div class="text-xs">224 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    243.364 €
+                                    <div class="text-xs">123 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-red-600 font-medium">
+                                    -43.1%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    6.084,11 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    40
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">7</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2 ORIGINALS FOREST UNFINISHED LOOK 190x1900x14mm ACEITADO ( 2,88m2/Cj )">
+                                        M2 ORIGINALS FOREST UNFINISHED LOOK 190x...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">60138486</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">PARQUETS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    90.616 €
+                                    <div class="text-xs">1,577 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    129.605 €
+                                    <div class="text-xs">2,255 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +43.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    25.921,04 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    5
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">8</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="TRABAJOS VARIOS DE ELECTRICIDAD, AÑADIR TOMA PARA MICRO Y HORNO EN COLUMNA, PUNTO LUZ PARA LED MUEBLE ALTO.">
+                                        TRABAJOS VARIOS DE ELECTRICIDAD, AÑADIR...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">S00</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">SERVICIOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    90.061 €
+                                    <div class="text-xs">321 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    122.320 €
+                                    <div class="text-xs">577 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +35.8%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    732,45 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    167
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">9</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2 PIZARRA PEDRAVAL CUBIERTA 32X22X6 (36P/M2)">
+                                        M2 PIZARRA PEDRAVAL CUBIERTA 32X22X6 (36...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">60135386</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">TEJADOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    0 €
+                                    <div class="text-xs">0 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    120.286 €
+                                    <div class="text-xs">4,123 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +100.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    2.933,81 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    41
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">10</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="PLACA PLADUR N ESTANDAR 13x1200x2600 (42 pl/pt)">
+                                        PLACA PLADUR N ESTANDAR 13x1200x2600 (42...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">1102395</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">PLACA DE YESO LAMINADO Y DERIVADOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    0 €
+                                    <div class="text-xs">0 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    120.219 €
+                                    <div class="text-xs">9,360 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +100.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    817,81 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    147
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">11</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="WC TURA ADOSADO PARED">
+                                        WC TURA ADOSADO PARED
+                                    </div>
+                                    <div class="text-xs text-[#747878]">AZULEJO</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">CODIGOS GENERICOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    0 €
+                                    <div class="text-xs">0 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    119.198 €
+                                    <div class="text-xs">2,889 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +100.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    6.622,13 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    18
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">12</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2 PIZARRA CUPA 2 EXCELLENCE 30X20 (43pz/m2)">
+                                        M2 PIZARRA CUPA 2 EXCELLENCE 30X20 (43pz...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">60086863</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">TEJADOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    103.785 €
+                                    <div class="text-xs">2,815 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    112.803 €
+                                    <div class="text-xs">2,825 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +8.7%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    4.904,49 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    23
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">13</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2.ADOQ.GRANITO 20x10x10(6.82m2/s) 44p/m2">
+                                        M2.ADOQ.GRANITO 20x10x10(6.82m2/s) 44p/m...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">5000</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">GRANITOS, PIEDRAS Y PIZARRAS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    0 €
+                                    <div class="text-xs">0 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    92.021 €
+                                    <div class="text-xs">2,641 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +100.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    1.614,41 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    57
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">14</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="VIDREBANY DESAGÜE BAÑERA CROMO / MINERAL A ELEGIR">
+                                        VIDREBANY DESAGÜE BAÑERA CROMO / MINERAL...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">SANITARIOS</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">CODIGOS GENERICOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    0 €
+                                    <div class="text-xs">0 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    87.500 €
+                                    <div class="text-xs">385 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +100.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    7.291,63 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    12
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">15</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="Saco Cemento BIGMAT II 32,5 R 25 Kg/Saco (56 s/p)">
+                                        Saco Cemento BIGMAT II 32,5 R 25 Kg/Saco...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">1498H</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">MATERIALES EN SACOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    159.431 €
+                                    <div class="text-xs">30,860 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    85.498 €
+                                    <div class="text-xs">16,579 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-red-600 font-medium">
+                                    -46.4%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    101,90 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    839
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">16</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2 URSA TERRA 46R 1170X40X46mm (14,04 m2/pq)(24 pq/pt)(336,96 m2/pt)">
+                                        M2 URSA TERRA 46R 1170X40X46mm (14,04 m2...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">10121</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">AISLANTES E IMPERMEABILIZANTES</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    93.725 €
+                                    <div class="text-xs">20,321 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    68.394 €
+                                    <div class="text-xs">14,270 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-red-600 font-medium">
+                                    -27.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    522,09 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    131
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">17</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="SANYCCES MAMPARA DE DUCHA SINGLE CUSTOM 120CM H:200CM CRISTAL TRANSPARENTE PERFIL NIKEL 2 FIJOS LATERALES + PUERTA ABATIBLE 90º EXTERIOR 6CM CENTRAL">
+                                        SANYCCES MAMPARA DE DUCHA SINGLE CUSTOM...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">MAMPARAS</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">MAMPARAS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    129.462 €
+                                    <div class="text-xs">167 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    63.970 €
+                                    <div class="text-xs">65 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-red-600 font-medium">
+                                    -50.6%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    2.907,73 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    22
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">18</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2 Pizarra CUPA 30X20 H12 (43pz/m2)">
+                                        M2 Pizarra CUPA 30X20 H12 (43pz/m2)
+                                    </div>
+                                    <div class="text-xs text-[#747878]">60142728</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">TEJADOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    0 €
+                                    <div class="text-xs">0 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    63.568 €
+                                    <div class="text-xs">2,359 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +100.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    2.763,84 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    23
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">19</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="PLACA PLADUR N ESTANDAR 15x1200x2600 (36 pl/pt)">
+                                        PLACA PLADUR N ESTANDAR 15x1200x2600 (36...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">1102391</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">PLACA DE YESO LAMINADO Y DERIVADOS</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    126.391 €
+                                    <div class="text-xs">8,549 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    58.948 €
+                                    <div class="text-xs">3,817 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-red-600 font-medium">
+                                    -53.4%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    633,85 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    93
+                                </td>
+                            </tr>
+                                                    <tr class="border-b border-[#f2f3f7] hover:bg-gray-50">
+                                <td class="py-3 px-4 text-[#747878]">20</td>
+                                <td class="py-3 px-4 font-medium">
+                                    <div class="truncate max-w-xs" title="M2 ALPHAROCK PREMIUM E-225 135X40X4cm (5,40m2/paq) (97,20m2/pt) R.337090">
+                                        M2 ALPHAROCK PREMIUM E-225 135X40X4cm (5...
+                                    </div>
+                                    <div class="text-xs text-[#747878]">58616</div>
+                                </td>
+                                <td class="py-3 px-4 text-xs text-[#747878]">AISLANTES E IMPERMEABILIZANTES</td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    0 €
+                                    <div class="text-xs">0 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right font-semibold text-[#206393]">
+                                    57.756 €
+                                    <div class="text-xs">6,369 uds</div>
+                                </td>
+                                <td class="py-3 px-4 text-right text-green-600 font-medium">
+                                    +100.0%
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    1.203,25 €
+                                </td>
+                                <td class="py-3 px-4 text-right text-[#747878]">
+                                    48
+                                </td>
+                            </tr>
+                                            </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Gráfico Comparativo Top 10 Productos -->
+        <div class="glass-card rounded-xl p-5 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-[#191c1e]">Comparativa Top 10 Productos</h2>
+                <span class="text-xs text-[#747878]">Facturación por año</span>
+            </div>
+            <div style="position: relative; height: 350px;">
+                <canvas id="productChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Clientes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="glass-card rounded-xl p-5">
+                    <h3 class="text-lg font-semibold text-[#191c1e] mb-3">Top 5 Clientes 2025</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-[#e1e2e6]">
+                                    <th class="text-left py-2 px-3 text-xs font-semibold text-[#747878] uppercase">Cliente</th>
+                                    <th class="text-right py-2 px-3 text-xs font-semibold text-[#747878] uppercase">Ventas</th>
+                                    <th class="text-right py-2 px-3 text-xs font-semibold text-[#747878] uppercase">Ops</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">CLIENTES VARIOS</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">1.485.403 €</td>
+                                        <td class="py-2 px-3 text-right">14,056</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">CONSTRUC. DEL PIRINEU 200...</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">714.525 €</td>
+                                        <td class="py-2 px-3 text-right">610</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">BAVER 2000, S.L.</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">660.595 €</td>
+                                        <td class="py-2 px-3 text-right">1,004</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">PURICA MULTIGREMIO INSTAL...</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">634.256 €</td>
+                                        <td class="py-2 px-3 text-right">1,113</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">CONSTRUCCIONES FILLOY, S....</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">612.350 €</td>
+                                        <td class="py-2 px-3 text-right">1,067</td>
+                                    </tr>
+                                                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                            <div class="glass-card rounded-xl p-5">
+                    <h3 class="text-lg font-semibold text-[#191c1e] mb-3">Top 5 Clientes 2026</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-[#e1e2e6]">
+                                    <th class="text-left py-2 px-3 text-xs font-semibold text-[#747878] uppercase">Cliente</th>
+                                    <th class="text-right py-2 px-3 text-xs font-semibold text-[#747878] uppercase">Ventas</th>
+                                    <th class="text-right py-2 px-3 text-xs font-semibold text-[#747878] uppercase">Ops</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">ANCAP SERVEIS INTEGRALS D...</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">1.535.128 €</td>
+                                        <td class="py-2 px-3 text-right">809</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">CLIENTES VARIOS</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">754.450 €</td>
+                                        <td class="py-2 px-3 text-right">5,857</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">PURICA MULTIGREMIO INSTAL...</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">491.499 €</td>
+                                        <td class="py-2 px-3 text-right">418</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">CONSTRUC. DEL PIRINEU 200...</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">462.809 €</td>
+                                        <td class="py-2 px-3 text-right">444</td>
+                                    </tr>
+                                                                    <tr class="border-b border-[#f2f3f7]">
+                                        <td class="py-2 px-3 font-medium">BAVER 2000, S.L.</td>
+                                        <td class="py-2 px-3 text-right text-[#206393] font-semibold">450.089 €</td>
+                                        <td class="py-2 px-3 text-right">406</td>
+                                    </tr>
+                                                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                    </div>
+                </div>
+        </main>
+    </div>
+
+    <script>
+// Carga dinámica de subfamilias al seleccionar familia
+document.addEventListener('DOMContentLoaded', function() {
+    const familySelect = document.querySelector('select[name="family"]');
+    const subfamilySelect = document.getElementById('subfamilySelect');
+
+    if (familySelect && subfamilySelect) {
+        familySelect.addEventListener('change', function() {
+            const familyCode = this.value;
+
+            if (!familyCode) {
+                subfamilySelect.innerHTML = '<option value="">Todas</option>';
+                subfamilySelect.disabled = true;
+                return;
+            }
+
+            fetch(`http://localhost/ribera-estadisticas/public/index.php/api/subfamilies?family=${familyCode}`)
+                .then(r => r.json())
+                .then(data => {
+                    subfamilySelect.innerHTML = '<option value="">Todas</option>' +
+                        data.map(s => `<option value="${s.cod_subfamilia}">${s.descripcion?.substring(0, 40) || s.cod_subfamilia}</option>`).join('');
+                    subfamilySelect.disabled = false;
+                });
+        });
+    }
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let chartType = 'bar';
+
+function setChartType(type) {
+    chartType = type;
+    salesChart.config.type = type;
+    salesChart.update();
+}
+
+// Datos para gráfico de evolución mensual
+const monthlyData = [{"year":"2025","month":"1","total":"1316320.660000"},{"year":"2025","month":"2","total":"1504444.480000"},{"year":"2025","month":"3","total":"1733369.700000"},{"year":"2025","month":"4","total":"1892702.740000"},{"year":"2025","month":"5","total":"1972018.050000"},{"year":"2025","month":"6","total":"1739390.620000"},{"year":"2025","month":"7","total":"2382589.720000"},{"year":"2025","month":"8","total":"1748574.260000"},{"year":"2025","month":"9","total":"2079719.520000"},{"year":"2025","month":"10","total":"2330587.310000"},{"year":"2025","month":"11","total":"1942772.270000"},{"year":"2025","month":"12","total":"1654821.790000"},{"year":"2026","month":"1","total":"1102423.620000"},{"year":"2026","month":"2","total":"2564976.280000"},{"year":"2026","month":"3","total":"2337498.350000"},{"year":"2026","month":"4","total":"2614209.560000"},{"year":"2026","month":"5","total":"2311368.610000"},{"year":"2026","month":"6","total":"1840915.140000"}];
+const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+const dataYear1 = new Array(12).fill(0);
+const dataYear2 = new Array(12).fill(0);
+
+monthlyData.forEach(item => {
+    const monthIndex = item.month - 1;
+    if (item.year == 2025) {
+        dataYear1[monthIndex] = parseFloat(item.total);
+    } else if (item.year == 2026) {
+        dataYear2[monthIndex] = parseFloat(item.total);
+    }
+});
+
+// Gráfico de Ventas
+const salesCtx = document.getElementById('salesChart').getContext('2d');
+const salesChart = new Chart(salesCtx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [
+            {
+                label: '2025',
+                data: dataYear1,
+                backgroundColor: 'rgba(116, 120, 120, 0.7)',
+                borderColor: '#747878',
+                borderWidth: 1
+            },
+            {
+                label: '2026',
+                data: dataYear2,
+                backgroundColor: 'rgba(32, 99, 147, 0.7)',
+                borderColor: '#206393',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.raw.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: {
+                    callback: function(value) {
+                        return (value / 1000) + 'k €';
+                    }
+                }
+            },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Gráfico de Familias (comparativa year1 vs year2)
+const familyCtx = document.getElementById('familyChart').getContext('2d');
+const familyData = [{"cod_familia":"1060","familia":"TEJADOS","y1_revenue":1278741.4,"y2_revenue":1129401.93,"growth":-11.678629471134663},{"cod_familia":"1150","familia":"PUERTAS Y ACCESORIOS","y1_revenue":1044536.6,"y2_revenue":1047274.01,"growth":0.2620693233726834},{"cod_familia":"1050","familia":"AISLANTES E IMPERMEABILIZANTES","y1_revenue":1123473.12,"y2_revenue":807312.6,"growth":-28.141351526060554},{"cod_familia":"2390","familia":"FERRETERIA VARIOS","y1_revenue":1253688.14,"y2_revenue":741893.48,"growth":-40.82312368369377},{"cod_familia":"1040","familia":"PLACA DE YESO LAMINADO Y DERIVADOS","y1_revenue":920442.81,"y2_revenue":660391.42,"growth":-28.25285690481954},{"cod_familia":"3000","familia":"CERAMICA Y GRES","y1_revenue":1275829.52,"y2_revenue":580200.5,"growth":-54.52366551292841},{"cod_familia":"4070","familia":"LINEA BLANCA - ELECTRODOMESTICOS","y1_revenue":1104797.49,"y2_revenue":531247.56,"growth":-51.91448525104813},{"cod_familia":"6010","familia":"CODIGOS GENERICOS","y1_revenue":587182.93,"y2_revenue":465829.58,"growth":-20.667043233017694},{"cod_familia":"1070","familia":"VELUX - VENTANAS. CERCOS Y ACCESORIOS","y1_revenue":1016953.99,"y2_revenue":444388.79,"growth":-56.30197684754646},{"cod_familia":"1010","familia":"MATERIAL DE OBRA (OBRA BASTA)","y1_revenue":812167.52,"y2_revenue":394634.38,"growth":-51.4097313322749},{"cod_familia":"1020","familia":"MATERIALES EN SACOS","y1_revenue":673174.69,"y2_revenue":361962.82,"growth":-46.23047696579323},{"cod_familia":"2450","familia":"PARQUETS","y1_revenue":833338.59,"y2_revenue":356161.65,"growth":-57.26087159842195},{"cod_familia":"1100","familia":"FORJADOS Y ENCOFRADOS","y1_revenue":447656.14,"y2_revenue":302792.62,"growth":-32.360445229233314},{"cod_familia":"3050","familia":"GRIFERIA","y1_revenue":713640.1,"y2_revenue":296076.81,"growth":-58.51174702766843},{"cod_familia":"2320","familia":"FUEGOS, ESTUFAS Y CALDERAS","y1_revenue":524545.52,"y2_revenue":273665.22,"growth":-47.82812748071893}];
+const year1Lbl = '2025', year2Lbl = '2026';
+
+// Color de la barra de year2 según crecimiento (verde=sube, rojo=baja, gris=sin año previo)
+const familyColorsY2 = familyData.map(f => {
+    if (f.y1_revenue === 0 && f.y2_revenue > 0) return 'rgba(116,120,120,0.6)';
+    if (f.growth >= 0) return 'rgba(40,167,69,0.85)';   // crece → verde
+    return 'rgba(220,53,69,0.8)';                        // cae → rojo
+});
+
+function familyDatasets(rows) {
+    return [
+        {
+            label: 'Facturación ' + year1Lbl,
+            data: rows.map(f => f.y1_revenue),
+            backgroundColor: 'rgba(116,120,120,0.35)',
+            borderColor: '#747878',
+            borderWidth: 1,
+            borderRadius: 3
+        },
+        {
+            label: 'Facturación ' + year2Lbl,
+            data: rows.map(f => f.y2_revenue),
+            backgroundColor: familyColorsY2,
+            borderColor: '#206393',
+            borderWidth: 1,
+            borderRadius: 3
+        }
+    ];
+}
+
+const familyChart = new Chart(familyCtx, {
+    type: 'bar',
+    data: {
+        labels: familyData.map(f => (f.familia || 'N/A').substring(0, 25)),
+        datasets: familyDatasets(familyData)
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.dataset.label + ': ' + ctx.raw.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+                    },
+                    afterBody: function(ctxArr) {
+                        const f = familyData[ctxArr[0].dataIndex];
+                        if (!f) return '';
+                        const sign = f.growth >= 0 ? '+' : '';
+                        const lines = ['Δ ' + year1Lbl + '→' + year2Lbl + ': ' + sign + f.growth.toFixed(1) + '%'];
+                        if (f.y1_revenue === 0 && f.y2_revenue > 0) lines.push('(sin ventas en ' + year1Lbl + ')');
+                        return lines;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: { callback: v => (v / 1000) + 'k €' }
+            },
+            y: { grid: { display: false } }
+        }
+    }
+});
+
+// Toggle de ordenación: facturación year2 ↔ crecimiento
+const famSortBtn = document.getElementById('famSortToggle');
+if (famSortBtn) {
+    famSortBtn.addEventListener('click', () => {
+        const byGrowth = famSortBtn.dataset.mode === 'revenue';
+        const sorted = [...familyData].sort((a, b) => byGrowth ? b.growth - a.growth : b.y2_revenue - a.y2_revenue);
+        familyChart.data.labels = sorted.map(f => (f.familia || 'N/A').substring(0, 25));
+        familyChart.data.datasets[0].data = sorted.map(f => f.y1_revenue);
+        // recalcula colores en el nuevo orden
+        familyChart.data.datasets[1].data = sorted.map(f => f.y2_revenue);
+        familyChart.data.datasets[1].backgroundColor = sorted.map(f => {
+            if (f.y1_revenue === 0 && f.y2_revenue > 0) return 'rgba(116,120,120,0.6)';
+            if (f.growth >= 0) return 'rgba(40,167,69,0.85)';
+            return 'rgba(220,53,69,0.8)';
+        });
+        // familyData se usa en el tooltip por dataIndex → reordenamos también la referencia
+        familyData.sort((a, b) => byGrowth ? b.growth - a.growth : b.y2_revenue - a.y2_revenue);
+        famSortBtn.dataset.mode = byGrowth ? 'growth' : 'revenue';
+        famSortBtn.textContent = 'Ordenar: ' + (byGrowth ? 'por crecimiento' : 'por facturación');
+        familyChart.update();
+    });
+}
+
+// Gráfico de Productos
+const productCtx = document.getElementById('productChart').getContext('2d');
+const productData = [{"cod_articulo":"ALMACEN","descripcion":"Vigueta Pretensada VP-18 de L-3,20m","familia":"PUERTAS Y ACCESORIOS","year1_revenue":915146.55,"year2_revenue":941486.96,"year1_qty":69828.9117,"year2_qty":44182.548,"year1_orders":409,"year2_orders":187,"growth":2.878272337911334,"year1_avg_ticket":2237.5221271393643,"year2_avg_ticket":5034.689625668449},{"cod_articulo":"BRICO","descripcion":"ZOCALO PARECIDO A MANTARO","familia":"FERRETERIA VARIOS","year1_revenue":1169256.42,"year2_revenue":707391.58,"year1_qty":13256.5626,"year2_qty":19320.17,"year1_orders":444,"year2_orders":370,"growth":-39.50073158460828,"year1_avg_ticket":2633.4604054054053,"year2_avg_ticket":1911.869135135135},{"cod_articulo":"7890","descripcion":"M2 Pizarra CUPA 5 EXCELLENCE 32X22  (36p\\m2)","familia":"TEJADOS","year1_revenue":269119.28,"year2_revenue":318082.61,"year1_qty":6456.87,"year2_qty":6183.18,"year1_orders":25,"year2_orders":17,"growth":18.19391386600022,"year1_avg_ticket":10764.771200000001,"year2_avg_ticket":18710.741764705883},{"cod_articulo":"75007881","descripcion":"M2. Pizarra CUPA 5 ARD. 20x30 (43p\/m2 \u00fatil)","familia":"TEJADOS","year1_revenue":341001.4,"year2_revenue":283008.17,"year1_qty":10684.855449,"year2_qty":8832.66437,"year1_orders":314,"year2_orders":138,"growth":-17.006742494312352,"year1_avg_ticket":1085.991719745223,"year2_avg_ticket":2050.78384057971},{"cod_articulo":"MARMOLES","descripcion":"SUMISNISTRO E INSTALACI\u00d3N ENCIMERA DE COCINA Y FRONTAL EN GRANITO NEGRO ZIMBAWE MATE","familia":"PIEDRAS NATURALES","year1_revenue":243933.18,"year2_revenue":257350.86,"year1_qty":91.62,"year2_qty":456.04,"year1_orders":44,"year2_orders":55,"growth":5.5005555209832435,"year1_avg_ticket":5543.935909090909,"year2_avg_ticket":4679.106545454545},{"cod_articulo":"MUEBLES","descripcion":"SALGAR SPIRIT MUEBLES SUSP. 2 CAJONES 800*540*450 mm. MOON GREY  119429","familia":"CODIGOS GENERICOS","year1_revenue":427709.66,"year2_revenue":243364.42,"year1_qty":224,"year2_qty":123,"year1_orders":69,"year2_orders":40,"growth":-43.100555643283805,"year1_avg_ticket":6198.69072463768,"year2_avg_ticket":6084.110500000001},{"cod_articulo":"60138486","descripcion":"M2 ORIGINALS FOREST UNFINISHED LOOK 190x1900x14mm ACEITADO ( 2,88m2\/Cj )","familia":"PARQUETS","year1_revenue":90615.54,"year2_revenue":129605.2,"year1_qty":1576.608,"year2_qty":2254.984,"year1_orders":7,"year2_orders":5,"growth":43.02756458770759,"year1_avg_ticket":12945.077142857142,"year2_avg_ticket":25921.04},{"cod_articulo":"S00","descripcion":"TRABAJOS VARIOS DE ELECTRICIDAD, A\u00d1ADIR TOMA PARA MICRO Y HORNO EN COLUMNA, PUNTO LUZ PARA LED MUEBLE ALTO.","familia":"SERVICIOS","year1_revenue":90061.44,"year2_revenue":122319.61,"year1_qty":321,"year2_qty":576.8,"year1_orders":327,"year2_orders":167,"growth":35.817959384171516,"year1_avg_ticket":275.417247706422,"year2_avg_ticket":732.4527544910179},{"cod_articulo":"60135386","descripcion":"M2 PIZARRA PEDRAVAL CUBIERTA 32X22X6 (36P\/M2)","familia":"TEJADOS","year1_revenue":0,"year2_revenue":120286.37,"year1_qty":0,"year2_qty":4123.04,"year1_orders":0,"year2_orders":41,"growth":100,"year1_avg_ticket":0,"year2_avg_ticket":2933.8139024390243},{"cod_articulo":"1102395","descripcion":"PLACA PLADUR N ESTANDAR 13x1200x2600 (42 pl\/pt)","familia":"PLACA DE YESO LAMINADO Y DERIVADOS","year1_revenue":0,"year2_revenue":120218.62,"year1_qty":0,"year2_qty":9360,"year1_orders":0,"year2_orders":147,"growth":100,"year1_avg_ticket":0,"year2_avg_ticket":817.8137414965986},{"cod_articulo":"AZULEJO","descripcion":"WC TURA ADOSADO PARED","familia":"CODIGOS GENERICOS","year1_revenue":0,"year2_revenue":119198.29,"year1_qty":0,"year2_qty":2888.74,"year1_orders":0,"year2_orders":18,"growth":100,"year1_avg_ticket":0,"year2_avg_ticket":6622.1272222222215},{"cod_articulo":"60086863","descripcion":"M2 PIZARRA CUPA 2 EXCELLENCE 30X20 (43pz\/m2)","familia":"TEJADOS","year1_revenue":103785.12,"year2_revenue":112803.2,"year1_qty":2814.966,"year2_qty":2824.51,"year1_orders":19,"year2_orders":23,"growth":8.68918396008985,"year1_avg_ticket":5462.374736842105,"year2_avg_ticket":4904.486956521739},{"cod_articulo":"5000","descripcion":"M2.ADOQ.GRANITO 20x10x10(6.82m2\/s) 44p\/m2","familia":"GRANITOS, PIEDRAS Y PIZARRAS","year1_revenue":0,"year2_revenue":92021.17,"year1_qty":0,"year2_qty":2641.458,"year1_orders":0,"year2_orders":57,"growth":100,"year1_avg_ticket":0,"year2_avg_ticket":1614.40649122807},{"cod_articulo":"SANITARIOS","descripcion":"VIDREBANY DESAG\u00dcE BA\u00d1ERA CROMO \/ MINERAL A ELEGIR","familia":"CODIGOS GENERICOS","year1_revenue":0,"year2_revenue":87499.62,"year1_qty":0,"year2_qty":385,"year1_orders":0,"year2_orders":12,"growth":100,"year1_avg_ticket":0,"year2_avg_ticket":7291.634999999999},{"cod_articulo":"1498H","descripcion":"Saco Cemento BIGMAT II 32,5 R 25 Kg\/Saco (56 s\/p)","familia":"MATERIALES EN SACOS","year1_revenue":159430.62,"year2_revenue":85497.56,"year1_qty":30860,"year2_qty":16579,"year1_orders":1836,"year2_orders":839,"growth":-46.37318728359709,"year1_avg_ticket":86.83584967320262,"year2_avg_ticket":101.90412395709177},{"cod_articulo":"10121","descripcion":"M2 URSA TERRA 46R 1170X40X46mm (14,04 m2\/pq)(24 pq\/pt)(336,96 m2\/pt)","familia":"AISLANTES E IMPERMEABILIZANTES","year1_revenue":93724.87,"year2_revenue":68394.39,"year1_qty":20320.69,"year2_qty":14269.92,"year1_orders":228,"year2_orders":131,"growth":-27.026423189490682,"year1_avg_ticket":411.07399122807016,"year2_avg_ticket":522.0945801526717},{"cod_articulo":"MAMPARAS","descripcion":"SANYCCES MAMPARA DE DUCHA SINGLE CUSTOM 120CM H:200CM CRISTAL TRANSPARENTE PERFIL NIKEL 2 FIJOS LATERALES + PUERTA ABATIBLE 90\u00ba EXTERIOR 6CM CENTRAL","familia":"MAMPARAS","year1_revenue":129461.76,"year2_revenue":63970.05,"year1_qty":167,"year2_qty":65,"year1_orders":65,"year2_orders":22,"growth":-50.58768705137331,"year1_avg_ticket":1991.7193846153846,"year2_avg_ticket":2907.7295454545456},{"cod_articulo":"60142728","descripcion":"M2 Pizarra CUPA 30X20 H12 (43pz\/m2)","familia":"TEJADOS","year1_revenue":0,"year2_revenue":63568.42,"year1_qty":0,"year2_qty":2359,"year1_orders":0,"year2_orders":23,"growth":100,"year1_avg_ticket":0,"year2_avg_ticket":2763.844347826087},{"cod_articulo":"1102391","descripcion":"PLACA PLADUR N ESTANDAR 15x1200x2600 (36 pl\/pt)","familia":"PLACA DE YESO LAMINADO Y DERIVADOS","year1_revenue":126391.24,"year2_revenue":58947.69,"year1_qty":8549,"year2_qty":3817,"year1_orders":109,"year2_orders":93,"growth":-53.36093703962395,"year1_avg_ticket":1159.5526605504588,"year2_avg_ticket":633.8461290322581},{"cod_articulo":"58616","descripcion":"M2 ALPHAROCK PREMIUM E-225 135X40X4cm (5,40m2\/paq) (97,20m2\/pt) R.337090","familia":"AISLANTES E IMPERMEABILIZANTES","year1_revenue":0,"year2_revenue":57755.82,"year1_qty":0,"year2_qty":6369.34,"year1_orders":0,"year2_orders":48,"growth":100,"year1_avg_ticket":0,"year2_avg_ticket":1203.24625}];
+const top10Products = productData.slice(0, 10);
+
+new Chart(productCtx, {
+    type: 'bar',
+    data: {
+        labels: top10Products.map(p => p.cod_articulo),
+        datasets: [
+            {
+                label: '2025',
+                data: top10Products.map(p => parseFloat(p.year1_revenue || 0)),
+                backgroundColor: 'rgba(116, 120, 120, 0.7)',
+                borderColor: '#747878',
+                borderWidth: 1
+            },
+            {
+                label: '2026',
+                data: top10Products.map(p => parseFloat(p.year2_revenue || 0)),
+                backgroundColor: 'rgba(32, 99, 147, 0.7)',
+                borderColor: '#206393',
+                borderWidth: 1
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, position: 'top' },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.raw.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+                    },
+                    title: function(context) {
+                        const idx = context[0].dataIndex;
+                        return top10Products[idx].descripcion?.substring(0, 50);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(0,0,0,0.05)' },
+                ticks: {
+                    callback: function(value) {
+                        return (value / 1000) + 'k €';
+                    }
+                }
+            },
+            x: { grid: { display: false } }
+        }
+    }
+});
+</script>
+</body>
+</html>
