@@ -1,0 +1,271 @@
+-- ====================================================================
+-- RIBERA ESTADÍSTICAS - ESQUEMA DE BASE DE DATOS DE REPORTING (SUPABASE)
+-- ====================================================================
+
+-- Habilitar extensión pgcrypto para UUIDs
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- --------------------------------------------------------------------
+-- 1. LIMPIEZA DE TABLAS PREVIAS (Idempotencia)
+-- --------------------------------------------------------------------
+DROP TABLE IF EXISTS suppliers_reporting CASCADE;
+DROP TABLE IF EXISTS clients_reporting CASCADE;
+DROP TABLE IF EXISTS sales_lines CASCADE;
+DROP TABLE IF EXISTS sales_headers CASCADE;
+DROP TABLE IF EXISTS stats_sales_monthly CASCADE;
+DROP TABLE IF EXISTS products_stock CASCADE;
+DROP TABLE IF EXISTS stats_sellers CASCADE;
+DROP TABLE IF EXISTS stats_warehouses CASCADE;
+DROP TABLE IF EXISTS stats_kpis CASCADE;
+DROP TABLE IF EXISTS sync_state CASCADE;
+DROP TABLE IF EXISTS sync_runs CASCADE;
+
+-- --------------------------------------------------------------------
+-- 2. CREACIÓN DE TABLAS
+-- --------------------------------------------------------------------
+
+-- Historial de ejecuciones de sincronización
+CREATE TABLE sync_runs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    dataset VARCHAR(100) NOT NULL,
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(50) NOT NULL, -- 'running', 'success', 'failed'
+    records_processed INT DEFAULT 0,
+    error_message TEXT
+);
+
+-- Estado de sincronización actual por dataset
+CREATE TABLE sync_state (
+    dataset VARCHAR(100) PRIMARY KEY,
+    active_batch_id UUID,
+    last_success_at TIMESTAMP WITH TIME ZONE,
+    last_run_status VARCHAR(50),
+    last_error_message TEXT
+);
+
+-- KPIs Consolidados (SNAPSHOT - batch_id primero en PK)
+CREATE TABLE stats_kpis (
+    batch_id UUID NOT NULL,
+    period_key VARCHAR(50) NOT NULL, -- 'hoy', 'quincena', 'year_actual'
+    total_sales NUMERIC(15, 6) DEFAULT 0.0,
+    total_orders INT DEFAULT 0,
+    avg_ticket NUMERIC(15, 6) DEFAULT 0.0,
+    pending_amount NUMERIC(15, 6) DEFAULT 0.0,
+    unique_clients INT DEFAULT 0,
+    total_cost NUMERIC(15, 6) DEFAULT 0.0,
+    gross_profit NUMERIC(15, 6) DEFAULT 0.0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (batch_id, period_key)
+);
+
+-- Ventas por Almacén (SNAPSHOT - batch_id primero en PK)
+CREATE TABLE stats_warehouses (
+    batch_id UUID NOT NULL,
+    period_key VARCHAR(50) NOT NULL,
+    cod_almacen VARCHAR(50) NOT NULL,
+    orders_count INT DEFAULT 0,
+    total_sales NUMERIC(15, 6) DEFAULT 0.0,
+    PRIMARY KEY (batch_id, period_key, cod_almacen)
+);
+
+-- Ventas por Vendedor (SNAPSHOT - batch_id primero en PK)
+CREATE TABLE stats_sellers (
+    batch_id UUID NOT NULL,
+    period_key VARCHAR(50) NOT NULL,
+    cod_vendedor VARCHAR(50) NOT NULL,
+    nombre_vendedor VARCHAR(255),
+    orders_count INT DEFAULT 0,
+    total_sales NUMERIC(15, 6) DEFAULT 0.0,
+    PRIMARY KEY (batch_id, period_key, cod_vendedor)
+);
+
+-- Productos y Existencias (SNAPSHOT - batch_id primero en PK)
+CREATE TABLE products_stock (
+    batch_id UUID NOT NULL,
+    cod_articulo VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255),
+    marca VARCHAR(100),
+    cod_familia VARCHAR(50),
+    cod_subfamilia VARCHAR(50),
+    stock_total NUMERIC(15, 6) DEFAULT 0.0,
+    stock_minimo NUMERIC(15, 6) DEFAULT 0.0,
+    precio_coste NUMERIC(15, 6) DEFAULT 0.0,
+    precio_venta NUMERIC(15, 6) DEFAULT 0.0,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (batch_id, cod_articulo)
+);
+
+-- Histórico de Ventas Mensuales (INCREMENTAL - PK natural)
+CREATE TABLE stats_sales_monthly (
+    year INT NOT NULL,
+    month INT NOT NULL,
+    revenue NUMERIC(15, 6) DEFAULT 0.0,
+    total_cost NUMERIC(15, 6) DEFAULT 0.0,
+    gross_profit NUMERIC(15, 6) DEFAULT 0.0,
+    orders_count INT DEFAULT 0,
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (year, month)
+);
+
+-- Cabeceras de Venta (INCREMENTAL - PK natural)
+CREATE TABLE sales_headers (
+    cod_venta VARCHAR(50) NOT NULL,
+    tipo_venta INT NOT NULL,
+    cod_empresa VARCHAR(50) NOT NULL,
+    cod_caja VARCHAR(50) NOT NULL,
+    cod_almacen VARCHAR(50),
+    cod_cliente VARCHAR(50),
+    razon_social VARCHAR(255),
+    fecha_venta TIMESTAMP WITH TIME ZONE NOT NULL,
+    cod_forma_liquidacion VARCHAR(50),
+    cod_vendedor VARCHAR(50),
+    nombre_vendedor VARCHAR(255),
+    total_amount NUMERIC(15, 6) DEFAULT 0.0,
+    pending_amount NUMERIC(15, 6) DEFAULT 0.0,
+    anulada BOOLEAN DEFAULT FALSE,
+    source_modified_at TIMESTAMP WITH TIME ZONE,
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (cod_venta, tipo_venta, cod_empresa, cod_caja)
+);
+
+-- Líneas de Venta (INCREMENTAL - PK natural)
+CREATE TABLE sales_lines (
+    cod_venta VARCHAR(50) NOT NULL,
+    tipo_venta INT NOT NULL,
+    cod_empresa VARCHAR(50) NOT NULL,
+    cod_caja VARCHAR(50) NOT NULL,
+    linea INT NOT NULL,
+    cod_articulo VARCHAR(50),
+    descripcion VARCHAR(255),
+    cantidad NUMERIC(15, 6) DEFAULT 0.0,
+    precio NUMERIC(15, 6) DEFAULT 0.0,
+    precio_coste NUMERIC(15, 6) DEFAULT 0.0,
+    total_amount NUMERIC(15, 6) DEFAULT 0.0,
+    source_modified_at TIMESTAMP WITH TIME ZONE,
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (cod_venta, tipo_venta, cod_empresa, cod_caja, linea)
+);
+
+-- Directorio de Clientes (INCREMENTAL - PK natural)
+CREATE TABLE clients_reporting (
+    cod_cliente VARCHAR(50) PRIMARY KEY,
+    razon_social VARCHAR(255),
+    cif VARCHAR(50),
+    poblacion VARCHAR(100),
+    provincia VARCHAR(100),
+    telefono VARCHAR(50),
+    e_mail VARCHAR(255),
+    limite_credito NUMERIC(15, 6) DEFAULT 0.0,
+    cod_vendedor VARCHAR(50),
+    total_spent NUMERIC(15, 6) DEFAULT 0.0,
+    order_count INT DEFAULT 0,
+    source_modified_at TIMESTAMP WITH TIME ZONE,
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Directorio de Proveedores (INCREMENTAL - PK natural)
+CREATE TABLE suppliers_reporting (
+    cod_proveedor VARCHAR(50) PRIMARY KEY,
+    razon_social VARCHAR(255),
+    cif VARCHAR(50),
+    poblacion VARCHAR(100),
+    provincia VARCHAR(100),
+    telefono VARCHAR(50),
+    e_mail VARCHAR(255),
+    credito_otorgado NUMERIC(15, 6) DEFAULT 0.0,
+    source_modified_at TIMESTAMP WITH TIME ZONE,
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- --------------------------------------------------------------------
+-- 3. HABILITACIÓN DE RLS (Row Level Security)
+-- --------------------------------------------------------------------
+ALTER TABLE sync_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sync_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stats_kpis ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stats_warehouses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stats_sellers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products_stock ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stats_sales_monthly ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales_headers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales_lines ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients_reporting ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suppliers_reporting ENABLE ROW LEVEL SECURITY;
+
+-- --------------------------------------------------------------------
+-- 4. CREACIÓN DE POLÍTICAS RLS (Lectura exclusiva para autenticados)
+-- --------------------------------------------------------------------
+
+-- sync_runs
+CREATE POLICY select_sync_runs ON sync_runs 
+    FOR SELECT TO authenticated USING (true);
+
+-- sync_state
+CREATE POLICY select_sync_state ON sync_state 
+    FOR SELECT TO authenticated USING (true);
+
+-- stats_kpis
+CREATE POLICY select_stats_kpis ON stats_kpis 
+    FOR SELECT TO authenticated USING (true);
+
+-- stats_warehouses
+CREATE POLICY select_stats_warehouses ON stats_warehouses 
+    FOR SELECT TO authenticated USING (true);
+
+-- stats_sellers
+CREATE POLICY select_stats_sellers ON stats_sellers 
+    FOR SELECT TO authenticated USING (true);
+
+-- products_stock
+CREATE POLICY select_products_stock ON products_stock 
+    FOR SELECT TO authenticated USING (true);
+
+-- stats_sales_monthly
+CREATE POLICY select_stats_sales_monthly ON stats_sales_monthly 
+    FOR SELECT TO authenticated USING (true);
+
+-- sales_headers
+CREATE POLICY select_sales_headers ON sales_headers 
+    FOR SELECT TO authenticated USING (true);
+
+-- sales_lines
+CREATE POLICY select_sales_lines ON sales_lines 
+    FOR SELECT TO authenticated USING (true);
+
+-- clients_reporting
+CREATE POLICY select_clients_reporting ON clients_reporting 
+    FOR SELECT TO authenticated USING (true);
+
+-- suppliers_reporting
+CREATE POLICY select_suppliers_reporting ON suppliers_reporting 
+    FOR SELECT TO authenticated USING (true);
+
+-- Nota: Las operaciones de escritura (INSERT, UPDATE, DELETE) quedan
+-- denegadas de forma predeterminada para el rol público e incluso autenticado.
+-- Solo las llamadas usando la Secret Key / service_role omiten las RLS y tienen 
+-- privilegios completos de escritura.
+
+-- 4.1 OTORGAR PRIVILEGIOS DE SELECT AL ROL AUTHENTICATED
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO authenticated;
+
+-- --------------------------------------------------------------------
+-- 5. CREACIÓN DE ÍNDICES OPTIMIZADOS
+-- --------------------------------------------------------------------
+
+-- Búsquedas y filtros en la pantalla de Ventas
+CREATE INDEX idx_sales_headers_fecha ON sales_headers(fecha_venta DESC);
+CREATE INDEX idx_sales_headers_cliente ON sales_headers(cod_cliente);
+CREATE INDEX idx_sales_headers_vendedor ON sales_headers(cod_vendedor);
+CREATE INDEX idx_sales_headers_pendiente ON sales_headers(pending_amount) WHERE pending_amount > 0;
+
+-- Carga rápida de líneas asociadas a un documento (modal)
+CREATE INDEX idx_sales_lines_documento ON sales_lines(cod_venta, tipo_venta, cod_empresa, cod_caja);
+
+-- Filtros rápidos en la pantalla de Inventario (incluyen batch_id por ser tabla SNAPSHOT)
+CREATE INDEX idx_products_stock_minimo ON products_stock(batch_id, stock_total, stock_minimo) WHERE stock_total < stock_minimo;
+CREATE INDEX idx_products_stock_categoria ON products_stock(batch_id, cod_familia, cod_subfamilia);
+
+-- Listados ordenados de Clientes y Proveedores
+CREATE INDEX idx_clients_reporting_spent ON clients_reporting(total_spent DESC);
+CREATE INDEX idx_suppliers_reporting_name ON suppliers_reporting(razon_social);
