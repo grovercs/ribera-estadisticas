@@ -24,7 +24,7 @@ $Description = "Consulta sync_requests cada minuto y ejecuta ribera:process-sync
 
 $PhpPath = "C:\wamp64\bin\php\php8.4.24\php.exe"
 $ProjectDir = "C:\Proyectos\antigravity\ribera-estadisticas"
-$Argument = "$ProjectDir\artisan ribera:process-sync-requests"
+$Argument = "-d memory_limit=1024M $ProjectDir\artisan ribera:process-sync-requests"
 
 function Find-RiberaWorkerTask {
     param([string]$ExactName)

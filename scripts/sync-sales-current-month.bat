@@ -19,7 +19,7 @@ set ERROR_FILE=%LOG_DIR%\sync_sales_%SOURCE%.error.log
 (
   echo ============================================================
   echo [%date% %time%] Iniciando sincronizacion sales --period=current_month (source=%SOURCE%)
-  "%PHP_PATH%" "%ARTISAN%" ribera:sync-sales-locked --source=%SOURCE%
+  "%PHP_PATH%" -d memory_limit=1024M "%ARTISAN%" ribera:sync-sales-locked --source=%SOURCE%
   if !errorlevel! neq 0 (
     echo [%date% %time%] ERROR: El comando termino con codigo !errorlevel!
     exit /b !errorlevel!
