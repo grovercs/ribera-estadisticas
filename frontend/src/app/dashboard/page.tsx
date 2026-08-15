@@ -221,12 +221,18 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   const marginVielhaYear = marginStore(marginsData.year_rows || [], VIELHA)
   const marginPontYear = marginStore(marginsData.year_rows || [], PONT)
 
+  const now = new Date()
+  const todayLabel = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  const yesterdayLabel = yesterday.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+
   const mobileSections = [
     {
       title: '1 · Ventas',
       rows: [
-        { label: 'Hoy', vielhaValue: hoyVielhaImp, pontValue: hoyPontImp, vielhaCount: hoyVielhaCnt, pontCount: hoyPontCnt },
-        { label: 'Ayer', vielhaValue: ayerVielhaImp, pontValue: ayerPontImp, vielhaCount: ayerVielhaCnt, pontCount: ayerPontCnt },
+        { label: todayLabel, vielhaValue: hoyVielhaImp, pontValue: hoyPontImp, vielhaCount: hoyVielhaCnt, pontCount: hoyPontCnt },
+        { label: yesterdayLabel, vielhaValue: ayerVielhaImp, pontValue: ayerPontImp, vielhaCount: ayerVielhaCnt, pontCount: ayerPontCnt },
         { label: 'Quincena Actual', vielhaValue: qActVielhaImp, pontValue: qActPontImp, vielhaCount: qActVielhaCnt, pontCount: qActPontCnt, highlight: true },
         { label: 'Quincena Anterior', vielhaValue: qAntVielhaImp, pontValue: qAntPontImp, vielhaCount: qAntVielhaCnt, pontCount: qAntPontCnt },
         { label: 'Anteriores', vielhaValue: antVielhaImp, pontValue: antPontImp, vielhaCount: antVielhaCnt, pontCount: antPontCnt, muted: true },
@@ -253,7 +259,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     {
       title: '4 · Márgenes Comerciales',
       rows: [
-        { label: 'Hoy', subheader: true },
+        { label: todayLabel, subheader: true },
         { label: 'Venta', vielhaValue: marginVielhaHoy.venta, pontValue: marginPontHoy.venta, totalValue: marginsHoy.venta },
         { label: 'Coste', vielhaValue: marginVielhaHoy.coste, pontValue: marginPontHoy.coste, totalValue: marginsHoy.coste },
         { label: 'Margen %', vielhaValue: marginVielhaHoy.margen_porcentaje, pontValue: marginPontHoy.margen_porcentaje, totalValue: marginsHoy.margen_porcentaje, format: 'pct' as const },
@@ -298,7 +304,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       <div className="flex flex-col gap-1 border-b border-[#e1e2e6] pb-4">
         <h1 className="text-3xl md:text-4xl font-black text-[#191c1e] tracking-tight">Cuadro de Dirección</h1>
         <p className="text-base text-[#747878] font-medium">
-          Fotografía diaria del negocio · {new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })} · Sync {lastSync}
+          Fotografía diaria del negocio · {todayLabel} · Sync {lastSync}
         </p>
       </div>
 
@@ -333,14 +339,16 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
             </tr>
             <tr className="hover:bg-[#f8f9fc]/60">
               <td className="px-3 py-2 text-left">
-                <div className="font-bold text-[#191c1e] text-sm">Hoy</div>
+                <div className="font-bold text-[#191c1e] text-sm">{todayLabel}</div>
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{fmtEur(hoyVielhaImp)} <span className="text-xs text-[#9aa0a6]">({hoyVielhaCnt})</span></td>
               <td className="px-3 py-2 text-right tabular-nums">{fmtEur(hoyPontImp)} <span className="text-xs text-[#9aa0a6]">({hoyPontCnt})</span></td>
               <td className="px-3 py-2 text-right tabular-nums font-bold">{fmtEur(hoyTotalImp)} <span className="text-xs text-[#9aa0a6]">({hoyTotalCnt})</span></td>
             </tr>
             <tr className="hover:bg-[#f8f9fc]/60">
-              <td className="px-3 py-2 text-left"><div className="font-bold text-[#191c1e] text-sm">Ayer</div></td>
+              <td className="px-3 py-2 text-left">
+                <div className="font-bold text-[#191c1e] text-sm">{yesterdayLabel}</div>
+              </td>
               <td className="px-3 py-2 text-right tabular-nums">{fmtEur(ayerVielhaImp)} <span className="text-xs text-[#9aa0a6]">({ayerVielhaCnt})</span></td>
               <td className="px-3 py-2 text-right tabular-nums">{fmtEur(ayerPontImp)} <span className="text-xs text-[#9aa0a6]">({ayerPontCnt})</span></td>
               <td className="px-3 py-2 text-right tabular-nums font-bold">{fmtEur(ayerTotalImp)} <span className="text-xs text-[#9aa0a6]">({ayerTotalCnt})</span></td>
