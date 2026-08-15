@@ -38,7 +38,17 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     supabase.from('sync_state').select('dataset,last_success_at,last_run_status').eq('dataset', 'sales').maybeSingle(),
   ])
 
-  const salesData = salesRes.data || { hoy: [], ayer: [], quincena_actual: [], quincena_anterior: [], anteriores: [] }
+  const salesDataRaw = salesRes.data || {}
+  const salesData = {
+    ultimo_dia: salesDataRaw.ultimo_dia || null,
+    penultimo_dia: salesDataRaw.penultimo_dia || null,
+    hoy: salesDataRaw.hoy || [],
+    ayer: salesDataRaw.ayer || [],
+    quincena_actual: salesDataRaw.quincena_actual || [],
+    quincena_anterior: salesDataRaw.quincena_anterior || [],
+    anteriores: salesDataRaw.anteriores || [],
+  }
+
   const salesPeriods = salesPeriodsRes.data || {
     quincena_actual: [],
     quincena_anterior: [],
@@ -221,11 +231,14 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   const marginVielhaYear = marginStore(marginsData.year_rows || [], VIELHA)
   const marginPontYear = marginStore(marginsData.year_rows || [], PONT)
 
-  const now = new Date()
-  const todayLabel = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
-  const yesterdayLabel = yesterday.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  const formatDashDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'Sin datos'
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return String(dateStr)
+    return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+  const todayLabel = formatDashDate(salesData.ultimo_dia)
+  const yesterdayLabel = formatDashDate(salesData.penultimo_dia)
 
   const mobileSections = [
     {
@@ -259,7 +272,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     {
       title: '4 · Márgenes Comerciales',
       rows: [
-        { label: todayLabel, subheader: true },
+        { label: `Márgenes ${todayLabel}`, subheader: true },
         { label: 'Venta', vielhaValue: marginVielhaHoy.venta, pontValue: marginPontHoy.venta, totalValue: marginsHoy.venta },
         { label: 'Coste', vielhaValue: marginVielhaHoy.coste, pontValue: marginPontHoy.coste, totalValue: marginsHoy.coste },
         { label: 'Margen %', vielhaValue: marginVielhaHoy.margen_porcentaje, pontValue: marginPontHoy.margen_porcentaje, totalValue: marginsHoy.margen_porcentaje, format: 'pct' as const },
@@ -304,7 +317,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       <div className="flex flex-col gap-1 border-b border-[#e1e2e6] pb-4">
         <h1 className="text-3xl md:text-4xl font-black text-[#191c1e] tracking-tight">Cuadro de Dirección</h1>
         <p className="text-base text-[#747878] font-medium">
-          Fotografía diaria del negocio · {todayLabel} · Sync {lastSync}
+          Fotografía diaria del negocio · Últimos datos: {todayLabel} · Sync {lastSync}
         </p>
       </div>
 
