@@ -9,9 +9,9 @@ use Carbon\Carbon;
 
 class RiberaSyncToSupabase extends Command
 {
-    protected $signature = 'ribera:sync-to-supabase 
-                            {dataset? : Dataset específico (kpis, warehouses, sellers, stock, clients, suppliers, monthly_history, sales, historical)}
-                            {--period= : Período personalizado para ventas. Opciones: test_1month, full}';
+    protected $signature = 'ribera:sync-to-supabase
+                            {dataset? : Dataset específico (kpis, warehouses, sellers, stock, clients, suppliers, monthly_history, sales, receivables, historical)}
+                            {--period= : Período personalizado para ventas. Opciones: test_1month, current_month}';
 
     protected $description = 'Sincroniza datos del ERP SQL Server local hacia la base de datos de reporting en Supabase';
 
@@ -792,9 +792,17 @@ class RiberaSyncToSupabase extends Command
         ";
         $params = [];
 
+        $isPartialPeriod = ($periodOption === 'test_1month');
+
         if ($periodOption === 'test_1month') {
             $this->info("Ejecutando prueba controlada de 1 mes de ventas (Julio 2026)...");
             $querySql .= " AND fecha_venta >= '20260701' AND fecha_venta < '20260801'";
+        } elseif ($periodOption === 'current_month') {
+            $start = sprintf('%04d%02d01', $currentYear, (int) date('m'));
+            $end = date('Ymd', strtotime("{$currentYear}-" . date('m') . "-01 +1 month"));
+            $this->info("Sincronizando ventas del mes actual ({$start} a {$end})...");
+            $querySql .= " AND fecha_venta >= ? AND fecha_venta < ?";
+            $params = [$start, $end];
         } else if ($lastSuccess) {
             $checkTime = date('Ymd H:i:s', strtotime($lastSuccess . ' -24 hours'));
             $this->info("Sincronización incremental de ventas desde: {$checkTime}...");
@@ -875,14 +883,19 @@ class RiberaSyncToSupabase extends Command
             }
         }
 
-        // 5. Registrar el sync_state final
-        DB::connection('supabase')->table('sync_state')->upsert([
-            'dataset' => 'sales',
-            'active_batch_id' => null,
-            'last_success_at' => now(),
-            'last_run_status' => 'success',
-            'last_error_message' => null
-        ], ['dataset'], ['last_success_at', 'last_run_status', 'last_error_message']);
+        // 5. Registrar el sync_state final (solo para sincronizaciones reales, no pruebas parciales)
+        if (!$isPartialPeriod) {
+            DB::connection('supabase')->table('sync_state')->upsert([
+                'dataset' => 'sales',
+                'active_batch_id' => null,
+                'last_success_at' => now(),
+                'last_run_status' => 'success',
+                'last_error_message' => null
+            ], ['dataset'], ['last_success_at', 'last_run_status', 'last_error_message']);
+            $this->info("Sync_state actualizado: last_success_at = " . now());
+        } else {
+            $this->warn("Sync_state NO actualizado: la opción --period={$periodOption} es una sincronización parcial.");
+        }
 
         // 6. Ejecutar Garbage Collector de borrados físicos no registrados
         $this->cleanupSalesOrphans();

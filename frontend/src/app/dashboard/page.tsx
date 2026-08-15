@@ -34,7 +34,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     supabase.rpc('get_store_dashboard_albaranes', { p_year: year }),
     supabase.rpc('get_store_dashboard_purchases_periods', { p_year: year }),
     supabase.rpc('get_store_dashboard_payables'),
-    supabase.from('sync_state').select('*').limit(5),
+    supabase.from('sync_state').select('dataset,last_success_at,last_run_status').eq('dataset', 'sales').maybeSingle(),
   ])
 
   const salesData = salesRes.data || { hoy: [], ayer: [], quincena_actual: [], quincena_anterior: [], anteriores: [] }
@@ -60,9 +60,9 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     year_anterior: { count: 0, importe: 0 },
   }
   const payablesData = payablesRes.data || { periodos: [], total_importe: 0, total_ops: 0 }
-  const syncStateList = syncStateRes.data || []
-  const lastSync = syncStateList?.[0]?.last_success_at
-    ? new Date(syncStateList[0].last_success_at).toLocaleTimeString('es-ES', {
+  const syncState = syncStateRes.data
+  const lastSync = syncState?.last_success_at
+    ? new Date(syncState.last_success_at).toLocaleTimeString('es-ES', {
         hour: '2-digit',
         minute: '2-digit',
       })
