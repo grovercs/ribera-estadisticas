@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import ExecutiveMobileCards from './components/ExecutiveMobileCards'
+import SyncButton from './components/SyncButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +18,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
 
   const supabase = await createClient()
 
-  // 7 RPCs reales validados
+  // Usuario autenticado y solicitud de sync activa
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // 7 RPCs reales validados + estado de sync
   const [
     salesRes,
     salesPeriodsRes,
@@ -27,6 +31,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     purchasesPeriodsRes,
     payablesRes,
     syncStateRes,
+    activeSyncRes,
   ] = await Promise.all([
     supabase.rpc('get_store_dashboard_sales', { p_year: year, p_anio_ant: anioAnt }),
     supabase.rpc('get_store_dashboard_sales_periods', { p_year: year }),
@@ -36,6 +41,12 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     supabase.rpc('get_store_dashboard_purchases_periods', { p_year: year }),
     supabase.rpc('get_store_dashboard_payables'),
     supabase.from('sync_state').select('dataset,last_success_at,last_run_status').eq('dataset', 'sales').maybeSingle(),
+    supabase.from('sync_requests')
+      .select('id, status, source, requested_at, started_at, finished_at, error_message')
+      .eq('dataset', 'sales')
+      .in('status', ['pending', 'running'])
+      .order('requested_at', { ascending: false })
+      .maybeSingle(),
   ])
 
   const salesDataRaw = salesRes.data || {}
@@ -78,6 +89,8 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
         minute: '2-digit',
       })
     : 'Reciente'
+
+  const activeSyncRequest = activeSyncRes.data || null
 
   // Mapeo definitivo: cod_almacen 1 = Pont de Suert, 2 = Vielha
   const PONT = '1'
@@ -316,11 +329,16 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
 
   return (
     <div className="space-y-5 text-[#191c1e] text-sm max-w-7xl mx-auto">
-      <div className="flex flex-col gap-1 border-b border-[#e1e2e6] pb-4">
-        <h1 className="text-3xl md:text-4xl font-black text-[#191c1e] tracking-tight">Cuadro de Dirección</h1>
-        <p className="text-base text-[#747878] font-medium">
-          Fotografía diaria del negocio · Últimos datos: {todayLabel} · Sync {lastSync}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-[#e1e2e6] pb-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl md:text-4xl font-black text-[#191c1e] tracking-tight">Cuadro de Dirección</h1>
+          <p className="text-base text-[#747878] font-medium">
+            Fotografía diaria del negocio · Últimos datos: {todayLabel} · Sync {lastSync}
+          </p>
+        </div>
+        {user && (
+          <SyncButton initialActiveRequest={activeSyncRequest} userId={user.id} />
+        )}
       </div>
 
       {/* Tabla principal VIELHA | PONT | TOTAL */}

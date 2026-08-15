@@ -32,6 +32,7 @@ DROP TABLE IF EXISTS stats_warehouses CASCADE;
 DROP TABLE IF EXISTS stats_kpis CASCADE;
 DROP TABLE IF EXISTS sync_state CASCADE;
 DROP TABLE IF EXISTS sync_runs CASCADE;
+DROP TABLE IF EXISTS sync_requests CASCADE;
 
 -- --------------------------------------------------------------------
 -- 2. CREACIÓN DE TABLAS
@@ -55,6 +56,22 @@ CREATE TABLE sync_state (
     last_success_at TIMESTAMP WITH TIME ZONE,
     last_run_status VARCHAR(50),
     last_error_message TEXT
+);
+
+-- Solicitudes de sincronización manual y automática (lock lógico + auditoría)
+CREATE TABLE sync_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    dataset VARCHAR(100) NOT NULL DEFAULT 'sales',
+    status VARCHAR(50) NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending','running','success','failed')),
+    requested_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+    source VARCHAR(50) NOT NULL
+        CHECK (source IN ('manual','auto')),
+    requested_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMP WITH TIME ZONE,
+    finished_at TIMESTAMP WITH TIME ZONE,
+    error_message TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
 -- KPIs Consolidados (SNAPSHOT - batch_id primero en PK)
@@ -234,6 +251,7 @@ $$;
 -- --------------------------------------------------------------------
 ALTER TABLE sync_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sync_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stats_kpis ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stats_warehouses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stats_sellers ENABLE ROW LEVEL SECURITY;
@@ -254,8 +272,20 @@ CREATE POLICY select_sync_runs ON sync_runs
     FOR SELECT TO authenticated USING (true);
 
 -- sync_state
-CREATE POLICY select_sync_state ON sync_state 
+CREATE POLICY select_sync_state ON sync_state
     FOR SELECT TO authenticated USING (true);
+
+-- sync_requests: lectura compartida para saber si hay una activa
+CREATE POLICY select_sync_requests ON sync_requests
+    FOR SELECT TO authenticated USING (true);
+
+-- sync_requests: solo insert manual y propio desde el frontend
+CREATE POLICY insert_sync_requests ON sync_requests
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        requested_by = auth.uid()
+        AND source = 'manual'
+    );
 
 -- stats_kpis
 CREATE POLICY select_stats_kpis ON stats_kpis 
@@ -332,3 +362,32 @@ CREATE INDEX idx_receivables_cliente ON receivables(batch_id, cod_cliente);
 -- Listados ordenados de Clientes y Proveedores
 CREATE INDEX idx_clients_reporting_spent ON clients_reporting(total_spent DESC);
 CREATE INDEX idx_suppliers_reporting_name ON suppliers_reporting(razon_social);
+
+-- Índice único parcial: solo una solicitud activa (pending/running) por dataset
+CREATE UNIQUE INDEX idx_sync_requests_one_active_per_dataset
+    ON sync_requests(dataset)
+    WHERE status IN ('pending','running');
+
+-- Índice para búsqueda eficiente de pendientes por el agente local
+CREATE INDEX idx_sync_requests_pending_dataset ON sync_requests(dataset, requested_at)
+    WHERE status = 'pending';
+
+-- --------------------------------------------------------------------
+-- 6. TRIGGERS DE MANTENIMIENTO
+-- --------------------------------------------------------------------
+
+-- Actualizar automáticamente updated_at en sync_requests
+CREATE OR REPLACE FUNCTION sync_requests_set_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER tr_sync_requests_updated_at
+    BEFORE UPDATE ON sync_requests
+    FOR EACH ROW
+    EXECUTE FUNCTION sync_requests_set_updated_at();

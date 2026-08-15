@@ -1,17 +1,10 @@
-# Ribera Estadisticas — Crear/actualizar tarea programada automatica de sales
+# Ribera Estadisticas — Crear/actualizar worker de solicitudes manuales de sync
 #
 # NOTA: Este script requiere permisos de Administrador para crear tareas programadas.
 #       Si no se ejecuta como administrador, mostrara advertencia y terminara.
 #
-# Crea/actualiza una unica tarea:
-#   - Ribera Sync - Sales
-# Con dos triggers:
-#   - 13:15 todos los dias
-#   - 19:15 todos los dias
-# El batch sync-sales-auto.bat detecta la hora actual y ejecuta
-# el source correspondiente (auto_13:15 o auto_19:15).
-# Esto evita el problema de Task Scheduler donde multiples actions
-# se ejecutan con cualquier trigger.
+# Crea/actualiza una tarea programada que cada 1 minuto consulta sync_requests
+# y ejecuta la sincronizacion de sales cuando hay una solicitud manual pendiente.
 
 param(
     [switch]$Force
@@ -26,13 +19,14 @@ if (-not $isAdmin) {
     exit 1
 }
 
-$TaskName = "Ribera Sync - Sales"
-$Description = "Sincroniza ventas del mes actual desde el ERP SQL Server hacia Supabase a las 13:15 y 19:15 con lock global."
+$TaskName = "Ribera Sync - Process Manual Requests"
+$Description = "Consulta sync_requests cada minuto y ejecuta ribera:process-sync-requests para solicitudes manuales de sales."
 
+$PhpPath = "C:\wamp64\bin\php\php8.4.24\php.exe"
 $ProjectDir = "C:\Proyectos\antigravity\ribera-estadisticas"
-$BatchPath = "$ProjectDir\scripts\sync-sales-auto.bat"
+$Argument = "$ProjectDir\artisan ribera:process-sync-requests"
 
-function Find-RiberaSalesTask {
+function Find-RiberaWorkerTask {
     param([string]$ExactName)
 
     # Busqueda exacta por nombre
@@ -45,8 +39,8 @@ function Find-RiberaSalesTask {
         try {
             foreach ($action in $t.Actions) {
                 $actionText = ($action.Execute + ' ' + $action.Arguments).ToLower()
-                if ($actionText -match [regex]::Escape($BatchPath.ToLower()) -or
-                    ($actionText -match [regex]::Escape($ProjectDir.ToLower()) -and $actionText -match 'ribera|sync-sales|sync-to-supabase|sync-sales-auto\.bat')) {
+                if ($actionText -match [regex]::Escape($Argument.ToLower()) -or
+                    ($actionText -match [regex]::Escape($ProjectDir.ToLower()) -and $actionText -match 'process-sync')) {
                     return $t
                 }
             }
@@ -57,7 +51,7 @@ function Find-RiberaSalesTask {
     return $null
 }
 
-$Existing = Find-RiberaSalesTask -ExactName $TaskName
+$Existing = Find-RiberaWorkerTask -ExactName $TaskName
 
 if ($Existing) {
     Write-Host "Tarea existente encontrada: $($Existing.TaskName)" -ForegroundColor Yellow
@@ -77,30 +71,30 @@ if ($Existing) {
     }
 }
 
-# Crear dos triggers: 13:15 y 19:15
-$Trigger1315 = New-ScheduledTaskTrigger -Daily -At "13:15"
-$Trigger1915 = New-ScheduledTaskTrigger -Daily -At "19:15"
-
-# Una sola action: el batch detecta la hora y elige el source correcto
-$Action = New-ScheduledTaskAction -Execute $BatchPath -WorkingDirectory $ProjectDir
+$Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 1)
+$Action = New-ScheduledTaskAction -Execute $PhpPath -Argument $Argument -WorkingDirectory $ProjectDir
 $Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
 $Settings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
     -DontStopIfGoingOnBatteries `
     -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 60) `
+    -ExecutionTimeLimit (New-TimeSpan -Minutes 65) `
     -MultipleInstances IgnoreNew
 
 Register-ScheduledTask `
     -TaskName $TaskName `
     -Description $Description `
     -Action $Action `
-    -Trigger @($Trigger1315, $Trigger1915) `
+    -Trigger $Trigger `
     -Principal $Principal `
     -Settings $Settings `
     -Force | Out-Null
 
+# Ejecutar inmediatamente para no esperar hasta la medianoche
+Start-ScheduledTask -TaskName $TaskName
+
 Write-Host "Tarea programada creada/actualizada: $TaskName" -ForegroundColor Green
-Write-Host "  Triggers: 13:15 y 19:15 diarios" -ForegroundColor Cyan
-Write-Host "  Batch: $BatchPath" -ForegroundColor Cyan
-Write-Host "  Nota: el batch detecta la hora y asigna source=auto_13:15 o auto_19:15" -ForegroundColor DarkGray
+Write-Host "  Ejecutable: $PhpPath" -ForegroundColor Cyan
+Write-Host "  Argumento: $Argument" -ForegroundColor Cyan
+Write-Host "  Frecuencia: cada 1 minuto, 24 horas" -ForegroundColor Cyan
+Write-Host "  Primera ejecucion iniciada ahora." -ForegroundColor Green
