@@ -233,8 +233,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
 
   const formatDashDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return 'Sin datos'
-    const d = new Date(dateStr)
-    if (Number.isNaN(d.getTime())) return String(dateStr)
+    // Asumir fecha local YYYY-MM-DD; evitar conversion de zona horaria
+    const [y, m, day] = dateStr.split('-').map(Number)
+    if (!y || !m || !day) return String(dateStr)
+    const d = new Date(y, m - 1, day, 12, 0, 0)
     return d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
   }
   const todayLabel = formatDashDate(salesData.ultimo_dia)
