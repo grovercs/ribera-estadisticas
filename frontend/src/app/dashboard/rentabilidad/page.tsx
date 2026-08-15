@@ -221,7 +221,7 @@ export default async function RentabilidadPage({ searchParams }: PageProps) {
             </p>
           )}
         </div>
-        <div className="hidden sm:block overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm md:text-base text-left">
             <thead className="text-[#747878] text-sm uppercase border-b border-[#e1e2e6]">
               <tr>
@@ -268,7 +268,7 @@ export default async function RentabilidadPage({ searchParams }: PageProps) {
         </div>
 
         {/* Vista móvil de comparativa interanual */}
-        <div className="block sm:hidden space-y-3">
+        <div className="block md:hidden space-y-3">
           {comparisonRows.map((row) => {
             const diffValue = isComparable ? row.act - row.prev : null
             const pct = isComparable && row.prev !== 0 ? ((row.act - row.prev) / row.prev) * 100 : null

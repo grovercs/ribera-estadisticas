@@ -205,7 +205,7 @@ export default function DashboardCharts({
       {/* Evolución de ventas (2/3 de ancho en desktop) */}
       <div className="rounded-xl border border-[#e1e2e6] bg-white p-5 shadow-sm xl:col-span-2">
         <h2 className="text-xl font-bold text-[#191c1e] mb-4">{chartTitle}</h2>
-        <div className="h-[280px] relative">
+        <div className="h-[220px] sm:h-[280px] relative">
           {mounted ? (
             <Line data={lineData} options={lineOptions} />
           ) : (
@@ -217,7 +217,7 @@ export default function DashboardCharts({
       {/* Ventas por almacén (1/3 de ancho en desktop) */}
       <div className="rounded-xl border border-[#e1e2e6] bg-white p-5 shadow-sm">
         <h2 className="text-xl font-bold text-[#191c1e] mb-4">Por almacén</h2>
-        <div className="h-[280px] relative">
+        <div className="h-[240px] sm:h-[280px] relative">
           {sortedWarehouseData.length === 0 ? (
             <div className="flex h-full items-center justify-center text-sm text-[#747878]">Sin datos registrados</div>
           ) : mounted ? (

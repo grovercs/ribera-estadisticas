@@ -34,8 +34,32 @@ export default function ExecutiveMobileCards({ sections }: ExecutiveMobileCardsP
     return currencyFormatter.format(v)
   }
 
+  const ValueLine = ({
+    label,
+    value,
+    count,
+    format,
+    isTotal = false,
+  }: {
+    label: string
+    value: number
+    count?: number
+    format?: MobileRow['format']
+    isTotal?: boolean
+  }) => (
+    <div className={`flex justify-between items-baseline ${isTotal ? 'border-t border-[#f2f3f7] pt-1 mt-1' : ''}`}>
+      <span className={`font-semibold ${isTotal ? 'text-[#191c1e]' : 'text-[#747878]'}`}>{label}</span>
+      <span className={`font-bold ${isTotal ? 'text-[#191c1e]' : 'text-[#191c1e]'}`}>
+        {fmt(value, format)}
+        {count != null && (
+          <span className="text-[10px] text-[#9aa0a6] font-normal ml-1">({numberFormatter.format(count)})</span>
+        )}
+      </span>
+    </div>
+  )
+
   return (
-    <div className="block sm:hidden space-y-4">
+    <div className="block md:hidden space-y-4">
       {sections.map((section) => (
         <div key={section.title} className="rounded-xl border border-[#e1e2e6] bg-white shadow-sm overflow-hidden">
           <div className="px-3 py-2 text-xs font-black uppercase tracking-widest text-white bg-[#206393]">
@@ -79,34 +103,10 @@ export default function ExecutiveMobileCards({ sections }: ExecutiveMobileCardsP
                   <div className={`font-bold text-sm mb-2 ${row.highlight ? 'text-[#206393]' : row.muted ? 'text-[#747878]' : 'text-[#191c1e]'}`}>
                     {row.label}
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="text-right">
-                      <div className="text-[#747878] font-semibold">Vielha</div>
-                      <div className="font-bold text-[#191c1e]">
-                        {fmt(v, row.format)}
-                        {row.vielhaCount != null && (
-                          <span className="text-[#9aa0a6] font-normal ml-1">({numberFormatter.format(c1)})</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[#747878] font-semibold">Pont</div>
-                      <div className="font-bold text-[#191c1e]">
-                        {fmt(p, row.format)}
-                        {row.pontCount != null && (
-                          <span className="text-[#9aa0a6] font-normal ml-1">({numberFormatter.format(c2)})</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[#191c1e] font-semibold">Total</div>
-                      <div className="font-bold text-[#191c1e]">
-                        {fmt(total, row.format)}
-                        {row.vielhaCount != null && row.pontCount != null && (
-                          <span className="text-[#9aa0a6] font-normal ml-1">({numberFormatter.format(totalCount)})</span>
-                        )}
-                      </div>
-                    </div>
+                  <div className="space-y-0.5 text-xs">
+                    <ValueLine label="Vielha" value={v} count={c1} format={row.format} />
+                    <ValueLine label="Pont" value={p} count={c2} format={row.format} />
+                    <ValueLine label="Total" value={total} count={totalCount} format={row.format} isTotal />
                   </div>
                 </div>
               )

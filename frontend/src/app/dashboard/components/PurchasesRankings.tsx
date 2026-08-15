@@ -33,12 +33,12 @@ export default function PurchasesRankings({
   return (
     <div className="rounded-xl border border-[#e1e2e6] bg-white p-5 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#e1e2e6] pb-3 mb-4 gap-3">
-        <div className="flex border-b sm:border-b-0">
+        <div className="flex border-b sm:border-b-0 overflow-x-auto sm:overflow-visible w-full sm:w-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-base font-semibold border-b-2 transition-all -mb-px ${
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold border-b-2 transition-all -mb-px whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-[#206393] text-[#206393]'
                   : 'border-transparent text-[#747878] hover:text-[#191c1e]'

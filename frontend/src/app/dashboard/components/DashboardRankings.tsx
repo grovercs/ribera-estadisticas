@@ -47,12 +47,12 @@ export default function DashboardRankings({
     <div className="rounded-xl border border-[#e1e2e6] bg-white p-5 shadow-sm">
       {/* Cabecera y Selector de Pestañas */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-[#e1e2e6] pb-3 mb-4 gap-3">
-        <div className="flex border-b sm:border-b-0">
+        <div className="flex border-b sm:border-b-0 overflow-x-auto sm:overflow-visible w-full sm:w-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-base font-semibold border-b-2 transition-all -mb-px ${
+              className={`px-3 sm:px-4 py-2 text-sm sm:text-base font-semibold border-b-2 transition-all -mb-px whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'border-[#206393] text-[#206393]'
                   : 'border-transparent text-[#747878] hover:text-[#191c1e]'
@@ -67,7 +67,7 @@ export default function DashboardRankings({
         {activeTab === 'products' && (
           <Link
             href={`${basePath}?year_from=${yf}&month_from=${mf}&year_to=${yt}&month_to=${mt}&hide_no_stock=${!hideNoStock}`}
-            className={`px-3 py-1.5 text-sm font-semibold rounded-lg border transition-all ${
+            className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg border transition-all whitespace-nowrap ${
               hideNoStock
                 ? 'bg-[#206393] text-white border-[#206393]'
                 : 'bg-white text-[#747878] border-[#e1e2e6] hover:bg-[#f8f9fc]'

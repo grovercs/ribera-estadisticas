@@ -303,7 +303,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       </div>
 
       {/* Tabla principal VIELHA | PONT | TOTAL */}
-      <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#e1e2e6] shadow-sm bg-white min-w-0">
+      <div className="hidden md:block overflow-x-auto rounded-xl border border-[#e1e2e6] shadow-sm bg-white min-w-0">
         <div className="min-w-[768px]">
         <table className="w-full border-collapse text-sm md:text-base">
           <thead>
