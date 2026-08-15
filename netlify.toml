@@ -1,0 +1,25 @@
+# Netlify build configuration for Ribera Estadísticas frontend
+# Next.js 16.3 App Router + Supabase SSR
+
+[build]
+  # The frontend lives in the `frontend/` subdirectory of this repository.
+  base = "frontend"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  # Pin a stable Node.js LTS version for reproducible builds.
+  NODE_VERSION = "22"
+  # Disable Next.js telemetry in CI/production builds.
+  NEXT_TELEMETRY_DISABLED = "1"
+
+# Security headers for the deployed site.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Netlify's Next.js runtime handles SSR/ISR routes automatically.
+# Do NOT add a catch-all redirect to /index.html here; it would break SSR.
