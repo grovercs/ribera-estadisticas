@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,6 +15,7 @@ import {
   ArcElement
 } from 'chart.js'
 import { Line, Doughnut, Bar } from 'react-chartjs-2'
+import { useIsMobile } from '@/lib/hooks/useIsMobile'
 
 ChartJS.register(
   CategoryScale,
@@ -41,6 +43,12 @@ export default function DashboardCharts({
   chartTitle = 'Evolución de ventas',
   comparisonLabel = 'Año anterior (€)'
 }: DashboardChartsProps) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isMobile = useIsMobile()
   const currencyFormatter = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
   const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -159,7 +167,7 @@ export default function DashboardCharts({
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: isMobile ? ('bottom' as const) : ('right' as const),
         labels: {
           color: '#191c1e',
           font: { size: 12, weight: 'bold' as const },
@@ -198,7 +206,11 @@ export default function DashboardCharts({
       <div className="rounded-xl border border-[#e1e2e6] bg-white p-5 shadow-sm xl:col-span-2">
         <h2 className="text-xl font-bold text-[#191c1e] mb-4">{chartTitle}</h2>
         <div className="h-[280px] relative">
-          <Line data={lineData} options={lineOptions} />
+          {mounted ? (
+            <Line data={lineData} options={lineOptions} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-[#747878]">Cargando gráfico…</div>
+          )}
         </div>
       </div>
 
@@ -208,8 +220,10 @@ export default function DashboardCharts({
         <div className="h-[280px] relative">
           {sortedWarehouseData.length === 0 ? (
             <div className="flex h-full items-center justify-center text-sm text-[#747878]">Sin datos registrados</div>
-          ) : (
+          ) : mounted ? (
             <Doughnut data={doughnutData} options={doughnutOptions} />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-[#747878]">Cargando gráfico…</div>
           )}
         </div>
       </div>

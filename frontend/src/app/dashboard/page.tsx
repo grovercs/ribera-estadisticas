@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import ExecutiveMobileCards from './components/ExecutiveMobileCards'
 
 export const dynamic = 'force-dynamic'
 
@@ -215,6 +216,83 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     })
     .filter(Boolean) as Array<{ periodo: string; importe: number; ops: number }>
 
+  const marginVielhaHoy = marginStore(marginsData.hoy_rows || [], VIELHA)
+  const marginPontHoy = marginStore(marginsData.hoy_rows || [], PONT)
+  const marginVielhaYear = marginStore(marginsData.year_rows || [], VIELHA)
+  const marginPontYear = marginStore(marginsData.year_rows || [], PONT)
+
+  const mobileSections = [
+    {
+      title: '1 · Ventas',
+      rows: [
+        { label: 'Hoy', vielhaValue: hoyVielhaImp, pontValue: hoyPontImp, vielhaCount: hoyVielhaCnt, pontCount: hoyPontCnt },
+        { label: 'Ayer', vielhaValue: ayerVielhaImp, pontValue: ayerPontImp, vielhaCount: ayerVielhaCnt, pontCount: ayerPontCnt },
+        { label: 'Quincena Actual', vielhaValue: qActVielhaImp, pontValue: qActPontImp, vielhaCount: qActVielhaCnt, pontCount: qActPontCnt, highlight: true },
+        { label: 'Quincena Anterior', vielhaValue: qAntVielhaImp, pontValue: qAntPontImp, vielhaCount: qAntVielhaCnt, pontCount: qAntPontCnt },
+        { label: 'Anteriores', vielhaValue: antVielhaImp, pontValue: antPontImp, vielhaCount: antVielhaCnt, pontCount: antPontCnt, muted: true },
+      ],
+    },
+    {
+      title: '2 · Facturas de Venta',
+      rows: [
+        { label: 'Quincena Actual', totalValue: factTotalImp('quincena_actual'), totalCount: factTotalCnt('quincena_actual'), totalOnly: true },
+        { label: 'Quincena Anterior', totalValue: factTotalImp('quincena_anterior'), totalCount: factTotalCnt('quincena_anterior'), totalOnly: true },
+        { label: `Año ${year}`, totalValue: factTotalImp('year'), totalCount: factTotalCnt('year'), totalOnly: true, highlight: true },
+        { label: 'Año Ant. (mismo período)', totalValue: factTotalImp('year_ant_periodo'), totalCount: factTotalCnt('year_ant_periodo'), totalOnly: true, muted: true },
+        { label: 'Año Anterior', totalValue: factTotalImp('year_anterior'), totalCount: factTotalCnt('year_anterior'), totalOnly: true, muted: true },
+      ],
+    },
+    {
+      title: '3 · Impagados y Pendientes de Cobro',
+      rows: [
+        { label: 'Impagados', vielhaValue: impVielhaImp, pontValue: impPontImp, vielhaCount: impVielhaCnt, pontCount: impPontCnt },
+        { label: 'Pendientes', vielhaValue: pendVielhaImp, pontValue: pendPontImp, vielhaCount: pendVielhaCnt, pontCount: pendPontCnt },
+        { label: 'Cartera Pendiente Total', totalValue: carteraImpagada, totalOnly: true },
+      ],
+    },
+    {
+      title: '4 · Márgenes Comerciales',
+      rows: [
+        { label: 'Hoy', subheader: true },
+        { label: 'Venta', vielhaValue: marginVielhaHoy.venta, pontValue: marginPontHoy.venta, totalValue: marginsHoy.venta },
+        { label: 'Coste', vielhaValue: marginVielhaHoy.coste, pontValue: marginPontHoy.coste, totalValue: marginsHoy.coste },
+        { label: 'Margen %', vielhaValue: marginVielhaHoy.margen_porcentaje, pontValue: marginPontHoy.margen_porcentaje, totalValue: marginsHoy.margen_porcentaje, format: 'pct' as const },
+        { label: `Año ${year}`, subheader: true },
+        { label: 'Venta', vielhaValue: marginVielhaYear.venta, pontValue: marginPontYear.venta, totalValue: marginsYear.venta },
+        { label: 'Coste', vielhaValue: marginVielhaYear.coste, pontValue: marginPontYear.coste, totalValue: marginsYear.coste },
+        { label: 'Margen %', vielhaValue: marginVielhaYear.margen_porcentaje, pontValue: marginPontYear.margen_porcentaje, totalValue: marginsYear.margen_porcentaje, format: 'pct' as const },
+      ],
+    },
+    {
+      title: '5 · Albaranes de Compra — Mes Actual',
+      rows: [
+        { label: 'Operaciones', totalValue: albTotalCnt, totalOnly: true, format: 'num' as const },
+        { label: 'Importe', vielhaValue: albVielhaImp, pontValue: albPontImp, totalValue: albTotalImp },
+      ],
+    },
+    {
+      title: '6 · Facturas de Compras y Gastos',
+      rows: [
+        { label: 'Mes Actual', totalValue: purchaseValue('mes_actual', 'importe'), totalCount: purchaseValue('mes_actual', 'count'), totalOnly: true, highlight: true },
+        { label: 'Mes Anterior', totalValue: purchaseValue('mes_anterior', 'importe'), totalCount: purchaseValue('mes_anterior', 'count'), totalOnly: true },
+        { label: 'Año Actual', totalValue: purchaseValue('year_actual', 'importe'), totalCount: purchaseValue('year_actual', 'count'), totalOnly: true, highlight: true },
+        { label: 'Año Ant. (mismo período)', totalValue: purchaseValue('year_anterior_periodo', 'importe'), totalCount: purchaseValue('year_anterior_periodo', 'count'), totalOnly: true, muted: true },
+      ],
+    },
+    {
+      title: '7 · Pagos Pendientes Proveedores',
+      rows: [
+        ...orderedPeriodos.map((p) => ({
+          label: p.periodo,
+          totalValue: p.importe,
+          totalCount: p.ops,
+          totalOnly: true as const,
+        })),
+        { label: 'Total Pagos', totalValue: payablesData.total_importe || 0, totalCount: payablesData.total_ops || 0, totalOnly: true },
+      ],
+    },
+  ]
+
   return (
     <div className="space-y-5 text-[#191c1e] text-sm max-w-7xl mx-auto">
       <div className="flex flex-col gap-1 border-b border-[#e1e2e6] pb-4">
@@ -225,7 +303,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       </div>
 
       {/* Tabla principal VIELHA | PONT | TOTAL */}
-      <div className="overflow-x-auto rounded-xl border border-[#e1e2e6] shadow-sm bg-white min-w-0">
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-[#e1e2e6] shadow-sm bg-white min-w-0">
         <div className="min-w-[768px]">
         <table className="w-full border-collapse text-sm md:text-base">
           <thead>
@@ -485,6 +563,8 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
         </table>
       </div>
       </div>
+
+      <ExecutiveMobileCards sections={mobileSections} />
 
       <p className="text-sm text-[#747878] font-medium px-1">
         Fuente: ERP INTEGRAL (SQL Server) · Sincronizado vía Supabase · Datos en tiempo real diferido · Sync {lastSync}

@@ -142,6 +142,13 @@ export default async function RentabilidadPage({ searchParams }: PageProps) {
     )
   }
 
+  const comparisonRows = [
+    { label: 'Venta neta', act: actVenta, prev: prevVenta, format: 'currency' as const },
+    { label: 'Coste de ventas', act: actCoste, prev: prevCoste, format: 'currency' as const, higherIsBetter: false },
+    { label: 'Margen bruto', act: actMargen, prev: prevMargen, format: 'currency' as const },
+    { label: 'Margen %', act: actMargenPct, prev: prevMargenPct, format: 'percent' as const },
+  ]
+
   return (
     <div className="space-y-6">
 
@@ -214,7 +221,7 @@ export default async function RentabilidadPage({ searchParams }: PageProps) {
             </p>
           )}
         </div>
-        <div className="overflow-x-auto">
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm md:text-base text-left">
             <thead className="text-[#747878] text-sm uppercase border-b border-[#e1e2e6]">
               <tr>
@@ -226,15 +233,10 @@ export default async function RentabilidadPage({ searchParams }: PageProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f2f3f7]">
-              {[
-                { label: 'Venta neta', act: actVenta, prev: prevVenta, format: 'currency' as const },
-                { label: 'Coste de ventas', act: actCoste, prev: prevCoste, format: 'currency' as const },
-                { label: 'Margen bruto', act: actMargen, prev: prevMargen, format: 'currency' as const },
-                { label: 'Margen %', act: actMargenPct, prev: prevMargenPct, format: 'percent' as const },
-              ].map((row) => {
+              {comparisonRows.map((row) => {
                 const diffValue = isComparable ? row.act - row.prev : null
                 const pct = isComparable && row.prev !== 0 ? ((row.act - row.prev) / row.prev) * 100 : null
-                const isFavorable = row.label === 'Coste de ventas' ? (diffValue ?? 0) <= 0 : (diffValue ?? 0) >= 0
+                const isFavorable = (row.higherIsBetter ?? true) ? (diffValue ?? 0) >= 0 : (diffValue ?? 0) <= 0
                 const colorClass = !isComparable ? 'text-[#747878]' : isFavorable ? 'text-emerald-600' : 'text-red-600'
                 const sign = diffValue != null && diffValue > 0 ? '+' : ''
                 const formattedDiff = diffValue != null
@@ -263,6 +265,45 @@ export default async function RentabilidadPage({ searchParams }: PageProps) {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Vista móvil de comparativa interanual */}
+        <div className="block sm:hidden space-y-3">
+          {comparisonRows.map((row) => {
+            const diffValue = isComparable ? row.act - row.prev : null
+            const pct = isComparable && row.prev !== 0 ? ((row.act - row.prev) / row.prev) * 100 : null
+            const isFavorable = (row.higherIsBetter ?? true) ? (diffValue ?? 0) >= 0 : (diffValue ?? 0) <= 0
+            const colorClass = !isComparable ? 'text-[#747878]' : isFavorable ? 'text-emerald-600' : 'text-red-600'
+            const sign = diffValue != null && diffValue > 0 ? '+' : ''
+            const formattedDiff = diffValue != null
+              ? (row.format === 'currency'
+                  ? `${sign}${currencyFormatter.format(diffValue)}`
+                  : `${sign}${diffValue.toFixed(2)} p.p.`)
+              : '—'
+            const formattedAct = row.format === 'currency' ? currencyFormatter.format(row.act) : `${row.act.toFixed(2)} %`
+            const formattedPrev = row.format === 'currency' ? currencyFormatter.format(row.prev) : `${row.prev.toFixed(2)} %`
+            const formattedPct = isComparable && pct != null ? `${pct > 0 ? '+' : ''}${pct.toFixed(1)} %` : '—'
+
+            return (
+              <div key={row.label} className="rounded-xl border border-[#e1e2e6] bg-white p-4 shadow-sm">
+                <div className="font-bold text-[#191c1e]">{row.label}</div>
+                <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
+                  <div className="text-right">
+                    <div className="text-xs text-[#747878]">Período actual</div>
+                    <div className="font-bold text-[#191c1e]">{formattedAct}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-[#747878]">Año anterior</div>
+                    <div className="font-medium text-[#747878]">{formattedPrev}</div>
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-[#f2f3f7] flex justify-between items-center">
+                  <span className={`text-sm font-bold ${colorClass}`}>{formattedDiff}</span>
+                  <span className={`text-sm font-bold ${colorClass}`}>{formattedPct}</span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
