@@ -2,9 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Calendar, Search, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
-export default function DashboardFilters() {
+interface DashboardFiltersProps {
+  basePath?: string
+}
+
+export default function DashboardFilters({ basePath = '/dashboard' }: DashboardFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -20,55 +24,57 @@ export default function DashboardFilters() {
   const handleFilter = (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
+
     const params = new URLSearchParams()
     params.set('year_from', yf)
     params.set('month_from', mf)
     params.set('year_to', yt)
     params.set('month_to', mt)
 
-    router.push(`/dashboard?${params.toString()}`)
-    setTimeout(() => setLoading(false), 800)
+    const hideStock = searchParams.get('hide_no_stock')
+    if (hideStock) {
+      params.set('hide_no_stock', hideStock)
+    }
+
+    router.push(`${basePath}?${params.toString()}`)
+    setTimeout(() => setLoading(false), 650)
   }
 
   return (
-    <form onSubmit={handleFilter} className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-900 bg-slate-900/20 p-4 backdrop-blur-md">
-      <div className="flex items-center space-x-2 text-slate-400">
-        <Calendar className="h-4 w-4" />
-        <span className="text-xs font-semibold uppercase tracking-wider">Período:</span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {/* Desde */}
+    <form onSubmit={handleFilter} className="flex flex-wrap gap-2 items-center">
+      <div className="flex items-center gap-1">
+        <label className="text-sm font-semibold text-[#747878] uppercase">Desde</label>
         <select
           value={yf}
           onChange={(e) => setYf(e.target.value)}
-          className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-indigo-500"
+          className="px-2 py-1.5 bg-white border border-[#e1e2e6] rounded-lg text-base text-[#191c1e] outline-none focus:ring-1 focus:ring-[#206393]"
         >
           {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
         <select
           value={mf}
           onChange={(e) => setMf(e.target.value)}
-          className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-indigo-500"
+          className="px-2 py-1.5 bg-white border border-[#e1e2e6] rounded-lg text-base text-[#191c1e] outline-none focus:ring-1 focus:ring-[#206393]"
         >
           {months.map(m => <option key={m} value={m}>{m.padStart(2, '0')}</option>)}
         </select>
+      </div>
 
-        <span className="text-xs text-slate-500">hasta</span>
+      <span className="text-[#747878] font-semibold">→</span>
 
-        {/* Hasta */}
+      <div className="flex items-center gap-1">
+        <label className="text-sm font-semibold text-[#747878] uppercase">Hasta</label>
         <select
           value={yt}
           onChange={(e) => setYt(e.target.value)}
-          className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-indigo-500"
+          className="px-2 py-1.5 bg-white border border-[#e1e2e6] rounded-lg text-base text-[#191c1e] outline-none focus:ring-1 focus:ring-[#206393]"
         >
           {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
         <select
           value={mt}
           onChange={(e) => setMt(e.target.value)}
-          className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-indigo-500"
+          className="px-2 py-1.5 bg-white border border-[#e1e2e6] rounded-lg text-base text-[#191c1e] outline-none focus:ring-1 focus:ring-[#206393]"
         >
           {months.map(m => <option key={m} value={m}>{m.padStart(2, '0')}</option>)}
         </select>
@@ -77,15 +83,16 @@ export default function DashboardFilters() {
       <button
         type="submit"
         disabled={loading}
-        className="flex items-center space-x-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md hover:shadow-indigo-500/20 hover:brightness-110 transition-all duration-200 active:scale-[0.97]"
+        className="p-2 bg-[#206393] text-white rounded-lg hover:bg-[#1a5078] transition-colors disabled:opacity-50 active:scale-[0.98]"
+        title="Aplicar"
       >
         {loading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="h-4.5 w-4.5 animate-spin" />
         ) : (
-          <>
-            <Search className="h-3.5 w-3.5" />
-            <span>Consultar</span>
-          </>
+          /* Icono de búsqueda SVG */
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
+          </svg>
         )}
       </button>
     </form>

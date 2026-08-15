@@ -1,13 +1,26 @@
 -- ====================================================================
 -- RIBERA ESTADÍSTICAS - ESQUEMA DE BASE DE DATOS DE REPORTING (SUPABASE)
 -- ====================================================================
+--
+-- ⚠️  ADVERTENCIA: ESTE SCRIPT ES DESTRUCTIVO.
+--
+-- Este archivo es una referencia de bootstrap / esquema completo para
+-- nuevos entornos. Contiene DROP TABLE ... CASCADE al inicio.
+--
+-- NO ejecutar en producción con datos existentes: borrará TODAS las
+-- tablas del esquema de reporting y sus dependencias.
+--
+-- Para entornos productivos, usar las migraciones idempotentes en
+-- database/migrations/ en lugar de este archivo.
+-- ====================================================================
 
 -- Habilitar extensión pgcrypto para UUIDs
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- --------------------------------------------------------------------
--- 1. LIMPIEZA DE TABLAS PREVIAS (Idempotencia)
+-- 1. LIMPIEZA DE TABLAS PREVIAS (DESTRUCTIVO - solo para bootstrap)
 -- --------------------------------------------------------------------
+DROP TABLE IF EXISTS receivables CASCADE;
 DROP TABLE IF EXISTS suppliers_reporting CASCADE;
 DROP TABLE IF EXISTS clients_reporting CASCADE;
 DROP TABLE IF EXISTS sales_lines CASCADE;
@@ -96,6 +109,29 @@ CREATE TABLE products_stock (
     PRIMARY KEY (batch_id, cod_articulo)
 );
 
+-- Vencimientos de Clientes / Cartera de Cobro (SNAPSHOT - batch_id primero en PK)
+CREATE TABLE receivables (
+    batch_id UUID NOT NULL,
+    cod_almacen VARCHAR(50),
+    cod_factura VARCHAR(50) NOT NULL,
+    tipo_factura INT NOT NULL,
+    cod_empresa VARCHAR(50) NOT NULL,
+    numero INT NOT NULL,
+    cod_cliente VARCHAR(50),
+    razon_social VARCHAR(255),
+    cif VARCHAR(50),
+    fecha_factura DATE,
+    fecha_vencimiento DATE,
+    importe NUMERIC(15, 6) DEFAULT 0.0,
+    importe_cobrado NUMERIC(15, 6) DEFAULT 0.0,
+    importe_pendiente NUMERIC(15, 6) DEFAULT 0.0,
+    cod_forma_liquidacion VARCHAR(50),
+    cod_remesa VARCHAR(50),
+    source_modified_at TIMESTAMP WITH TIME ZONE,
+    synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (batch_id, cod_factura, tipo_factura, cod_empresa, numero)
+);
+
 -- Histórico de Ventas Mensuales (INCREMENTAL - PK natural)
 CREATE TABLE stats_sales_monthly (
     year INT NOT NULL,
@@ -117,11 +153,12 @@ CREATE TABLE sales_headers (
     cod_almacen VARCHAR(50),
     cod_cliente VARCHAR(50),
     razon_social VARCHAR(255),
-    fecha_venta TIMESTAMP WITH TIME ZONE NOT NULL,
+    fecha_venta TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     cod_forma_liquidacion VARCHAR(50),
     cod_vendedor VARCHAR(50),
     nombre_vendedor VARCHAR(255),
     total_amount NUMERIC(15, 6) DEFAULT 0.0,
+    net_amount NUMERIC(15, 6),
     pending_amount NUMERIC(15, 6) DEFAULT 0.0,
     anulada BOOLEAN DEFAULT FALSE,
     source_modified_at TIMESTAMP WITH TIME ZONE,
@@ -178,6 +215,20 @@ CREATE TABLE suppliers_reporting (
     synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Helper: devuelve el batch_id activo para receivables
+CREATE OR REPLACE FUNCTION public.get_active_receivables_batch()
+RETURNS UUID
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path TO 'public'
+AS $$
+    SELECT active_batch_id
+    FROM public.sync_state
+    WHERE dataset = 'receivables'
+    LIMIT 1;
+$$;
+
 -- --------------------------------------------------------------------
 -- 3. HABILITACIÓN DE RLS (Row Level Security)
 -- --------------------------------------------------------------------
@@ -187,6 +238,7 @@ ALTER TABLE stats_kpis ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stats_warehouses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stats_sellers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products_stock ENABLE ROW LEVEL SECURITY;
+ALTER TABLE receivables ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stats_sales_monthly ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_headers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_lines ENABLE ROW LEVEL SECURITY;
@@ -218,11 +270,15 @@ CREATE POLICY select_stats_sellers ON stats_sellers
     FOR SELECT TO authenticated USING (true);
 
 -- products_stock
-CREATE POLICY select_products_stock ON products_stock 
+CREATE POLICY select_products_stock ON products_stock
+    FOR SELECT TO authenticated USING (true);
+
+-- receivables
+CREATE POLICY select_receivables ON receivables
     FOR SELECT TO authenticated USING (true);
 
 -- stats_sales_monthly
-CREATE POLICY select_stats_sales_monthly ON stats_sales_monthly 
+CREATE POLICY select_stats_sales_monthly ON stats_sales_monthly
     FOR SELECT TO authenticated USING (true);
 
 -- sales_headers
@@ -265,6 +321,13 @@ CREATE INDEX idx_sales_lines_documento ON sales_lines(cod_venta, tipo_venta, cod
 -- Filtros rápidos en la pantalla de Inventario (incluyen batch_id por ser tabla SNAPSHOT)
 CREATE INDEX idx_products_stock_minimo ON products_stock(batch_id, stock_total, stock_minimo) WHERE stock_total < stock_minimo;
 CREATE INDEX idx_products_stock_categoria ON products_stock(batch_id, cod_familia, cod_subfamilia);
+
+-- Filtros de cartera de cobro (incluyen batch_id por ser tabla SNAPSHOT)
+CREATE INDEX idx_receivables_almacen ON receivables(batch_id, cod_almacen);
+CREATE INDEX idx_receivables_forma_liquidacion ON receivables(batch_id, cod_forma_liquidacion);
+CREATE INDEX idx_receivables_remesa ON receivables(batch_id, cod_remesa) WHERE cod_remesa IS NULL;
+CREATE INDEX idx_receivables_vencimiento ON receivables(batch_id, fecha_vencimiento);
+CREATE INDEX idx_receivables_cliente ON receivables(batch_id, cod_cliente);
 
 -- Listados ordenados de Clientes y Proveedores
 CREATE INDEX idx_clients_reporting_spent ON clients_reporting(total_spent DESC);

@@ -1,0 +1,202 @@
+Line detail sample: [
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 5,
+    "precio": "20.000000",
+    "cantidad": "3.000000",
+    "precio_coste": "20.000000",
+    "line_total": "72.600000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 8,
+    "precio": "15.090000",
+    "cantidad": "25.000000",
+    "precio_coste": "5.826000",
+    "line_total": "349.210000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 10,
+    "precio": "20.000000",
+    "cantidad": "2.000000",
+    "precio_coste": "20.000000",
+    "line_total": "48.400000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 11,
+    "precio": "3.560000",
+    "cantidad": "540.000000",
+    "precio_coste": "1.924000",
+    "line_total": "1779.470000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 12,
+    "precio": "6.483000",
+    "cantidad": "8.000000",
+    "precio_coste": "2.503000",
+    "line_total": "50.200000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 13,
+    "precio": "7.397000",
+    "cantidad": "12.000000",
+    "precio_coste": "3.873000",
+    "line_total": "94.510000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 14,
+    "precio": "6.890000",
+    "cantidad": "12.000000",
+    "precio_coste": "6.052000",
+    "line_total": "100.040000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 15,
+    "precio": "20.400000",
+    "cantidad": "1.000000",
+    "precio_coste": "10.910000",
+    "line_total": "21.720000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 16,
+    "precio": "11.360000",
+    "cantidad": "1.000000",
+    "precio_coste": "5.331000",
+    "line_total": "12.100000"
+  },
+  {
+    "cod_venta": "26102175",
+    "tipo_venta": 5,
+    "total_amount": "2544.590000",
+    "linea": 17,
+    "precio": "7.672000",
+    "cantidad": "2.000000",
+    "precio_coste": "4.017000",
+    "line_total": "16.340000"
+  },
+  {
+    "cod_venta": "26102176",
+    "tipo_venta": 5,
+    "total_amount": "10.290000",
+    "linea": 0,
+    "precio": "10.630000",
+    "cantidad": "1.000000",
+    "precio_coste": "4.250000",
+    "line_total": "10.290000"
+  },
+  {
+    "cod_venta": "26102177",
+    "tipo_venta": 5,
+    "total_amount": "12.080000",
+    "linea": 0,
+    "precio": "7.319000",
+    "cantidad": "1.000000",
+    "precio_coste": "3.420000",
+    "line_total": "7.090000"
+  },
+  {
+    "cod_venta": "26102177",
+    "tipo_venta": 5,
+    "total_amount": "12.080000",
+    "linea": 1,
+    "precio": "4.579000",
+    "cantidad": "1.000000",
+    "precio_coste": "2.191000",
+    "line_total": "4.990000"
+  },
+  {
+    "cod_venta": "26102178",
+    "tipo_venta": 5,
+    "total_amount": "100.590000",
+    "linea": 0,
+    "precio": "7.534000",
+    "cantidad": "1.000000",
+    "precio_coste": "3.488000",
+    "line_total": "8.390000"
+  },
+  {
+    "cod_venta": "26102178",
+    "tipo_venta": 5,
+    "total_amount": "100.590000",
+    "linea": 1,
+    "precio": "8.400000",
+    "cantidad": "1.000000",
+    "precio_coste": "4.746000",
+    "line_total": "8.640000"
+  },
+  {
+    "cod_venta": "26102178",
+    "tipo_venta": 5,
+    "total_amount": "100.590000",
+    "linea": 2,
+    "precio": "1.651000",
+    "cantidad": "2.000000",
+    "precio_coste": "0.775000",
+    "line_total": "3.520000"
+  },
+  {
+    "cod_venta": "26102178",
+    "tipo_venta": 5,
+    "total_amount": "100.590000",
+    "linea": 3,
+    "precio": "1.672000",
+    "cantidad": "1.000000",
+    "precio_coste": "0.785000",
+    "line_total": "1.780000"
+  },
+  {
+    "cod_venta": "26102178",
+    "tipo_venta": 5,
+    "total_amount": "100.590000",
+    "linea": 4,
+    "precio": "3.362000",
+    "cantidad": "4.000000",
+    "precio_coste": "1.350000",
+    "line_total": "15.140000"
+  },
+  {
+    "cod_venta": "26102178",
+    "tipo_venta": 5,
+    "total_amount": "100.590000",
+    "linea": 5,
+    "precio": "2.259000",
+    "cantidad": "4.000000",
+    "precio_coste": "0.915000",
+    "line_total": "10.160000"
+  },
+  {
+    "cod_venta": "26102178",
+    "tipo_venta": 5,
+    "total_amount": "100.590000",
+    "linea": 6,
+    "precio": "1.346000",
+    "cantidad": "4.000000",
+    "precio_coste": "0.545000",
+    "line_total": "6.060000"
+  }
+]

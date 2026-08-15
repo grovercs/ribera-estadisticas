@@ -1,0 +1,373 @@
+
+=== get_store_dashboard_sales ===
+CREATE OR REPLACE FUNCTION public.get_store_dashboard_sales(p_year integer DEFAULT NULL::integer, p_anio_ant text DEFAULT 'todos'::text)
+ RETURNS json
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+    DECLARE
+        v_year int;
+        v_ultimo_dia date;
+        v_penultimo_dia date;
+        v_q_start date;
+        v_q_end date;
+        v_q_ant_start date;
+        v_q_ant_end date;
+        v_anio_base date;
+        res json;
+    BEGIN
+        v_year := COALESCE(p_year, EXTRACT(YEAR FROM CURRENT_DATE)::int);
+
+        SELECT MAX(fecha_venta) INTO v_ultimo_dia
+        FROM sales_headers
+        WHERE tipo_venta IN (2, 4, 5) AND anulada IS NOT TRUE;
+
+        IF v_ultimo_dia IS NULL THEN v_ultimo_dia := CURRENT_DATE; END IF;
+
+        SELECT MAX(fecha_venta) INTO v_penultimo_dia
+        FROM sales_headers
+        WHERE tipo_venta IN (2, 4, 5) AND anulada IS NOT TRUE AND fecha_venta < v_ultimo_dia;
+
+        IF v_penultimo_dia IS NULL THEN v_penultimo_dia := v_ultimo_dia - INTERVAL '1 day'; END IF;
+
+        -- Quincena actual
+        IF EXTRACT(DAY FROM CURRENT_DATE) >= 15 THEN
+            v_q_start := date_trunc('month', CURRENT_DATE)::date + 14;
+            v_q_end := (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month - 1 day')::date;
+            v_q_ant_start := date_trunc('month', CURRENT_DATE)::date;
+            v_q_ant_end := date_trunc('month', CURRENT_DATE)::date + 13;
+        ELSE
+            v_q_start := date_trunc('month', CURRENT_DATE)::date;
+            v_q_end := date_trunc('month', CURRENT_DATE)::date + 13;
+            v_q_ant_start := (date_trunc('month', CURRENT_DATE) - INTERVAL '1 month')::date + 14;
+            v_q_ant_end := (date_trunc('month', CURRENT_DATE) - INTERVAL '1 day')::date;
+        END IF;
+
+        IF p_anio_ant = 'todos' OR p_anio_ant IS NULL THEN
+            v_anio_base := '2000-01-01'::date;
+        ELSE
+            v_anio_base := make_date(v_year - p_anio_ant::int, 1, 1);
+        END IF;
+
+        SELECT json_build_object(
+            'ultimo_dia', v_ultimo_dia,
+            'penultimo_dia', v_penultimo_dia,
+            'hoy', (
+                SELECT json_agg(json_build_object('cod_almacen', cod_almacen, 'tickets', tickets, 'importe', importe_impuestos))
+                FROM (
+                    SELECT cod_almacen, COUNT(cod_venta) as tickets, SUM(total_amount) as importe_impuestos
+                    FROM sales_headers WHERE fecha_venta = v_ultimo_dia AND tipo_venta IN (2,4,5) AND anulada IS NOT TRUE
+                    GROUP BY cod_almacen
+                ) t
+            ),
+            'ayer', (
+                SELECT json_agg(json_build_object('cod_almacen', cod_almacen, 'tickets', tickets, 'importe', importe_impuestos))
+                FROM (
+                    SELECT cod_almacen, COUNT(cod_venta) as tickets, SUM(total_amount) as importe_impuestos
+                    FROM sales_headers WHERE fecha_venta = v_penultimo_dia AND tipo_venta IN (2,4,5) AND anulada IS NOT TRUE
+                    GROUP BY cod_almacen
+                ) t
+            ),
+            'quincena', (
+                SELECT json_agg(json_build_object('cod_almacen', cod_almacen, 'tickets', tickets, 'importe', importe_impuestos))
+                FROM (
+                    SELECT cod_almacen, COUNT(cod_venta) as tickets, SUM(total_amount) as importe_impuestos
+                    FROM sales_headers WHERE fecha_venta >= v_q_start AND fecha_venta <= v_q_end AND tipo_venta IN (2,4,5) AND anulada IS NOT TRUE
+                    GROUP BY cod_almacen
+                ) t
+            ),
+            'anteriores', (
+                SELECT json_agg(json_build_object('cod_almacen', cod_almacen, 'tickets', tickets, 'importe', importe_impuestos))
+                FROM (
+                    SELECT cod_almacen, COUNT(cod_venta) as tickets, SUM(total_amount) as importe_impuestos
+                    FROM sales_headers WHERE fecha_venta >= v_anio_base AND fecha_venta < v_q_start AND tipo_venta IN (2,4,5) AND anulada IS NOT TRUE
+                    GROUP BY cod_almacen
+                ) t
+            )
+        ) INTO res;
+
+        RETURN res;
+    END;
+    $function$
+
+
+=== get_store_dashboard_impagados ===
+CREATE OR REPLACE FUNCTION public.get_store_dashboard_impagados()
+ RETURNS json
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+    DECLARE
+        res json;
+    BEGIN
+        SELECT json_build_object(
+            'impagados_por_almacen', (
+                SELECT json_agg(json_build_object('cod_almacen', COALESCE(cod_almacen, 0), 'tickets', tickets, 'importe', importe))
+                FROM (
+                    SELECT cod_almacen, COUNT(*) as tickets, SUM(importe_pendiente) as importe
+                    FROM receivables
+                    WHERE cod_forma_liquidacion IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC')
+                    GROUP BY cod_almacen
+                ) t
+            ),
+            'pendientes_por_almacen', (
+                SELECT json_agg(json_build_object('cod_almacen', COALESCE(cod_almacen, 0), 'tickets', tickets, 'importe', importe))
+                FROM (
+                    SELECT cod_almacen, COUNT(*) as tickets, SUM(importe_pendiente) as importe
+                    FROM receivables
+                    WHERE cod_remesa IS NULL AND cod_forma_liquidacion NOT IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC')
+                    GROUP BY cod_almacen
+                ) t
+            )
+        ) INTO res;
+
+        RETURN res;
+    END;
+    $function$
+
+
+=== get_store_dashboard_payables ===
+CREATE OR REPLACE FUNCTION public.get_store_dashboard_payables()
+ RETURNS json
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+    DECLARE
+        res json;
+    BEGIN
+        SELECT json_build_object(
+            'periodos', (
+                SELECT json_agg(json_build_object('periodo', periodo, 'importe', total_pendiente))
+                FROM (
+                    SELECT periodo, SUM(importe_pendiente) as total_pendiente
+                    FROM vendor_payables
+                    GROUP BY periodo
+                ) t
+            ),
+            'total', (
+                SELECT COALESCE(SUM(importe_pendiente), 0) FROM vendor_payables
+            )
+        ) INTO res;
+
+        RETURN res;
+    END;
+    $function$
+
+
+=== get_store_dashboard_purchases_periods ===
+CREATE OR REPLACE FUNCTION public.get_store_dashboard_purchases_periods(p_year integer DEFAULT NULL::integer)
+ RETURNS json
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+    DECLARE
+        v_year int;
+        v_year_prev int;
+        v_ref_date date;
+        v_yant_start date;
+        v_yant_end date;
+        res json;
+    BEGIN
+        v_year := COALESCE(p_year, EXTRACT(YEAR FROM CURRENT_DATE)::int);
+        v_year_prev := v_year - 1;
+
+        v_ref_date := CURRENT_DATE;
+        v_yant_start := make_date(v_year_prev, 1, 1);
+        v_yant_end := make_date(v_year_prev, EXTRACT(MONTH FROM v_ref_date)::int, EXTRACT(DAY FROM v_ref_date)::int);
+
+        SELECT json_build_object(
+            'mes_actual', (
+                SELECT json_build_object('count', COALESCE(SUM(num_facturas), 0), 'importe', COALESCE(SUM(total_con_iva), 0))
+                FROM purchases_invoices_daily_summary
+                WHERE EXTRACT(YEAR FROM fecha_factura) = v_year AND EXTRACT(MONTH FROM fecha_factura) = EXTRACT(MONTH FROM v_ref_date)
+            ),
+            'mes_anterior', (
+                SELECT json_build_object('count', COALESCE(SUM(num_facturas), 0), 'importe', COALESCE(SUM(total_con_iva), 0))
+                FROM purchases_invoices_daily_summary
+                WHERE fecha_factura >= date_trunc('month', v_ref_date - INTERVAL '1 month')::date
+                  AND fecha_factura < date_trunc('month', v_ref_date)::date
+            ),
+            'year_actual', (
+                SELECT json_build_object('count', COALESCE(SUM(num_facturas), 0), 'importe', COALESCE(SUM(total_con_iva), 0))
+                FROM purchases_invoices_daily_summary
+                WHERE EXTRACT(YEAR FROM fecha_factura) = v_year
+            ),
+            'year_anterior_periodo', (
+                SELECT json_build_object('count', COALESCE(SUM(num_facturas), 0), 'importe', COALESCE(SUM(total_con_iva), 0))
+                FROM purchases_invoices_daily_summary
+                WHERE fecha_factura >= v_yant_start AND fecha_factura <= v_yant_end
+            ),
+            'year_anterior', (
+                SELECT json_build_object('count', COALESCE(SUM(num_facturas), 0), 'importe', COALESCE(SUM(total_con_iva), 0))
+                FROM purchases_invoices_daily_summary
+                WHERE EXTRACT(YEAR FROM fecha_factura) = v_year_prev
+            )
+        ) INTO res;
+
+        RETURN res;
+    END;
+    $function$
+
+
+=== get_store_dashboard_albaranes ===
+CREATE OR REPLACE FUNCTION public.get_store_dashboard_albaranes(p_year integer DEFAULT NULL::integer)
+ RETURNS json
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+    DECLARE
+        v_year int;
+        v_month int;
+        res json;
+    BEGIN
+        v_year := COALESCE(p_year, EXTRACT(YEAR FROM CURRENT_DATE)::int);
+        v_month := EXTRACT(MONTH FROM CURRENT_DATE)::int;
+
+        SELECT json_agg(json_build_object(
+            'cod_almacen', cod_almacen,
+            'albaranes', num_albaranes,
+            'importe', total_importe
+        )) INTO res
+        FROM purchases_albaranes_summary
+        WHERE year = v_year AND month = v_month;
+
+        RETURN COALESCE(res, '[]'::json);
+    END;
+    $function$
+
+
+=== get_dashboard_sales_by_warehouse ===
+CREATE OR REPLACE FUNCTION public.get_dashboard_sales_by_warehouse(p_year_from integer, p_month_from integer, p_year_to integer, p_month_to integer)
+ RETURNS TABLE(cod_almacen character varying, orders_count bigint, total_sales numeric)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+    BEGIN
+        IF p_year_from < 2012 OR p_year_to > 2030 OR p_month_from < 1 OR p_month_from > 12 OR p_month_to < 1 OR p_month_to > 12 THEN
+            RAISE EXCEPTION 'Parámetros de fecha fuera de rango';
+        END IF;
+
+        RETURN QUERY
+        WITH combined AS (
+            SELECT w.cod_almacen, w.orders_count::bigint as orders, w.total_sales as sales
+            FROM stats_historical_warehouses w
+            WHERE (w.year > p_year_from OR (w.year = p_year_from AND w.month >= p_month_from))
+              AND (w.year < p_year_to OR (w.year = p_year_to AND w.month <= p_month_to))
+              AND w.year < 2025
+            UNION ALL
+            SELECT h.cod_almacen, COUNT(*)::bigint as orders, SUM(h.total_amount) as sales
+            FROM sales_headers h
+            WHERE (EXTRACT(YEAR FROM h.fecha_venta) > p_year_from OR (EXTRACT(YEAR FROM h.fecha_venta) = p_year_from AND EXTRACT(MONTH FROM h.fecha_venta) >= p_month_from))
+              AND (EXTRACT(YEAR FROM h.fecha_venta) < p_year_to OR (EXTRACT(YEAR FROM h.fecha_venta) = p_year_to AND EXTRACT(MONTH FROM h.fecha_venta) <= p_month_to))
+              AND EXTRACT(YEAR FROM h.fecha_venta) >= 2025
+              AND h.anulada = false
+              AND h.cod_almacen IS NOT NULL AND h.cod_almacen <> ''
+            GROUP BY h.cod_almacen
+        )
+        SELECT 
+            c.cod_almacen::varchar,
+            SUM(c.orders)::bigint,
+            SUM(c.sales)
+        FROM combined c
+        GROUP BY c.cod_almacen
+        ORDER BY SUM(c.sales) DESC;
+    END;
+    $function$
+
+
+=== get_dashboard_sales_evolution ===
+CREATE OR REPLACE FUNCTION public.get_dashboard_sales_evolution(p_year_from integer, p_month_from integer, p_year_to integer, p_month_to integer)
+ RETURNS TABLE(year integer, month integer, total_sales numeric, prev_total_sales numeric)
+ LANGUAGE plpgsql
+ SET search_path TO 'public'
+AS $function$
+    BEGIN
+        IF p_year_from < 2012 OR p_year_to > 2030 OR p_month_from < 1 OR p_month_from > 12 OR p_month_to < 1 OR p_month_to > 12 THEN
+            RAISE EXCEPTION 'Parámetros de fecha fuera de rango';
+        END IF;
+
+        RETURN QUERY
+        WITH range_months AS (
+            SELECT y, m
+            FROM (
+                SELECT DISTINCT EXTRACT(YEAR FROM g)::int as y, EXTRACT(MONTH FROM g)::int as m
+                FROM generate_series(
+                    (p_year_from || '-' || p_month_from || '-01')::date,
+                    (p_year_to || '-' || p_month_to || '-01')::date,
+                    '1 month'::interval
+                ) g
+            ) t
+        ),
+        current_data AS (
+            SELECT stats_historical_kpis.year as y, stats_historical_kpis.month as m, revenue as val
+            FROM stats_historical_kpis
+            WHERE stats_historical_kpis.year < 2025
+            UNION ALL
+            SELECT EXTRACT(YEAR FROM fecha_venta)::int as y, EXTRACT(MONTH FROM fecha_venta)::int as m, SUM(total_amount) as val
+            FROM sales_headers
+            WHERE EXTRACT(YEAR FROM fecha_venta) >= 2025 AND anulada = false
+            GROUP BY y, m
+        ),
+        prev_data AS (
+            SELECT (stats_historical_kpis.year + 1) as y, stats_historical_kpis.month as m, revenue as val
+            FROM stats_historical_kpis
+            WHERE (stats_historical_kpis.year + 1) < 2025
+            UNION ALL
+            SELECT (EXTRACT(YEAR FROM fecha_venta) + 1)::int as y, EXTRACT(MONTH FROM fecha_venta)::int as m, SUM(total_amount) as val
+            FROM sales_headers
+            WHERE (EXTRACT(YEAR FROM fecha_venta) + 1) >= 2025 AND anulada = false
+            GROUP BY y, m
+        )
+        SELECT 
+            rm.y as year, 
+            rm.m as month,
+            COALESCE(c.val, 0.0),
+            COALESCE(p.val, 0.0)
+        FROM range_months rm
+        LEFT JOIN current_data c ON rm.y = c.y AND rm.m = c.m
+        LEFT JOIN prev_data p ON rm.y = p.y AND rm.m = p.m
+        ORDER BY year ASC, month ASC;
+    END;
+    $function$
+
+
+=== get_receivables_summary ===
+CREATE OR REPLACE FUNCTION public.get_receivables_summary(p_ref_date date DEFAULT CURRENT_DATE)
+ RETURNS TABLE(pendiente_total numeric, vencido_total numeric, no_vencido_total numeric, abonos_pendientes numeric, pct_vencido numeric, num_deudores integer, num_vencimientos_activos integer, num_vencimientos_totales integer)
+ LANGUAGE plpgsql
+ STABLE
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+    v_batch TEXT;
+BEGIN
+    v_batch := public.get_active_receivables_batch();
+
+    RETURN QUERY
+    WITH base AS (
+        SELECT 
+            r.importe_pendiente,
+            r.fecha_vencimiento,
+            r.cod_cliente
+        FROM public.receivables r
+        WHERE r.batch_id = v_batch
+    )
+    SELECT
+        ROUND(COALESCE(SUM(b.importe_pendiente), 0), 2) AS pendiente_total,
+        ROUND(COALESCE(SUM(CASE WHEN b.fecha_vencimiento <= p_ref_date AND b.importe_pendiente > 0 THEN b.importe_pendiente ELSE 0 END), 0), 2) AS vencido_total,
+        ROUND(COALESCE(SUM(CASE WHEN b.fecha_vencimiento > p_ref_date AND b.importe_pendiente > 0 THEN b.importe_pendiente ELSE 0 END), 0), 2) AS no_vencido_total,
+        ROUND(COALESCE(SUM(CASE WHEN b.importe_pendiente < 0 THEN b.importe_pendiente ELSE 0 END), 0), 2) AS abonos_pendientes,
+        ROUND(
+            CASE 
+                WHEN COALESCE(SUM(CASE WHEN b.importe_pendiente > 0 THEN b.importe_pendiente ELSE 0 END), 0) > 0 
+                THEN (COALESCE(SUM(CASE WHEN b.fecha_vencimiento <= p_ref_date AND b.importe_pendiente > 0 THEN b.importe_pendiente ELSE 0 END), 0) / COALESCE(SUM(CASE WHEN b.importe_pendiente > 0 THEN b.importe_pendiente ELSE 0 END), 1)) * 100.0
+                ELSE 0 
+            END, 2
+        ) AS pct_vencido,
+        COUNT(DISTINCT CASE WHEN b.importe_pendiente > 0.001 THEN b.cod_cliente ELSE NULL END)::INT AS num_deudores,
+        COUNT(CASE WHEN ABS(b.importe_pendiente) > 0.001 THEN 1 ELSE NULL END)::INT AS num_vencimientos_activos,
+        COUNT(*)::INT AS num_vencimientos_totales
+    FROM base b;
+END;
+$function$
+

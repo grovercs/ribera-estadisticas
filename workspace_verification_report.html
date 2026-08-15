@@ -1,0 +1,724 @@
+<title>Verificación de Workspace</title>
+<style>
+  :root {
+    --bg-ground: #f4f6f8;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f8fafc;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --accent: #206393;
+    --accent-light: #e3eaf1;
+    --border: #e1e2e6;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --risk: #ef4444;
+    --risk-bg: #fef2f2;
+    --info: #3b82f6;
+    --info-bg: #eff6ff;
+    --radius: 12px;
+    --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg-ground: #0f172a;
+      --bg-surface: #1e293b;
+      --bg-elevated: #162032;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent: #60a5fa;
+      --accent-light: #1e3a5f;
+      --border: #334155;
+      --success: #34d399;
+      --success-bg: #064e3b;
+      --warning: #fbbf24;
+      --warning-bg: #451a03;
+      --risk: #f87171;
+      --risk-bg: #450a0a;
+      --info: #60a5fa;
+      --info-bg: #172554;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg-ground: #0f172a;
+    --bg-surface: #1e293b;
+    --bg-elevated: #162032;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --accent: #60a5fa;
+    --accent-light: #1e3a5f;
+    --border: #334155;
+    --success: #34d399;
+    --success-bg: #064e3b;
+    --warning: #fbbf24;
+    --warning-bg: #451a03;
+    --risk: #f87171;
+    --risk-bg: #450a0a;
+    --info: #60a5fa;
+    --info-bg: #172554;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg-ground);
+    color: var(--text-primary);
+    line-height: 1.55;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px;
+  }
+
+  header {
+    margin-bottom: 32px;
+  }
+
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1.15;
+    margin: 0 0 12px 0;
+    color: var(--text-primary);
+    text-wrap: balance;
+  }
+
+  .subtitle {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    font-size: 0.875rem;
+  }
+
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .meta-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  .meta-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  section {
+    margin-bottom: 32px;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  h2 .icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.9rem;
+  }
+
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+  }
+
+  .lead {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin: 0 0 16px 0;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+
+  .summary-pill {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .summary-pill .number {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .summary-pill .label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    box-shadow: var(--shadow);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    background: var(--bg-elevated);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  td {
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  code, .mono {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.85em;
+    background: var(--bg-elevated);
+    padding: 2px 5px;
+    border-radius: 4px;
+    color: var(--text-primary);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+
+  .badge-success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .badge-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .badge-risk {
+    background: var(--risk-bg);
+    color: var(--risk);
+  }
+
+  .badge-info {
+    background: var(--info-bg);
+    color: var(--info);
+  }
+
+  .badge-muted {
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .findings-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .finding {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+
+  .finding-severity {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .finding-body {
+    flex: 1;
+  }
+
+  .finding-title {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .finding-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .recommendations {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .rec {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-elevated);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .rec-number {
+    flex-shrink: 0;
+    font-weight: 800;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rec-text {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .code-block {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+
+  .code-block code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .note {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    margin-top: 32px;
+  }
+
+  @media (max-width: 640px) {
+    .container {
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+    }
+
+    .meta-bar {
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
+
+<div class="container">
+  <header>
+    <div class="eyebrow">Ribera Estadísticas · Informe Técnico</div>
+    <h1>Verificación de Workspace</h1>
+    <p class="subtitle">Revisión de solo lectura del estado actual del repositorio, la migración a Supabase y el frontend Next.js.</p>
+
+    <div class="meta-bar">
+      <div class="meta-item">
+        <span class="meta-label">Rama</span>
+        <span class="meta-value">master</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Fecha de revisión</span>
+        <span class="meta-value">2026-08-14</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Commit más reciente</span>
+        <span class="meta-value">3de0935 — Merge branch 'sync-local-2026-08-10'</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Archivos modificados</span>
+        <span class="meta-value">1 tracked</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Archivos sin trackear</span>
+        <span class="meta-value">18 untracked</span>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="icon">📋</span>Resumen ejecutivo</h2>
+    <div class="card">
+      <p class="lead">El workspace contiene el proyecto Laravel <strong>Ribera Estadísticas</strong> en medio de una migración hacia una arquitectura serverless: Supabase como base de datos de reporting, un comando Artisan local como sincronizador, y un frontend Next.js alojado en <code>frontend/</code>. La mayoría del trabajo de infraestructura está presente, pero hay inconsistencias de esquema y de paridad económica que deben resolverse antes de desplegar.</p>
+      <div class="summary-grid">
+        <div class="summary-pill">
+          <span class="number">18</span>
+          <span class="label">Nuevos archivos</span>
+        </div>
+        <div class="summary-pill">
+          <span class="number">1</span>
+          <span class="label">Archivo modificado</span>
+        </div>
+        <div class="summary-pill">
+          <span class="number">7</span>
+          <span class="label">RPCs en scratch</span>
+        </div>
+        <div class="summary-pill">
+          <span class="number">9</span>
+          <span class="label">Datasets sync</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="icon">🗂️</span>Estado del repositorio</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Estado</th>
+            <th>Ruta</th>
+            <th>Observación</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-warning"><span class="status-dot" style="background:currentColor"></span> Modified</span></td>
+            <td><code>config/database.php</code></td>
+            <td>Se añadió la conexión <code>supabase</code> como PostgreSQL con <code>sslmode=require</code>.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info"><span class="status-dot" style="background:currentColor"></span> New</span></td>
+            <td><code>app/Console/Commands/RiberaSyncToSupabase.php</code></td>
+            <td>Comando Artisan <code>ribera:sync-to-supabase</code> con 9 datasets, estrategias snapshot e incremental.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info"><span class="status-dot" style="background:currentColor"></span> New</span></td>
+            <td><code>database/supabase_schema.sql</code></td>
+            <td>DDL de tablas de reporting, RLS e índices para Supabase.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info"><span class="status-dot" style="background:currentColor"></span> New</span></td>
+            <td><code>frontend/</code></td>
+            <td>Aplicación Next.js 16.3 con App Router, Supabase SSR, Tailwind 4 y Chart.js.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info"><span class="status-dot" style="background:currentColor"></span> New</span></td>
+            <td><code>scratch/rpc_*.sql</code></td>
+            <td>7 funciones PostgreSQL para agregaciones de dashboard (ventas, márgenes, impagados, pagos).</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-info"><span class="status-dot" style="background:currentColor"></span> New</span></td>
+            <td><code>scratch/deploy_and_validate_net_margins.php</code></td>
+            <td>Script de despliegue y validación de paridad de márgenes.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-muted"><span class="status-dot" style="background:currentColor"></span> New</span></td>
+            <td><code>implementation_plan*.md</code></td>
+            <td>4 planes de implementación (evolución de la estrategia de migración).</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-muted"><span class="status-dot" style="background:currentColor"></span> New</span></td>
+            <td><code>nuevo1.txt</code>, <code>encargo maestro.txt</code></td>
+            <td>Archivos de notas sin extensión estándar; revisar si deben ignorarse o eliminarse.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="icon">🏗️</span>Arquitectura y progreso</h2>
+    <div class="card">
+      <p class="lead">La migración está estructurada en 6 fases. El trabajo completado cubre las fases 1 y 2 en gran medida; el frontend está en desarrollo activo y la validación de paridad económica está en curso.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fase</th>
+              <th>Estado</th>
+              <th>Evidencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>FASE 0 — Auditoría</td>
+              <td><span class="badge badge-success">Completada</span></td>
+              <td>Volumetría real del ERP documentada en <code>implementation_plan4.md</code>: ~1,37 M cabeceras y ~3,8 M líneas.</td>
+            </tr>
+            <tr>
+              <td>FASE 1 — Supabase</td>
+              <td><span class="badge badge-success">Completada</span></td>
+              <td>DDL, RLS e índices definidos en <code>database/supabase_schema.sql</code>.</td>
+            </tr>
+            <tr>
+              <td>FASE 2 — Sincronizador</td>
+              <td><span class="badge badge-success">Implementado</span></td>
+              <td>Comando <code>ribera:sync-to-supabase</code> con snapshot, incremental y borrados físicos.</td>
+            </tr>
+            <tr>
+              <td>FASE 3 — Paridad de datos</td>
+              <td><span class="badge badge-warning">En curso</span></td>
+              <td>Scripts de validación en <code>scratch/</code>; se detectan tablas referenciadas por RPC que faltan en el esquema.</td>
+            </tr>
+            <tr>
+              <td>FASE 4 — Frontend</td>
+              <td><span class="badge badge-warning">En curso</span></td>
+              <td>Next.js con login, layout protegido y dashboard de Cuadro de Dirección renderizado.</td>
+            </tr>
+            <tr>
+              <td>FASE 5 — Netlify Preview</td>
+              <td><span class="badge badge-muted">Pendiente</span></td>
+              <td>No se detecta config de despliegue (<code>netlify.toml</code> ni adaptador estático).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="icon">🔍</span>Hallazgos y riesgos</h2>
+    <div class="card">
+      <ul class="findings-list">
+        <li class="finding">
+          <div class="finding-severity"><span class="badge badge-risk">Crítico</span></div>
+          <div class="finding-body">
+            <div class="finding-title">Tablas ausentes referenciadas por RPC</div>
+            <p class="finding-desc">Las funciones <code>get_store_dashboard_impagados</code> y <code>get_store_dashboard_payables</code> leen de <code>receivables</code> y <code>vendor_payables</code>, que no existen en <code>database/supabase_schema.sql</code>. El dashboard de Next.js invoca ambas RPC, por lo que fallará en producción.</p>
+          </div>
+        </li>
+        <li class="finding">
+          <div class="finding-severity"><span class="badge badge-risk">Crítico</span></div>
+          <div class="finding-body">
+            <div class="finding-title">Tablas históricas no declaradas en el esquema</div>
+            <p class="finding-desc">El método <code>syncHistorical()</code> inserta en <code>stats_historical_kpis</code>, <code>stats_historical_sellers</code>, <code>stats_historical_warehouses</code>, <code>stats_historical_families</code>, <code>stats_historical_clients</code> y <code>stats_historical_products</code>, ninguna de las cuales aparece en el DDL de Supabase.</p>
+          </div>
+        </li>
+        <li class="finding">
+          <div class="finding-severity"><span class="badge badge-warning">Alto</span></div>
+          <div class="finding-body">
+            <div class="finding-title">Discrepancia de base imponible vs. importe con IVA</div>
+            <p class="finding-desc">El dashboard Laravel usa <code>importe_impuestos</code> (con IVA) para KPIs de venta. Las RPC de márgenes usan <code>net_amount</code> (sin IVA). La comparación directa entre dashboards puede no cuadrar al céntimo si no se documenta la diferencia conceptual.</p>
+          </div>
+        </li>
+        <li class="finding">
+          <div class="finding-severity"><span class="badge badge-warning">Alto</span></div>
+          <div class="finding-body">
+            <div class="finding-title">Clave de Supabase con formato no estándar</div>
+            <p class="finding-desc"><code>frontend/.env.local</code> contiene una <code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code> con prefijo <code>sb_publishable_</code>. Las claves JWT reales de Supabase comienzan con <code>eyJ</code>. Verificar si es un placeholder o una clave válida.</p>
+          </div>
+        </li>
+        <li class="finding">
+          <div class="finding-severity"><span class="badge badge-warning">Medio</span></div>
+          <div class="finding-body">
+            <div class="finding-title">Scratch desordenado y potencialmente sensible</div>
+            <p class="finding-desc">Existen más de 100 scripts de investigación en <code>scratch/</code>, algunos con rutas absolutas, CSVs y logs. Deben limpiarse antes de producción o añadirse a <code>.gitignore</code>.</p>
+          </div>
+        </li>
+        <li class="finding">
+          <div class="finding-severity"><span class="badge badge-warning">Medio</span></div>
+          <div class="finding-body">
+            <div class="finding-title">Dependencia de fechas del sistema en el sincronizador</div>
+            <p class="finding-desc"><code>syncSales()</code> usa <code>date('Y')</code> y <code>strtotime($row->fecha_venta)</code> para decidir recálculos históricos. Si <code>fecha_venta</code> es nula o inválida, puede generar advertencias o recálculos incorrectos.</p>
+          </div>
+        </li>
+        <li class="finding">
+          <div class="finding-severity"><span class="badge badge-info">Bajo</span></div>
+          <div class="finding-body">
+            <div class="finding-title">Tests automatizados no visibles</div>
+            <p class="finding-desc">No se encontraron tests unitarios ni de integración para el sincronizador ni para las RPC. Se recomienda añadir tests de paridad numérica.</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="icon">✅</span>Recomendaciones priorizadas</h2>
+    <div class="card">
+      <div class="recommendations">
+        <div class="rec">
+          <span class="rec-number">1</span>
+          <span class="rec-text"><strong>Completar el esquema Supabase:</strong> añadir las tablas <code>receivables</code>, <code>vendor_payables</code> y las <code>stats_historical_*</code> al DDL, con sus índices y políticas RLS.</span>
+        </div>
+        <div class="rec">
+          <span class="rec-number">2</span>
+          <span class="rec-text"><strong>Documentar la base de cálculo:</strong> decidir si los KPIs de ventas se reportan con o sin IVA y alinear tanto el sincronizador, las RPC y el frontend.</span>
+        </div>
+        <div class="rec">
+          <span class="rec-number">3</span>
+          <span class="rec-text"><strong>Validar credenciales de Supabase:</strong> confirmar que la publishable key del frontend es válida y rotarla si es un placeholder.</span>
+        </div>
+        <div class="rec">
+          <span class="rec-number">4</span>
+          <span class="rec-text"><strong>Refactorizar <code>syncHistorical()</code>:</strong> separar la carga histórica en métodos más pequeños y asegurar que las tablas destino existen antes de ejecutar upserts.</span>
+        </div>
+        <div class="rec">
+          <span class="rec-number">5</span>
+          <span class="rec-text"><strong>Limpiar <code>scratch/</code>:</strong> conservar solo scripts reutilizables y de documentación; mover datos temporales a <code>.gitignore</code> o eliminarlos.</span>
+        </div>
+        <div class="rec">
+          <span class="rec-number">6</span>
+          <span class="rec-text"><strong>Añadir tests de paridad:</strong> automatizar la comparación de totales entre SQL Server y Supabase con tolerancia 0,00 € para los rangos críticos.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="icon">📎</span>Detalle de archivos clave</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Archivo</th>
+            <th>Rol</th>
+            <th>Líneas aprox.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>app/Console/Commands/RiberaSyncToSupabase.php</code></td>
+            <td>Sincronizador ERP → Supabase</td>
+            <td class="mono">1.438</td>
+          </tr>
+          <tr>
+            <td><code>database/supabase_schema.sql</code></td>
+            <td>Esquema de reporting en PostgreSQL</td>
+            <td class="mono">273</td>
+          </tr>
+          <tr>
+            <td><code>frontend/src/app/dashboard/page.tsx</code></td>
+            <td>Página Cuadro de Dirección (Server Component)</td>
+            <td class="mono">492</td>
+          </tr>
+          <tr>
+            <td><code>frontend/src/lib/supabase/server.ts</code></td>
+            <td>Cliente SSR con cookies</td>
+            <td class="mono">28</td>
+          </tr>
+          <tr>
+            <td><code>config/database.php</code></td>
+            <td>Conexiones mysql, erp y supabase</td>
+            <td class="mono">215</td>
+          </tr>
+          <tr>
+            <td><code>app/Http/Controllers/StoreDashboardController.php</code></td>
+            <td>Dashboard Laravel actual (referencia de paridad)</td>
+            <td class="mono">1.020</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="note">Este informe es de <strong>solo lectura</strong>. No se han realizado cambios en el workspace. La verificación se basa en el contenido actual de <code>master</code> y los archivos untracked/modified existentes.</p>
+</div>

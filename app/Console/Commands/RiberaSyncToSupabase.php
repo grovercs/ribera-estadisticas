@@ -19,14 +19,15 @@ class RiberaSyncToSupabase extends Command
     {
         $dataset = $this->argument('dataset');
         $availableDatasets = [
-            'kpis', 
-            'warehouses', 
-            'sellers', 
-            'stock', 
-            'clients', 
-            'suppliers', 
-            'monthly_history', 
+            'kpis',
+            'warehouses',
+            'sellers',
+            'stock',
+            'clients',
+            'suppliers',
+            'monthly_history',
             'sales',
+            'receivables',
             'historical'
         ];
 
@@ -57,6 +58,7 @@ class RiberaSyncToSupabase extends Command
                     'suppliers' => $this->syncSuppliers($runId),
                     'monthly_history' => $this->syncMonthlyHistory($runId),
                     'sales' => $this->syncSales($runId),
+                    'receivables' => $this->syncReceivables($runId),
                     'historical' => $this->syncHistorical($runId),
                     default => 0
                 };
@@ -104,7 +106,8 @@ class RiberaSyncToSupabase extends Command
     }
 
     /**
-     * Helper para parsear fechas locales de Madrid y convertirlas a UTC para Supabase
+     * Helper para parsear fechas locales de Madrid y convertirlas a UTC para Supabase.
+     * Usar para marcas temporales reales (modificaciones, altas).
      */
     private function parseDateToUtc(?string $dateStr): ?string
     {
@@ -127,6 +130,29 @@ class RiberaSyncToSupabase extends Command
                     ->toDateTimeString();
             }
         }
+    }
+
+    /**
+     * Helper para fechas de negocio (ej. fecha_venta) que conceptualmente son locales.
+     * Se almacenan como TIMESTAMP WITHOUT TIME ZONE para que dia/mes/año coincidan
+     * con las consultas del ERP original.
+     */
+    private function parseLocalDate(?string $dateStr): ?string
+    {
+        if (!$dateStr) {
+            return null;
+        }
+        // SQL Server devuelve 'Y-m-d H:i:s.u' o 'Y-m-d H:i:s'. Nos quedamos con la
+        // parte local sin desplazar la zona horaria.
+        $clean = substr($dateStr, 0, 19);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $clean)) {
+            try {
+                return Carbon::parse($dateStr, 'Europe/Madrid')->toDateTimeString();
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+        return $clean;
     }
 
     /**
@@ -760,7 +786,7 @@ class RiberaSyncToSupabase extends Command
         // Determinar condiciones de rango de fechas de venta
         $querySql = "
             SELECT 
-                cod_venta, tipo_venta, cod_empresa, cod_caja, cod_almacen, cod_cliente, razon_social, fecha_venta, cod_forma_liquidacion, cod_vendedor, nombre_vendedor, importe_impuestos as total_amount, importe_pendiente as pending_amount, anulada, fecha_modificacion
+                cod_venta, tipo_venta, cod_empresa, cod_caja, cod_almacen, cod_cliente, razon_social, fecha_venta, cod_forma_liquidacion, cod_vendedor, nombre_vendedor, importe as net_amount, importe_impuestos as total_amount, importe_pendiente as pending_amount, anulada, fecha_modificacion
             FROM hist_ventas_cabecera
             WHERE tipo_venta IN (2, 4, 5)
         ";
@@ -794,7 +820,7 @@ class RiberaSyncToSupabase extends Command
         $headerChunk = [];
 
         while ($row = $stmt->fetch(\PDO::FETCH_OBJ)) {
-            $fechaVentaUtc = $this->parseDateToUtc($row->fecha_venta);
+            $fechaVentaLocal = $this->parseLocalDate($row->fecha_venta);
             $modifiedAtUtc = $this->parseDateToUtc($row->fecha_modificacion);
 
             $headerChunk[] = [
@@ -805,10 +831,11 @@ class RiberaSyncToSupabase extends Command
                 'cod_almacen' => $row->cod_almacen ? trim($row->cod_almacen) : null,
                 'cod_cliente' => $row->cod_cliente ? trim($row->cod_cliente) : null,
                 'razon_social' => $row->razon_social ? trim($row->razon_social) : null,
-                'fecha_venta' => $fechaVentaUtc,
+                'fecha_venta' => $fechaVentaLocal,
                 'cod_forma_liquidacion' => $row->cod_forma_liquidacion ? trim($row->cod_forma_liquidacion) : null,
                 'cod_vendedor' => $row->cod_vendedor ? trim($row->cod_vendedor) : null,
                 'nombre_vendedor' => $row->nombre_vendedor ? trim($row->nombre_vendedor) : null,
+                'net_amount' => (float)($row->net_amount ?? 0),
                 'total_amount' => (float)($row->total_amount ?? 0),
                 'pending_amount' => (float)($row->pending_amount ?? 0),
                 'anulada' => trim($row->anulada) === 'S',
@@ -872,7 +899,7 @@ class RiberaSyncToSupabase extends Command
         DB::connection('supabase')->table('sales_headers')->upsert(
             $headerChunk,
             ['cod_venta', 'tipo_venta', 'cod_empresa', 'cod_caja'],
-            ['cod_almacen', 'cod_cliente', 'razon_social', 'fecha_venta', 'cod_forma_liquidacion', 'cod_vendedor', 'nombre_vendedor', 'total_amount', 'pending_amount', 'anulada', 'source_modified_at', 'synced_at']
+            ['cod_almacen', 'cod_cliente', 'razon_social', 'fecha_venta', 'cod_forma_liquidacion', 'cod_vendedor', 'nombre_vendedor', 'net_amount', 'total_amount', 'pending_amount', 'anulada', 'source_modified_at', 'synced_at']
         );
 
         // 2. Obtener líneas correspondientes de SQL Server
@@ -942,6 +969,258 @@ class RiberaSyncToSupabase extends Command
                 );
             $processedLinesCount += count($lineChunk);
         }
+    }
+
+    /**
+     * 9. receivables (SNAPSHOT - Vencimientos de clientes / cartera de cobro)
+     *
+     * Protocolo de seguridad snapshot:
+     *  1. Calcular totales esperados en ERP: filas, importe_total,
+     *     importe_cobrado, importe_pendiente, impagados y pendientes_normales.
+     *  2. Generar batch_id nuevo.
+     *  3. Insertar todas las filas en Supabase.
+     *  4. Calcular los mismos totales en el nuevo batch y comparar con ERP.
+     *  5. SOLO si todas las paridades (filas y monetarias) coinciden dentro de
+     *     la tolerancia (1,00 €), actualizar sync_state.active_batch_id.
+     *  6. Limpiar batches antiguos.
+     *
+     * Si cualquier paso intermedio falla, el batch nuevo se borra y el batch
+     * anterior sigue activo.
+     */
+    private function syncReceivables(string $runId): int
+    {
+        ini_set('memory_limit', '512M');
+        $db = DB::connection('erp');
+
+        // --- PASO 1: totales esperados en ERP ----------------------------------
+        $this->info("Calculando totales de cartera en ERP...");
+        $whereCartera = "
+            v.cod_forma_liquidacion IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC')
+            OR (v.cod_remesa IS NULL AND v.cod_forma_liquidacion NOT IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC'))
+        ";
+
+        $expectedStmt = $db->getPdo()->prepare("
+            SELECT
+                COUNT(*) as filas,
+                COALESCE(SUM(v.importe), 0) as importe_total,
+                COALESCE(SUM(v.importe_cobrado), 0) as importe_cobrado_total,
+                COALESCE(SUM(v.importe - v.importe_cobrado), 0) as importe_pendiente_total,
+                COUNT(CASE WHEN v.cod_forma_liquidacion IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC') THEN 1 END) as impagados_count,
+                COALESCE(SUM(CASE WHEN v.cod_forma_liquidacion IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC')
+                    THEN (v.importe - v.importe_cobrado) ELSE 0 END), 0) as impagados_pendiente,
+                COUNT(CASE WHEN v.cod_remesa IS NULL
+                    AND v.cod_forma_liquidacion NOT IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC') THEN 1 END) as pendientes_normales_count,
+                COALESCE(SUM(CASE WHEN v.cod_remesa IS NULL
+                    AND v.cod_forma_liquidacion NOT IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC')
+                    THEN (v.importe - v.importe_cobrado) ELSE 0 END), 0) as pendientes_normales_pendiente
+            FROM vencimientos_facturas v
+            WHERE {$whereCartera}
+        ");
+        $expectedStmt->execute();
+        $expected = $expectedStmt->fetch(\PDO::FETCH_OBJ);
+
+        $expectedCount = (int) ($expected->filas ?? 0);
+        if ($expectedCount === 0) {
+            $this->warn("No hay vencimientos pendientes/impagados en ERP. Se omite la carga.");
+            return 0;
+        }
+
+        $this->info("ERP: {$expectedCount} vencimientos, pendiente total="
+            . number_format($expected->importe_pendiente_total, 2) . ", impagados="
+            . number_format($expected->impagados_pendiente, 2) . ", pendientes_normales="
+            . number_format($expected->pendientes_normales_pendiente, 2));
+
+        // --- PASO 2: crear batch_id nuevo ------------------------------------
+        $batchId = (string) Str::uuid();
+
+        // --- PASO 3: insertar filas en Supabase -------------------------------
+        $this->info("Consultando vencimientos de clientes desde SQL Server...");
+        $stmt = $db->getPdo()->prepare("
+            SELECT
+                f.cod_almacen,
+                v.cod_factura,
+                v.tipo_factura,
+                v.cod_empresa,
+                v.numero,
+                v.cod_cliente,
+                v.razon_social,
+                f.cif,
+                COALESCE(f.fecha_factura, v.fecha_vencimiento) as fecha_factura,
+                v.fecha_vencimiento,
+                v.importe,
+                v.importe_cobrado,
+                (v.importe - v.importe_cobrado) as importe_pendiente,
+                v.cod_forma_liquidacion,
+                v.cod_remesa
+            FROM vencimientos_facturas v
+            LEFT JOIN facturas_ventas_cabecera f
+                ON v.cod_factura = f.cod_factura
+                AND v.tipo_factura = f.tipo_factura
+                AND v.cod_empresa = f.cod_empresa
+            WHERE {$whereCartera}
+        ");
+        $stmt->execute();
+
+        $chunk = [];
+        $insertedCount = 0;
+        $syncedAt = now();
+
+        while ($rowObj = $stmt->fetch(\PDO::FETCH_OBJ)) {
+            $idVencimiento = sprintf(
+                '%d-%d-%d-%d',
+                (int)$rowObj->cod_empresa,
+                (int)$rowObj->cod_factura,
+                (int)$rowObj->tipo_factura,
+                (int)$rowObj->numero
+            );
+
+            $chunk[] = [
+                'id_vencimiento' => $idVencimiento,
+                'batch_id' => $batchId,
+                'cod_empresa' => (int)$rowObj->cod_empresa,
+                'cod_factura' => (int)$rowObj->cod_factura,
+                'tipo_factura' => (int)$rowObj->tipo_factura,
+                'numero' => (int)$rowObj->numero,
+                'cod_cliente' => $rowObj->cod_cliente ? (int)$rowObj->cod_cliente : 0,
+                'razon_social' => $rowObj->razon_social ? substr(trim($rowObj->razon_social), 0, 150) : null,
+                'fecha_factura' => $rowObj->fecha_factura ? substr($rowObj->fecha_factura, 0, 10) : null,
+                'fecha_vencimiento' => $rowObj->fecha_vencimiento ? substr($rowObj->fecha_vencimiento, 0, 10) : null,
+                'importe_original' => (float)($rowObj->importe ?? 0),
+                'importe_cobrado' => (float)($rowObj->importe_cobrado ?? 0),
+                'importe_pendiente' => (float)($rowObj->importe_pendiente ?? 0),
+                'fecha_devolucion' => null,
+                'cod_forma_liquidacion' => $rowObj->cod_forma_liquidacion ? trim($rowObj->cod_forma_liquidacion) : null,
+                'nombre_forma_liquidacion' => null,
+                'iban' => null,
+                'cod_remesa' => $rowObj->cod_remesa ? (int)$rowObj->cod_remesa : null,
+                'synced_at' => $syncedAt,
+                'cod_almacen' => $rowObj->cod_almacen ? (int)$rowObj->cod_almacen : null,
+            ];
+
+            if (count($chunk) >= 500) {
+                DB::connection('supabase')->table('receivables')->insert($chunk);
+                $insertedCount += count($chunk);
+                $chunk = [];
+            }
+        }
+
+        if (count($chunk) > 0) {
+            DB::connection('supabase')->table('receivables')->insert($chunk);
+            $insertedCount += count($chunk);
+        }
+
+        $this->info("Insertadas {$insertedCount} filas en Supabase para batch {$batchId}.");
+
+        // --- PASO 4: validar paridad ERP vs Supabase --------------------------
+        $this->info("Validando paridad de filas y totales entre ERP y Supabase (tolerancia 0,00 €)...");
+        $actual = DB::connection('supabase')
+            ->selectOne("
+                SELECT
+                    COUNT(*) as filas,
+                    COALESCE(SUM(importe_original), 0) as importe_total,
+                    COALESCE(SUM(importe_cobrado), 0) as importe_cobrado_total,
+                    COALESCE(SUM(importe_pendiente), 0) as importe_pendiente_total,
+                    COUNT(CASE WHEN cod_forma_liquidacion IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC') THEN 1 END) as impagados_count,
+                    COALESCE(SUM(CASE WHEN cod_forma_liquidacion IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC') THEN importe_pendiente ELSE 0 END), 0) as impagados_pendiente,
+                    COUNT(CASE WHEN cod_remesa IS NULL AND cod_forma_liquidacion NOT IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC') THEN 1 END) as pendientes_normales_count,
+                    COALESCE(SUM(CASE WHEN cod_remesa IS NULL AND cod_forma_liquidacion NOT IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC') THEN importe_pendiente ELSE 0 END), 0) as pendientes_normales_pendiente
+                FROM receivables
+                WHERE batch_id = ?
+            ", [$batchId]);
+
+        // Comparador exacto al céntimo.
+        $moneyEqual = fn ($a, $b): bool => round((float) $a, 2) === round((float) $b, 2);
+
+        $paridadOk = true;
+        $errores = [];
+        $advertencias = [];
+
+        // Validaciones BLOQUEANTES (paridad exacta)
+        if ((int)$actual->filas !== $expectedCount) {
+            $paridadOk = false;
+            $errores[] = "filas: ERP={$expectedCount}, Supabase={$actual->filas}";
+        }
+        if (!$moneyEqual($actual->importe_pendiente_total, $expected->importe_pendiente_total)) {
+            $paridadOk = false;
+            $errores[] = "importe_pendiente_total: ERP=" . number_format($expected->importe_pendiente_total, 2) . ", Supabase=" . number_format($actual->importe_pendiente_total, 2);
+        }
+        if ((int)$actual->impagados_count !== (int)$expected->impagados_count) {
+            $paridadOk = false;
+            $errores[] = "impagados_count: ERP={$expected->impagados_count}, Supabase={$actual->impagados_count}";
+        }
+        if (!$moneyEqual($actual->impagados_pendiente, $expected->impagados_pendiente)) {
+            $paridadOk = false;
+            $errores[] = "impagados_pendiente: ERP=" . number_format($expected->impagados_pendiente, 2) . ", Supabase=" . number_format($actual->impagados_pendiente, 2);
+        }
+        if ((int)$actual->pendientes_normales_count !== (int)$expected->pendientes_normales_count) {
+            $paridadOk = false;
+            $errores[] = "pendientes_normales_count: ERP={$expected->pendientes_normales_count}, Supabase={$actual->pendientes_normales_count}";
+        }
+        if (!$moneyEqual($actual->pendientes_normales_pendiente, $expected->pendientes_normales_pendiente)) {
+            $paridadOk = false;
+            $errores[] = "pendientes_normales_pendiente: ERP=" . number_format($expected->pendientes_normales_pendiente, 2) . ", Supabase=" . number_format($actual->pendientes_normales_pendiente, 2);
+        }
+
+        // Validaciones ADICIONALES (informativas; no bloquean, pero se reportan)
+        if (!$moneyEqual($actual->importe_total, $expected->importe_total)) {
+            $advertencias[] = "importe_total: ERP=" . number_format($expected->importe_total, 2) . ", Supabase=" . number_format($actual->importe_total, 2);
+        }
+        if (!$moneyEqual($actual->importe_cobrado_total, $expected->importe_cobrado_total)) {
+            $advertencias[] = "importe_cobrado_total: ERP=" . number_format($expected->importe_cobrado_total, 2) . ", Supabase=" . number_format($actual->importe_cobrado_total, 2);
+        }
+
+        if (!empty($advertencias)) {
+            $this->warn("Advertencias de paridad adicional (no bloqueantes):");
+            foreach ($advertencias as $adv) {
+                $this->warn("  - {$adv}");
+            }
+        }
+
+        if (!$paridadOk) {
+            $this->error("PARIDAD FALLIDA:");
+            foreach ($errores as $err) {
+                $this->error("  - {$err}");
+            }
+            $this->error("El batch {$batchId} no se activa. Se limpia el batch huérfano.");
+
+            DB::connection('supabase')
+                ->table('receivables')
+                ->where('batch_id', $batchId)
+                ->delete();
+
+            throw new \Exception("Paridad receivables incorrecta: " . implode('; ', $errores));
+        }
+
+        $this->info("Paridad validada exacta: filas={$actual->filas}, importe_pendiente_total=" . number_format($actual->importe_pendiente_total, 2) . ", "
+            . "impagados={$actual->impagados_count}/" . number_format($actual->impagados_pendiente, 2) . ", "
+            . "pendientes_normales={$actual->pendientes_normales_count}/" . number_format($actual->pendientes_normales_pendiente, 2) . ".");
+
+        // --- PASO 5: activar el nuevo batch -----------------------------------
+        $stateRow = DB::connection('supabase')->table('sync_state')->where('dataset', 'receivables')->first();
+        $lotePrevio = $stateRow ? $stateRow->active_batch_id : null;
+
+        DB::connection('supabase')->transaction(function () use ($batchId) {
+            DB::connection('supabase')->table('sync_state')->upsert([
+                'dataset' => 'receivables',
+                'active_batch_id' => $batchId,
+                'last_success_at' => now(),
+                'last_run_status' => 'success',
+                'last_error_message' => null
+            ], ['dataset'], ['active_batch_id', 'last_success_at', 'last_run_status', 'last_error_message']);
+        });
+
+        $this->info("Batch {$batchId} activado como active_batch_id de receivables.");
+
+        // --- PASO 6: limpieza de batches antiguos -----------------------------
+        if ($lotePrevio) {
+            $deleted = DB::connection('supabase')->table('receivables')
+                ->where('batch_id', '!=', $batchId)
+                ->where('batch_id', '!=', $lotePrevio)
+                ->delete();
+            $this->info("Limpieza: se eliminaron {$deleted} batches antiguos de receivables.");
+        }
+
+        return $insertedCount;
     }
 
     /**

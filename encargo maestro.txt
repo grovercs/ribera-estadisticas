@@ -1,0 +1,1094 @@
+# PROYECTO: PUBLICACIÓN EN NETLIFY DEL PANEL DE ESTADÍSTICAS DE LOGÍSTICA RIBERA
+
+## OBJETIVO
+
+Tenemos actualmente una aplicación de estadísticas de Logística Ribera funcionando en local.
+
+La aplicación consulta datos del ERP de Ribera, cuya base de datos está en un SQL Server dentro de la red local de la empresa.
+
+El objetivo es convertir esta aplicación en una solución web accesible desde Internet mediante:
+
+- Netlify
+- Next.js
+- TypeScript
+- Supabase
+- PostgreSQL
+- Supabase Auth
+- Supabase RLS
+- Tailwind CSS
+- shadcn/ui
+
+La aplicación de estadísticas será principalmente de SOLO LECTURA.
+
+El SQL Server local debe continuar siendo la FUENTE DE VERDAD del ERP.
+
+NO se debe exponer SQL Server directamente a Internet.
+
+---
+
+# REGLA CRÍTICA: NO EMPEZAR REESCRIBIENDO
+
+Antes de crear código nuevo debes estudiar exhaustivamente la aplicación existente.
+
+La aplicación actual ya:
+
+- se conecta correctamente a la base de datos de Ribera;
+- ejecuta consultas SQL reales;
+- obtiene estadísticas;
+- conoce tablas y relaciones del ERP;
+- tiene lógica de negocio ya descubierta;
+- posiblemente dispone de gráficos, KPIs, clientes, ventas, productos, stock u otros datos.
+
+NO debes volver a descubrir desde cero información que ya exista.
+
+NO debes sustituir consultas SQL que funcionan simplemente por crear otras nuevas.
+
+NO debes inventar nombres de tablas, columnas, relaciones o reglas de negocio.
+
+Primero:
+
+1. inspecciona el repositorio completo;
+2. identifica cómo funciona actualmente;
+3. identifica la conexión existente al ERP;
+4. identifica todas las consultas SQL utilizadas;
+5. identifica qué información muestra cada pantalla;
+6. identifica qué transformaciones se realizan después de las consultas;
+7. identifica qué componentes visuales ya existen;
+8. identifica qué partes podemos reutilizar.
+
+Después presenta un Implementation Plan.
+
+---
+
+# ARQUITECTURA OBJETIVO
+
+La arquitectura final será:
+
+```text
+                 RED LOCAL DE RIBERA
+                 ───────────────────
+
+            ┌─────────────────────────┐
+            │ SQL Server ERP Ribera   │
+            │                         │
+            │ FUENTE DE VERDAD        │
+            └────────────┬────────────┘
+                         │
+                    SOLO LECTURA
+                         │
+                         ▼
+            ┌─────────────────────────┐
+            │ Sincronizador local     │
+            │                         │
+            │ reutilizar Laravel/PHP  │
+            │ existente si conviene   │
+            └────────────┬────────────┘
+                         │
+                         │ HTTPS SALIENTE
+                         ▼
+
+                      INTERNET
+                    ────────────
+
+            ┌─────────────────────────┐
+            │ Supabase                │
+            │                         │
+            │ PostgreSQL              │
+            │ Auth                    │
+            │ RLS                     │
+            │ Datos reporting         │
+            └────────────┬────────────┘
+                         │
+                         ▼
+            ┌─────────────────────────┐
+            │ Next.js                 │
+            │ TypeScript              │
+            │ Tailwind                │
+            │ shadcn/ui               │
+            └────────────┬────────────┘
+                         │
+                         ▼
+            ┌─────────────────────────┐
+            │ Netlify                 │
+            └────────────┬────────────┘
+                         │
+                         ▼
+                  Usuarios autorizados
+PRINCIPIO FUNDAMENTAL DE SEGURIDAD
+
+SQL Server NO debe recibir conexiones desde Internet.
+
+NO:
+
+abrir puerto 1433 en el router;
+publicar SQL Server;
+crear túneles públicos innecesarios;
+permitir consultas directas desde Netlify a SQL Server;
+permitir consultas directas desde el navegador al SQL Server.
+
+El flujo debe ser siempre:
+
+SQL Server local
+→ sincronizador local
+→ conexión HTTPS saliente
+→ Supabase
+
+Nunca al revés.
+
+1. ANALIZAR LA APLICACIÓN ACTUAL
+
+Antes de modificar nada debes generar un inventario.
+
+Debes localizar:
+
+Backend existente
+Laravel;
+PHP;
+configuración de conexiones;
+controladores;
+modelos;
+servicios;
+comandos Artisan;
+consultas SQL;
+Stored Procedures si existen;
+queries raw;
+transformaciones;
+APIs internas.
+Base de datos ERP
+
+Identificar:
+
+motor exacto;
+configuración existente;
+tablas utilizadas;
+vistas utilizadas;
+Stored Procedures;
+relaciones;
+claves;
+campos;
+tipos;
+consultas estadísticas existentes.
+
+NO mostrar credenciales en la respuesta.
+
+Las credenciales existentes deben permanecer en variables de entorno.
+inventario de consultas 
+crear una documentacion interna que relacione: 
+Pantalla / KPI
+↓
+consulta SQL original
+↓
+tablas ERP utilizadas
+↓
+transformaciones posteriores
+↓
+datos necesarios en Supabase
+ekemplo conceptual
+Facturación mensual
+    ↓
+SQL Server
+    ↓
+consulta actual existente
+    ↓
+resultado agregado por mes
+    ↓
+stats_ventas_mensuales
+
+Esto es solamente un ejemplo.
+
+NO utilizar esos nombres automáticamente.
+
+Primero estudiar las consultas existentes.>
+
+3. NO REPLICAR TODO EL ERP
+
+Supabase NO será inicialmente una copia completa de SQL Server.
+
+Supabase funcionará principalmente como:
+
+base de datos de reporting / estadísticas web
+
+Sincronizar únicamente los datos necesarios para las pantallas del panel.
+
+Antes de copiar una tabla completa estudiar si basta con:
+
+agregados;
+resúmenes;
+snapshots;
+KPIs precalculados;
+datos recientes;
+dimensiones mínimas necesarias.
+
+Ejemplo:
+
+Si SQL Server contiene millones de líneas de venta pero el dashboard únicamente necesita:
+
+ventas diarias;
+ventas mensuales;
+ventas por comercial;
+ventas por cliente;
+
+preferir sincronizar los resultados agregados cuando sea razonable.
+
+Sin embargo:
+
+si una pantalla necesita búsquedas o drill-down a nivel de operación individual, sincronizar el nivel de detalle necesario.
+
+La decisión debe hacerse pantalla por pantalla.
+
+4. SUPABASE
+
+Crear un esquema PostgreSQL específicamente diseñado para reporting.
+
+NO trasladar mecánicamente el esquema completo del ERP.
+
+El diseño definitivo debe derivarse del análisis de las consultas existentes.
+
+Podrían existir tablas conceptualmente equivalentes a:
+
+stats_daily
+stats_monthly
+stats_clients
+stats_products
+stats_stock
+stats_salespeople
+sync_status
+
+pero NO utilizar automáticamente estos nombres.
+
+Diseñar los nombres basándose en los datos reales de la aplicación.
+
+5. TABLA DE CONTROL DE SINCRONIZACIÓN
+
+Debe existir algún mecanismo equivalente a:
+
+sync_status
+
+que permita conocer:
+
+última sincronización iniciada;
+última sincronización completada;
+duración;
+estado;
+registros procesados;
+tipo de sincronización;
+mensaje de error si falla;
+última sincronización satisfactoria.
+
+La aplicación web deberá poder mostrar algo equivalente a:
+
+Datos actualizados: hoy 17:42
+
+Si una sincronización falla, conservar los últimos datos correctos.
+
+Nunca dejar el dashboard vacío simplemente porque una sincronización haya fallado.
+
+6. SINCRONIZADOR LOCAL
+
+Preferencia inicial:
+
+REUTILIZAR el proyecto Laravel existente si ya tiene funcionando la conexión a SQL Server.
+
+No crear otro sistema de conexión sin necesidad.
+
+Crear uno o varios comandos Artisan bien estructurados.
+
+Ejemplo conceptual:
+
+php artisan ribera:sync
+
+El nombre definitivo puede ser diferente.
+
+El sincronizador debe:
+
+conectarse al SQL Server usando la configuración existente;
+ejecutar las consultas ya validadas;
+transformar los datos;
+validar resultados;
+enviar los datos a Supabase;
+registrar el resultado;
+manejar errores;
+continuar conservando los últimos datos válidos.
+7. SINCRONIZACIÓN INCREMENTAL
+
+NO realizar automáticamente una recarga completa de todos los datos cada vez.
+
+Estudiar para cada dataset si puede utilizarse:
+
+timestamp;
+fecha modificación;
+ID incremental;
+fecha de operación;
+hash;
+upsert;
+checkpoint.
+
+Preferir sincronizaciones incrementales cuando sean seguras.
+
+Cuando un dataset sea pequeño, puede resultar más seguro reemplazar un snapshot completo.
+
+Decidir según el caso.
+
+Documentar la decisión.
+
+8. IDEMPOTENCIA
+
+El sincronizador debe ser idempotente cuando sea posible.
+
+Ejecutarlo dos veces con los mismos datos NO debe generar:
+
+duplicados;
+ventas duplicadas;
+clientes duplicados;
+estadísticas duplicadas.
+
+Utilizar:
+
+claves naturales;
+IDs del ERP;
+claves únicas;
+UPSERT;
+
+según corresponda.
+
+9. TRANSACCIONES
+
+Cuando varios registros formen un mismo snapshot lógico, evitar estados parciales.
+
+Cuando sea necesario:
+
+cargar datos nuevos;
+validar;
+cambiar el dataset activo;
+únicamente entonces retirar datos antiguos.
+
+Una sincronización interrumpida no debe dejar el panel mostrando datos inconsistentes.
+
+10. FRECUENCIA DE SINCRONIZACIÓN
+
+Inicialmente diseñar el sistema para permitir distintas frecuencias.
+
+Ejemplos:
+
+cada hora;
+cada 30 minutos;
+una vez al día;
+manual.
+
+NO fijar todavía una frecuencia arbitraria sin analizar cuánto cambian los datos y qué necesita dirección.
+
+El sincronizador probablemente se ejecutará desde el Programador de Tareas de Windows.
+
+Preparar documentación clara para ello.
+
+11. CREDENCIALES DEL SINCRONIZADOR
+
+El sincronizador tendrá credenciales de servidor para escribir en Supabase.
+
+Nunca incluirlas en:
+
+código;
+repositorio;
+GitHub;
+frontend;
+documentación;
+logs;
+AGENTS.md;
+CLAUDE.md;
+MEMORY.md.
+
+Utilizar variables de entorno.
+
+NO mostrar secretos completos en terminal ni respuestas.
+
+La credencial con privilegios elevados de Supabase debe existir exclusivamente en el entorno local seguro que ejecuta el sincronizador.
+
+12. FRONTEND
+
+El nuevo frontend debe utilizar:
+
+Next.js;
+App Router;
+TypeScript;
+Tailwind CSS;
+shadcn/ui.
+
+NO crear una SPA Vite independiente salvo que aparezca una razón técnica que lo justifique y se autorice.
+
+Queremos mantener el stack coherente con el resto de proyectos.
+
+13. MIGRACIÓN VISUAL
+
+La aplicación actual de estadísticas debe utilizarse como REFERENCIA FUNCIONAL Y VISUAL.
+
+Antes de rediseñar:
+
+capturar todas las pantallas existentes;
+identificar widgets;
+identificar gráficos;
+identificar filtros;
+identificar navegación;
+identificar KPIs;
+identificar tablas;
+identificar comportamiento responsive.
+
+NO eliminar funcionalidades existentes durante la migración.
+
+Se pueden mejorar:
+
+claridad;
+responsive;
+rendimiento;
+consistencia;
+accesibilidad;
+
+pero primero debe alcanzarse paridad funcional.
+
+14. GRÁFICOS
+
+Si la aplicación actual utiliza Chart.js y funciona correctamente, reutilizar los conceptos y configuraciones útiles.
+
+No cambiar de librería solo por preferencia personal.
+
+Si existe una ventaja clara se puede evaluar:
+
+Chart.js;
+Recharts.
+
+Pero NO cambiar innecesariamente.
+
+15. SUPABASE AUTH
+
+El panel no será público.
+
+Implementar autenticación mediante Supabase Auth.
+
+Todos los usuarios deben iniciar sesión.
+
+Preparar inicialmente roles adecuados a las necesidades reales.
+
+Ejemplos conceptuales:
+
+administrador;
+dirección;
+comercial;
+consulta.
+
+NO crear roles que no sean necesarios.
+
+16. RLS
+
+Todas las tablas expuestas mediante la Data API de Supabase deben tener RLS correctamente configurado.
+
+Principio:
+
+mínimo privilegio
+
+El frontend nunca debe depender solamente de:
+
+if (role === "admin")
+
+para proteger datos.
+
+La autorización real debe estar implementada mediante:
+
+RLS;
+servidor;
+o ambos.
+17. FRONTEND Y SUPABASE
+
+El navegador puede utilizar el cliente oficial:
+
+@supabase/supabase-js
+
+con credenciales públicas diseñadas para cliente.
+
+Nunca utilizar una credencial secreta o equivalente a service_role en el navegador.
+
+18. SERVER COMPONENTS
+
+Utilizar Server Components cuando aporten ventajas.
+
+No convertir todo automáticamente en Client Components.
+
+Los Client Components deben utilizarse cuando exista necesidad real de:
+
+interacción;
+gráficos;
+estado;
+eventos del navegador.
+19. RENDIMIENTO
+
+El dashboard debe sentirse inmediato.
+
+Objetivos:
+
+evitar consultas enormes;
+evitar cargar históricos innecesarios;
+consultar únicamente datos requeridos;
+índices adecuados;
+paginación donde corresponda;
+filtros eficientes;
+caché cuando sea útil;
+skeletons durante cargas.
+20. RESPONSIVE
+
+El panel debe funcionar correctamente en:
+
+escritorio;
+portátil;
+tablet;
+móvil.
+
+Aunque el uso principal probablemente sea ordenador, no crear pantallas inutilizables desde móvil.
+
+21. ESTADOS DE LA APLICACIÓN
+
+Toda pantalla debe contemplar:
+
+loading;
+empty;
+error;
+success;
+datos antiguos por fallo de sincronización.
+
+Ejemplo:
+
+Si Supabase funciona pero la última sincronización ocurrió hace 7 horas:
+
+mostrar los datos disponibles y avisar:
+
+Última actualización hace 7 horas.
+
+No romper la aplicación.
+
+22. NETLIFY
+
+El frontend Next.js se desplegará en Netlify.
+
+Preparar correctamente:
+
+configuración de build;
+variables de entorno;
+Node version;
+Next.js;
+redirects únicamente si son necesarios;
+integración GitHub → Netlify.
+
+NO desplegar ni realizar git push sin autorización explícita.
+
+Un git push puede desencadenar despliegue automático.
+
+23. VARIABLES DE ENTORNO
+
+Separar claramente:
+
+Frontend / públicas
+
+Únicamente aquellas específicamente permitidas para navegador.
+
+Backend / privadas
+
+Credenciales sensibles.
+
+Nunca utilizar una variable NEXT_PUBLIC_* para un secreto.
+
+24. SEGURIDAD
+
+Aplicar:
+
+RLS;
+principio de mínimo privilegio;
+validación;
+escape correcto;
+manejo seguro de errores;
+protección de secretos;
+HTTPS;
+sesiones seguras.
+
+NO mostrar:
+
+consultas SQL internas;
+stack traces;
+credenciales;
+rutas locales;
+detalles de infraestructura;
+
+al usuario final.
+
+25. SQL SERVER
+
+La conexión existente a SQL Server debe reutilizarse.
+
+NO:
+
+modificar datos ERP;
+realizar INSERT;
+UPDATE;
+DELETE;
+ALTER;
+DROP;
+
+desde el nuevo sincronizador salvo autorización explícita y existencia de una necesidad real.
+
+La integración debe considerarse:
+
+READ ONLY
+
+hacia el ERP.
+
+26. USUARIO SQL DE SOLO LECTURA
+
+Si actualmente la aplicación utiliza un usuario SQL con permisos elevados, documentar el riesgo.
+
+La solución final debería utilizar, si es viable, un usuario SQL Server específico con únicamente permisos SELECT sobre:
+
+tablas necesarias;
+vistas necesarias;
+Stored Procedures de lectura necesarias.
+
+NO realizar este cambio automáticamente si puede afectar a la aplicación existente.
+
+Proponerlo primero.
+
+27. NO TOCAR EL ERP
+
+La migración del panel estadístico NO debe alterar:
+
+funcionamiento del ERP;
+tablas ERP;
+procedimientos existentes;
+aplicación Delphi;
+servicios productivos;
+usuarios;
+
+salvo petición expresa.
+
+Estamos construyendo una capa de reporting.
+
+28. VALIDACIÓN DE DATOS
+
+Antes de dar por válida la sincronización, comparar para varios periodos:
+
+SQL Server vs Supabase.
+
+Como mínimo comprobar:
+
+totales;
+conteos;
+ventas;
+clientes;
+stock;
+principales KPIs.
+ERP = Supabase = Dashboard
+para los datos relevantes.
+29. PRUEBAS DE REGRESIÓN
+
+Antes de sustituir la aplicación local:
+
+comparar cada pantalla.
+Ejemplo: 
+              APLICACIÓN ACTUAL     NUEVA WEB
+Facturación       123.456 €          123.456 €
+Clientes             847                847
+Pedidos              352                352
+...
+No aceptar diferencias sin entender su causa.
+30. LOGGING
+
+El sincronizador debe generar logs útiles pero seguros.
+
+Registrar:
+
+inicio;
+final;
+duración;
+datasets;
+conteos;
+errores.
+
+NO registrar:
+
+passwords;
+tokens;
+secretos;
+información sensible innecesaria.
+31. RECUPERACIÓN ANTE ERRORES
+
+Una caída temporal de Internet no debe afectar SQL Server ni el ERP.
+
+Si Supabase no está accesible:
+
+registrar el error;
+NO modificar ERP;
+conservar los datos anteriores en Supabase;
+permitir reintento posterior.
+
+No borrar datos válidos antes de disponer de sus sustitutos.
+
+32. IMPLEMENTATION PLAN OBLIGATORIO
+
+ANTES de cambiar arquitectura, crear tablas o comenzar la migración, generar:
+
+A. Estado actual
+arquitectura encontrada;
+framework;
+versión;
+conexión SQL Server;
+consultas existentes;
+pantallas;
+dependencias;
+gráficos;
+autenticación actual;
+estructura del repositorio.
+B. Inventario de datos
+
+Para cada pantalla:
+
+datos necesarios;
+origen SQL;
+consulta actual;
+volumen aproximado;
+frecuencia de cambio.
+C. Modelo Supabase propuesto
+
+Para cada tabla:
+
+propósito;
+columnas;
+PK;
+índices;
+constraints;
+relación con ERP;
+estrategia de sincronización.
+D. Sincronización
+
+Para cada dataset:
+
+completa o incremental;
+criterio incremental;
+frecuencia recomendada;
+estrategia de upsert;
+recuperación de errores.
+E. Frontend
+páginas;
+componentes;
+gráficos;
+filtros;
+autenticación;
+responsive.
+F. Seguridad
+Auth;
+RLS;
+roles;
+claves;
+permisos.
+G. Migración
+
+Explicar cómo pasaremos de la aplicación actual a la nueva sin interrumpir el servicio.
+
+H. Validación
+
+Cómo se comprobará que los números son exactamente iguales.
+
+33. FASES DEL PROYECTO
+
+Trabajar por fases.
+
+FASE 0 — Auditoría
+
+NO modificar funcionalidad.
+
+Analizar:
+
+aplicación actual;
+SQL;
+conexión;
+pantallas;
+tablas;
+dependencias.
+
+Entregar Implementation Plan.
+
+FASE 1 — Supabase
+
+Preparar:
+
+proyecto;
+esquema;
+migraciones;
+índices;
+Auth;
+RLS.
+
+NO importar todavía todo sin validar el diseño.
+
+FASE 2 — Sincronizador
+
+Implementar sincronización local.
+
+Probar primero con un dataset pequeño.
+
+Validar:
+
+SQL Server → Supabase.
+
+FASE 3 — Paridad de datos
+
+Sincronizar datasets necesarios.
+
+Comparar resultados automáticamente.
+
+No continuar si existen diferencias sin explicar.
+
+FASE 4 — Frontend
+
+Construir/migrar Next.js.
+
+Mantener paridad con la aplicación actual.
+
+FASE 5 — Autenticación
+
+Implementar Supabase Auth + RLS.
+
+FASE 6 — Netlify Preview
+
+Desplegar primero en entorno preview/staging.
+
+NO reemplazar producción directamente.
+
+FASE 7 — Validación
+
+Probar:
+
+escritorio;
+móvil;
+login;
+permisos;
+todas las pantallas;
+KPIs;
+sincronización;
+fallos simulados.
+FASE 8 — Producción
+
+Solo después de aprobación explícita.
+
+34. NO HACER OVERENGINEERING
+
+Esta es una aplicación de estadísticas empresariales.
+
+NO necesitamos introducir por defecto:
+
+Kubernetes;
+Docker;
+AWS;
+Kafka;
+Redis;
+microservicios;
+GraphQL;
+RabbitMQ;
+Spark;
+Airflow;
+
+si no existe una necesidad real.
+Mantener la arquitectura sencilla:
+SQL Server
+    ↓
+sincronizador local
+    ↓
+Supabase
+    ↓
+Next.js
+    ↓
+Netlify
+35. NO ROMPER LO QUE YA FUNCIONA
+
+La aplicación existente es una fuente valiosa de conocimiento.
+
+Antes de cambiar cualquier consulta:
+
+preguntarse:
+
+¿Esta consulta ya está funcionando correctamente?
+
+Si la respuesta es sí, preferir reutilizar su lógica.
+
+El objetivo NO es volver a desarrollar el ERP.
+
+El objetivo es publicar un panel web seguro basado en datos del ERP.
+
+36. AUTONOMÍA
+
+Puedes trabajar autónomamente en:
+
+inspección;
+análisis;
+componentes locales;
+schemas;
+migraciones preparadas;
+tests;
+refactors pequeños;
+documentación.
+
+Debes pedir autorización antes de:
+
+modificar SQL Server;
+borrar datos;
+ejecutar migraciones destructivas;
+cambiar credenciales;
+modificar RLS de producción;
+realizar git push;
+desplegar producción;
+reemplazar la aplicación existente;
+cambiar una decisión arquitectónica principal.
+37. GIT
+
+Antes de modificar código:
+
+git status
+
+No sobrescribir trabajo del usuario.
+
+No utilizar:
+
+git reset --hard
+git push --force
+
+sin autorización expresa.
+
+Los commits deben ser pequeños y coherentes.
+
+NO hacer push automáticamente.
+
+38. VALIDACIÓN TÉCNICA
+
+Antes de considerar terminada una fase:
+
+ejecutar cuando corresponda:
+
+TypeScript typecheck;
+lint;
+tests;
+build de Next.js;
+pruebas del sincronizador;
+comparación de datos.
+
+No afirmar que funciona simplemente porque compile.
+
+39. VALIDACIÓN VISUAL
+
+Toda pantalla migrada debe comprobarse visualmente.
+
+Probar:
+
+resolución desktop;
+tablet;
+móvil;
+navegación;
+gráficos;
+filtros;
+tablas;
+loading;
+errores;
+logout/login.
+40. DOCUMENTACIÓN
+
+Documentar:
+
+README
+
+Cómo ejecutar el frontend.
+
+SYNC.md
+
+Cómo funciona el sincronizador.
+
+DATABASE.md
+
+Estructura reporting de Supabase.
+
+DEPLOYMENT.md
+
+Cómo desplegar Netlify.
+
+SECURITY.md
+
+Modelo Auth/RLS y secretos.
+
+Nunca incluir credenciales reales.
+
+41. BACKUP Y REVERSIBILIDAD
+
+Antes de sustituir algo existente:
+
+conservar versión anterior;
+permitir rollback;
+no borrar aplicación Laravel hasta comprobar nueva versión;
+no borrar scripts SQL existentes;
+no borrar SQL Server.
+
+La aplicación actual debe mantenerse operativa hasta que la nueva esté totalmente validada.
+
+42. DEFINITION OF DONE
+
+El proyecto NO estará terminado hasta que:
+
+la sincronización funcione automáticamente;
+SQL Server no esté expuesto;
+Supabase reciba correctamente los datos;
+los datos coincidan con el ERP;
+el frontend funcione desde Netlify;
+exista login;
+RLS esté activado;
+los usuarios vean únicamente lo autorizado;
+el dashboard reproduzca las estadísticas actuales;
+exista indicador de última sincronización;
+los errores de sincronización no destruyan los últimos datos válidos;
+desktop funcione;
+móvil funcione;
+build pase;
+no haya secretos en Git;
+exista documentación;
+se pueda hacer rollback.
+PRIMERA TAREA QUE DEBES HACER AHORA
+
+NO implementes todavía la migración.
+
+NO crees todavía tablas en producción.
+
+NO modifiques SQL Server.
+
+Haz únicamente la FASE 0 — AUDITORÍA.
+
+Analiza todo el proyecto existente y entrégame:
+
+arquitectura real actual;
+estructura del repositorio;
+cómo conecta con SQL Server;
+archivos responsables de la conexión;
+variables de entorno utilizadas, SIN mostrar sus valores;
+tablas/vistas/procedimientos utilizados;
+todas las consultas SQL relevantes;
+pantallas actuales;
+KPIs actuales;
+gráficos actuales;
+filtros actuales;
+volúmenes aproximados si pueden determinarse;
+qué datos deberían sincronizarse;
+qué datos NO merece la pena sincronizar;
+propuesta de esquema Supabase;
+propuesta de sincronización por dataset;
+propuesta de arquitectura Next.js;
+propuesta Auth/RLS;
+riesgos detectados;
+plan de implementación por fases.
+
+Después DETENTE y espera mi aprobación antes de comenzar la FASE 1.
+
+## Una precisión importante
+
+Hay una cosa que **Gemini debe comprobar** y no debemos imponerle de antemano: me has mostrado ahora que la aplicación de estadísticas parece hablar con un **SQL Server**, mientras que en otras partes del proyecto Ribera habíamos hablado de un sistema legacy con **MySQL**. Puede ser perfectamente que sean **dos bases distintas**, o que el panel estadístico esté conectado a otro ERP.
+
+Por eso he puesto que **primero determine el motor real y las consultas reales**. No quiero que Gemini empiece una migración suponiendo que es MySQL o SQL Server y termine conectando la arquitectura a la base equivocada. 
+
+Y sí: para esta fase yo **no le pediría todavía que programe nada**. Que nos entregue primero ese informe de auditoría. Cuando te lo dé, me lo pasas y yo lo reviso contigo antes de que Gemini toque Supabase.

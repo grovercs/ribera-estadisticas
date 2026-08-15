@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -33,10 +33,10 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-  const isNextOrStatic = 
-    request.nextUrl.pathname.startsWith('/_next') || 
-    request.nextUrl.pathname === '/favicon.ico' || 
-    request.nextUrl.pathname.match(/\.(?:svg|png|jpg|jpeg|gif|webp)$/);
+  const isNextOrStatic =
+    request.nextUrl.pathname.startsWith('/_next') ||
+    request.nextUrl.pathname === '/favicon.ico' ||
+    request.nextUrl.pathname.match(/\.(?:svg|png|jpg|jpeg|gif|webp)$/)
 
   if (isLoginPage && user) {
     const url = request.nextUrl.clone()
@@ -55,6 +55,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
