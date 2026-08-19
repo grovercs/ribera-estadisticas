@@ -19,45 +19,53 @@ class RiberaProcessSyncRequests extends Command
     {
         $dataset = $this->option('dataset');
 
-        $this->info("Worker de sync_requests iniciado para dataset: {$dataset}");
+        $this->workerLog('info', "Worker iniciado para dataset: {$dataset}");
 
-        // 1. Liberar solicitudes atascadas en running por más de 60 minutos
-        $this->releaseTimedOutRequests($dataset);
+        try {
+            // 1. Liberar solicitudes atascadas en running por más de 60 minutos
+            $this->releaseTimedOutRequests($dataset);
 
-        // 2. Buscar la solicitud pending más antigua
-        $pending = DB::connection('supabase')
-            ->table('sync_requests')
-            ->where('dataset', $dataset)
-            ->where('status', 'pending')
-            ->where('source', 'manual')
-            ->orderBy('requested_at', 'asc')
-            ->first();
+            // 2. Buscar la solicitud pending más antigua
+            $pending = DB::connection('supabase')
+                ->table('sync_requests')
+                ->where('dataset', $dataset)
+                ->where('status', 'pending')
+                ->where('source', 'manual')
+                ->orderBy('requested_at', 'asc')
+                ->first();
 
-        if (!$pending) {
-            $this->info('No hay solicitudes manuales pendientes.');
-            return self::SUCCESS;
+            if (!$pending) {
+                $this->workerLog('info', 'No hay solicitudes manuales pendientes.');
+                return self::SUCCESS;
+            }
+
+            $this->workerLog('info', "Solicitud manual encontrada: {$pending->id}. Lanzando quick sync con lock...");
+
+            // 3. Ejecutar el wrapper con lock global en modo quick (ventas de hoy)
+            $exitCode = Artisan::call('ribera:sync-sales-locked', [
+                '--source' => 'manual',
+                '--request-id' => $pending->id,
+                '--quick' => true,
+            ]);
+
+            $output = Artisan::output();
+            if ($output) {
+                $this->line($output);
+                $this->workerLog('info', 'Salida del comando de sincronización capturada.');
+            }
+
+            if ($exitCode === self::SUCCESS) {
+                $this->workerLog('info', 'Worker finalizó correctamente.');
+            } else {
+                $this->workerLog('warn', "Worker finalizó con código de salida {$exitCode}.");
+            }
+
+            return $exitCode;
+        } catch (\Throwable $e) {
+            $this->workerLog('error', 'Excepción en worker: ' . $e->getMessage());
+            $this->error('Excepción en worker: ' . $e->getMessage());
+            return self::FAILURE;
         }
-
-        $this->info("Solicitud manual encontrada: {$pending->id}. Lanzando sync con lock...");
-
-        // 3. Ejecutar el wrapper con lock global
-        $exitCode = Artisan::call('ribera:sync-sales-locked', [
-            '--source' => 'manual',
-            '--request-id' => $pending->id,
-        ]);
-
-        $output = Artisan::output();
-        if ($output) {
-            $this->line($output);
-        }
-
-        if ($exitCode === self::SUCCESS) {
-            $this->info('Worker finalizó correctamente.');
-        } else {
-            $this->warn('Worker finalizó con advertencias o error.');
-        }
-
-        return $exitCode;
     }
 
     private function releaseTimedOutRequests(string $dataset): void
@@ -77,7 +85,21 @@ class RiberaProcessSyncRequests extends Command
             ]);
 
         if ($affected > 0) {
+            $this->workerLog('warn', "{$affected} solicitud(es) marcadas como failed por timeout.");
             $this->warn("{$affected} solicitud(es) marcadas como failed por timeout.");
+        }
+    }
+
+    private function workerLog(string $level, string $message): void
+    {
+        $path = storage_path('logs/sync_manual_worker.log');
+        $line = sprintf("[%s] [%s] %s\n", now()->format('Y-m-d H:i:s'), strtoupper($level), $message);
+
+        try {
+            file_put_contents($path, $line, FILE_APPEND | LOCK_EX);
+        } catch (\Throwable $e) {
+            // El fallo de logging nunca debe tumbar el worker. Se envía a stderr.
+            fwrite(STDERR, "[LOG FAIL] {$e->getMessage()} | {$line}");
         }
     }
 }

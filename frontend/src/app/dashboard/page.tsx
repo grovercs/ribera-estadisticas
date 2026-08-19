@@ -30,7 +30,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     albaranesRes,
     purchasesPeriodsRes,
     payablesRes,
-    syncStateRes,
+    syncRunsRes,
     activeSyncRes,
   ] = await Promise.all([
     supabase.rpc('get_store_dashboard_sales', { p_year: year, p_anio_ant: anioAnt }),
@@ -40,7 +40,13 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     supabase.rpc('get_store_dashboard_albaranes', { p_year: year }),
     supabase.rpc('get_store_dashboard_purchases_periods', { p_year: year }),
     supabase.rpc('get_store_dashboard_payables'),
-    supabase.from('sync_state').select('dataset,last_success_at,last_run_status').eq('dataset', 'sales').maybeSingle(),
+    supabase.from('sync_runs')
+      .select('completed_at')
+      .eq('dataset', 'sales')
+      .eq('status', 'success')
+      .order('completed_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
     supabase.from('sync_requests')
       .select('id, status, source, requested_at, started_at, finished_at, error_message')
       .eq('dataset', 'sales')
@@ -82,9 +88,9 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     year_anterior: { count: 0, importe: 0 },
   }
   const payablesData = payablesRes.data || { periodos: [], total_importe: 0, total_ops: 0 }
-  const syncState = syncStateRes.data
-  const lastSync = syncState?.last_success_at
-    ? new Date(syncState.last_success_at).toLocaleTimeString('es-ES', {
+  const lastSyncAt = syncRunsRes.data?.completed_at
+  const lastSync = lastSyncAt
+    ? new Date(lastSyncAt).toLocaleTimeString('es-ES', {
         hour: '2-digit',
         minute: '2-digit',
       })

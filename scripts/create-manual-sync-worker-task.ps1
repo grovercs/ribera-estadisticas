@@ -1,100 +1,90 @@
-# Ribera Estadisticas — Crear/actualizar worker de solicitudes manuales de sync
-#
-# NOTA: Este script requiere permisos de Administrador para crear tareas programadas.
-#       Si no se ejecuta como administrador, mostrara advertencia y terminara.
-#
-# Crea/actualiza una tarea programada que cada 1 minuto consulta sync_requests
-# y ejecuta la sincronizacion de sales cuando hay una solicitud manual pendiente.
-
+#Requires -RunAsAdministrator
+[CmdletBinding()]
 param(
-    [switch]$Force
+    [string]$TaskName = "Ribera Sync - Process Manual Requests"
 )
 
-# Detectar si la sesion esta elevada
-$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")
+$ErrorActionPreference = 'Stop'
 
+$ProjectDir  = "C:\Proyectos\antigravity\ribera-estadisticas"
+$BatchPath   = Join-Path $ProjectDir "scripts\sync-manual-worker.bat"
+
+if (-not (Test-Path $BatchPath -PathType Leaf)) {
+    throw "No existe el batch del worker manual: $BatchPath"
+}
+
+# ---------------------------------------------------------------------------
+# Requerir admin
+# ---------------------------------------------------------------------------
+$currentPrincipal = New-Object Security.Principal.WindowsPrincipal(
+    [Security.Principal.WindowsIdentity]::GetCurrent()
+)
+$isAdmin = $currentPrincipal.IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator
+)
 if (-not $isAdmin) {
-    Write-Warning "Este script requiere ejecutarse como Administrador."
-    Write-Warning "Por favor, abre PowerShell con 'Ejecutar como administrador' y vuelve a ejecutar."
-    exit 1
+    throw "Este script requiere PowerShell ejecutado como Administrador."
 }
 
-$TaskName = "Ribera Sync - Process Manual Requests"
-$Description = "Consulta sync_requests cada minuto y ejecuta ribera:process-sync-requests para solicitudes manuales de sales."
-
-$PhpPath = "C:\wamp64\bin\php\php8.4.24\php.exe"
-$ProjectDir = "C:\Proyectos\antigravity\ribera-estadisticas"
-$Argument = "-d memory_limit=1024M $ProjectDir\artisan ribera:process-sync-requests"
-
-function Find-RiberaWorkerTask {
-    param([string]$ExactName)
-
-    # Busqueda exacta por nombre
-    $task = Get-ScheduledTask -TaskName $ExactName -ErrorAction SilentlyContinue
-    if ($task) { return $task }
-
-    # Busqueda por accion relacionada con Ribera
-    $allTasks = Get-ScheduledTask -ErrorAction SilentlyContinue
-    foreach ($t in $allTasks) {
-        try {
-            foreach ($action in $t.Actions) {
-                $actionText = ($action.Execute + ' ' + $action.Arguments).ToLower()
-                if ($actionText -match [regex]::Escape($Argument.ToLower()) -or
-                    ($actionText -match [regex]::Escape($ProjectDir.ToLower()) -and $actionText -match 'process-sync')) {
-                    return $t
-                }
-            }
-        } catch {
-            continue
-        }
-    }
-    return $null
+# ---------------------------------------------------------------------------
+# Eliminar tarea previa si existe
+# ---------------------------------------------------------------------------
+$existing = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($existing) {
+    Write-Host "Eliminando tarea existente '$TaskName'..."
+    Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
 }
 
-$Existing = Find-RiberaWorkerTask -ExactName $TaskName
+# ---------------------------------------------------------------------------
+# Crear trigger DIARIO real con repeticion cada 1 minuto durante 24 horas.
+#
+# El anterior -Once -RepetitionDuration P1D se ejecuta cada minuto SOLO durante
+# 24 h y no se reinicia al dia siguiente. schtasks.exe con /SC DAILY genera un
+# MSFT_TaskDailyTrigger que si se reinicia cada dia.
+# ---------------------------------------------------------------------------
+$taskArgs = @(
+    "/Create"
+    "/TN", "`"$TaskName`""
+    "/TR", "`"$BatchPath`""
+    "/SC", "DAILY"
+    "/MO", "1"
+    "/ST", "00:00"
+    "/RI", "1"
+    "/DU", "24:00"
+    "/RU", "`"NT AUTHORITY\SYSTEM`""
+    "/RL", "HIGHEST"
+    "/F"
+)
 
-if ($Existing) {
-    Write-Host "Tarea existente encontrada: $($Existing.TaskName)" -ForegroundColor Yellow
-    if (-not $Force) {
-        $confirm = Read-Host "Deseas actualizarla? (S/N)"
-        if ($confirm -notin @('S','s','SI','Si','si','YES','Yes','yes')) {
-            Write-Host "Omitiendo $TaskName" -ForegroundColor Cyan
-            exit 0
-        }
-    }
-    try {
-        Unregister-ScheduledTask -TaskName $Existing.TaskName -Confirm:$false -ErrorAction Stop
-        Write-Host "  Tarea anterior eliminada." -ForegroundColor Green
-    } catch {
-        Write-Error "No se pudo eliminar la tarea existente $($Existing.TaskName): $_"
-        exit 1
-    }
+Write-Host "Creando tarea con schtasks.exe: DAILY /ST 00:00 /RI 1 /DU 24:00"
+$schtasksOutput = & schtasks.exe $taskArgs 2>&1
+if ($LASTEXITCODE -ne 0) {
+    throw "schtasks.exe fallo con codigo $($LASTEXITCODE): $schtasksOutput"
 }
 
-$Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).Date -RepetitionInterval (New-TimeSpan -Minutes 1) -RepetitionDuration (New-TimeSpan -Days 1)
-$Action = New-ScheduledTaskAction -Execute $PhpPath -Argument $Argument -WorkingDirectory $ProjectDir
-$Principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-$Settings = New-ScheduledTaskSettingsSet `
-    -AllowStartIfOnBatteries `
-    -DontStopIfGoingOnBatteries `
-    -StartWhenAvailable `
-    -ExecutionTimeLimit (New-TimeSpan -Minutes 65) `
-    -MultipleInstances IgnoreNew
+# ---------------------------------------------------------------------------
+# Forzar directorio de trabajo del batch al root del proyecto
+# ---------------------------------------------------------------------------
+$task = Get-ScheduledTask -TaskName $TaskName
+if ($task.Actions.Count -gt 0) {
+    $task.Actions[0].WorkingDirectory = $ProjectDir
+    Set-ScheduledTask -InputObject $task | Out-Null
+}
 
-Register-ScheduledTask `
-    -TaskName $TaskName `
-    -Description $Description `
-    -Action $Action `
-    -Trigger $Trigger `
-    -Principal $Principal `
-    -Settings $Settings `
-    -Force | Out-Null
+# ---------------------------------------------------------------------------
+# Validar que tiene NextRunTime
+# ---------------------------------------------------------------------------
+$taskInfo = Get-ScheduledTaskInfo -TaskName $TaskName
+if (-not $taskInfo.NextRunTime) {
+    throw "La tarea se creo pero no tiene NextRunTime valido."
+}
 
-# Ejecutar inmediatamente para no esperar hasta la medianoche
+Write-Host "Tarea '$TaskName' registrada correctamente."
+Write-Host "Proxima ejecucion programada: $($taskInfo.NextRunTime)"
+
+# ---------------------------------------------------------------------------
+# Iniciar inmediatamente para comprobar que funciona
+# ---------------------------------------------------------------------------
 Start-ScheduledTask -TaskName $TaskName
-
-Write-Host "Tarea programada creada/actualizada: $TaskName" -ForegroundColor Green
-Write-Host "  Ejecutable: $PhpPath" -ForegroundColor Cyan
-Write-Host "  Argumento: $Argument" -ForegroundColor Cyan
-Write-Host "  Frecuencia: cada 1 minuto, 24 horas" -ForegroundColor Cyan
-Write-Host "  Primera ejecucion iniciada ahora." -ForegroundColor Green
+Write-Host "Tarea iniciada manualmente para validacion."

@@ -11,7 +11,7 @@ class RiberaSyncToSupabase extends Command
 {
     protected $signature = 'ribera:sync-to-supabase
                             {dataset? : Dataset específico (kpis, warehouses, sellers, stock, clients, suppliers, monthly_history, sales, receivables, historical)}
-                            {--period= : Período personalizado para ventas. Opciones: test_1month, current_month}';
+                            {--period= : Período personalizado para ventas. Opciones: test_1month, current_month, today}';
 
     protected $description = 'Sincroniza datos del ERP SQL Server local hacia la base de datos de reporting en Supabase';
 
@@ -773,10 +773,15 @@ class RiberaSyncToSupabase extends Command
     {
         ini_set('memory_limit', '512M');
         
-        // 1. Procesar borrados físicos primero
-        $this->syncDeletedRecords('sales', 'hist_ventas_cabecera', 'sales_headers', 'cod_venta');
-
         $periodOption = $this->option('period');
+        $isQuickPeriod = ($periodOption === 'today');
+        $isPartialPeriod = in_array($periodOption, ['test_1month', 'today'], true);
+
+        // 1. Procesar borrados físicos primero (omitir en quick sync)
+        if (!$isQuickPeriod) {
+            $this->syncDeletedRecords('sales', 'hist_ventas_cabecera', 'sales_headers', 'cod_venta');
+        }
+
         $stateRow = DB::connection('supabase')->table('sync_state')->where('dataset', 'sales')->first();
         $lastSuccess = $stateRow ? $stateRow->last_success_at : null;
 
@@ -785,18 +790,19 @@ class RiberaSyncToSupabase extends Command
 
         // Determinar condiciones de rango de fechas de venta
         $querySql = "
-            SELECT 
+            SELECT
                 cod_venta, tipo_venta, cod_empresa, cod_caja, cod_almacen, cod_cliente, razon_social, fecha_venta, cod_forma_liquidacion, cod_vendedor, nombre_vendedor, importe as net_amount, importe_impuestos as total_amount, importe_pendiente as pending_amount, anulada, fecha_modificacion
             FROM hist_ventas_cabecera
             WHERE tipo_venta IN (2, 4, 5)
         ";
         $params = [];
 
-        $isPartialPeriod = ($periodOption === 'test_1month');
-
         if ($periodOption === 'test_1month') {
             $this->info("Ejecutando prueba controlada de 1 mes de ventas (Julio 2026)...");
             $querySql .= " AND fecha_venta >= '20260701' AND fecha_venta < '20260801'";
+        } elseif ($periodOption === 'today') {
+            $this->info("Quick sync: sincronizando ventas de hoy...");
+            $querySql .= " AND fecha_venta = CAST(GETDATE() AS DATE)";
         } elseif ($periodOption === 'current_month') {
             $start = sprintf('%04d%02d01', $currentYear, (int) date('m'));
             $end = date('Ymd', strtotime("{$currentYear}-" . date('m') . "-01 +1 month"));
@@ -897,8 +903,12 @@ class RiberaSyncToSupabase extends Command
             $this->warn("Sync_state NO actualizado: la opción --period={$periodOption} es una sincronización parcial.");
         }
 
-        // 6. Ejecutar Garbage Collector de borrados físicos no registrados
-        $this->cleanupSalesOrphans();
+        // 6. Ejecutar Garbage Collector de borrados físicos no registrados (omitir en quick sync)
+        if (!$isQuickPeriod) {
+            $this->cleanupSalesOrphans();
+        } else {
+            $this->info("Quick sync: omitiendo Garbage Collector de ventas huérfanas.");
+        }
 
         return $processedHeadersCount;
     }

@@ -19,10 +19,11 @@ interface MobileDrawerProps {
   userEmail: string
   syncTimeText: string
   isDelayed: boolean
+  isSyncing: boolean
   onClose: () => void
 }
 
-function MobileDrawer({ menuItems, userInitial, userEmail, syncTimeText, isDelayed, onClose }: MobileDrawerProps) {
+function MobileDrawer({ menuItems, userInitial, userEmail, syncTimeText, isDelayed, isSyncing, onClose }: MobileDrawerProps) {
   const pathname = usePathname()
 
   return (
@@ -100,17 +101,39 @@ function MobileDrawer({ menuItems, userInitial, userEmail, syncTimeText, isDelay
               <p className="text-xs text-[#747878] mt-0.5 truncate">{userEmail}</p>
             </div>
           </div>
-          <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${
-            isDelayed ? 'bg-amber-50 border border-amber-200 text-amber-600' : 'bg-emerald-50 border border-emerald-200 text-emerald-600'
-          }`}>
-            <span className={`h-1.5 w-1.5 rounded-full ${isDelayed ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
-            <span className="text-xs font-bold uppercase tracking-wider">Sinc: {syncTimeText}</span>
-          </div>
+          <SyncBadge syncTimeText={syncTimeText} isDelayed={isDelayed} isSyncing={isSyncing} />
           <LogoutButton />
         </div>
 
       </aside>
     </>
+  )
+}
+
+function SyncBadge({ syncTimeText, isDelayed, isSyncing }: { syncTimeText: string; isDelayed: boolean; isSyncing: boolean }) {
+  let badgeClass: string
+  let dotClass: string
+  let label: string
+
+  if (isSyncing) {
+    badgeClass = 'bg-amber-50 border border-amber-200 text-amber-600'
+    dotClass = 'bg-amber-500 animate-pulse'
+    label = 'Sincronizando...'
+  } else if (isDelayed) {
+    badgeClass = 'bg-amber-50 border border-amber-200 text-amber-600'
+    dotClass = 'bg-amber-500 animate-pulse'
+    label = `Sinc: ${syncTimeText}`
+  } else {
+    badgeClass = 'bg-emerald-50 border border-emerald-200 text-emerald-600'
+    dotClass = 'bg-emerald-500'
+    label = `Sinc: ${syncTimeText}`
+  }
+
+  return (
+    <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${badgeClass}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
+      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+    </div>
   )
 }
 
@@ -122,10 +145,11 @@ interface ShellProps {
   userEmail: string
   syncTimeText: string
   isDelayed: boolean
+  isSyncing: boolean
   children: React.ReactNode
 }
 
-export default function DashboardShell({ menuItems, userInitial, userEmail, syncTimeText, isDelayed, children }: ShellProps) {
+export default function DashboardShell({ menuItems, userInitial, userEmail, syncTimeText, isDelayed, isSyncing, children }: ShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
 
@@ -201,6 +225,7 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
           userEmail={userEmail}
           syncTimeText={syncTimeText}
           isDelayed={isDelayed}
+          isSyncing={isSyncing}
           onClose={() => setMobileOpen(false)}
         />
       )}
@@ -224,17 +249,7 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
 
             {/* Badge de sincronización */}
             <div className="hidden sm:flex items-center">
-              {isDelayed ? (
-                <div className="flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-amber-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Sinc: {syncTimeText}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-emerald-600">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-bold uppercase tracking-wider">Sinc: {syncTimeText}</span>
-                </div>
-              )}
+              <SyncBadge syncTimeText={syncTimeText} isDelayed={isDelayed} isSyncing={isSyncing} />
             </div>
           </div>
 
