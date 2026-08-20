@@ -776,6 +776,7 @@ class RiberaSyncToSupabase extends Command
         $periodOption = $this->option('period');
         $isQuickPeriod = ($periodOption === 'today');
         $isPartialPeriod = in_array($periodOption, ['test_1month', 'today'], true);
+        $quickSalesDate = $isQuickPeriod ? now()->toDateString() : null;
 
         // 1. Procesar borrados físicos primero (omitir en quick sync)
         if (!$isQuickPeriod) {
@@ -801,8 +802,9 @@ class RiberaSyncToSupabase extends Command
             $this->info("Ejecutando prueba controlada de 1 mes de ventas (Julio 2026)...");
             $querySql .= " AND fecha_venta >= '20260701' AND fecha_venta < '20260801'";
         } elseif ($periodOption === 'today') {
-            $this->info("Quick sync: sincronizando ventas de hoy...");
-            $querySql .= " AND fecha_venta = CAST(GETDATE() AS DATE)";
+            $this->info("Quick sync: sincronizando ventas de {$quickSalesDate}...");
+            $querySql .= " AND CAST(fecha_venta AS DATE) = ?";
+            $params = [$quickSalesDate];
         } elseif ($periodOption === 'current_month') {
             $start = sprintf('%04d%02d01', $currentYear, (int) date('m'));
             $end = date('Ymd', strtotime("{$currentYear}-" . date('m') . "-01 +1 month"));
@@ -903,11 +905,12 @@ class RiberaSyncToSupabase extends Command
             $this->warn("Sync_state NO actualizado: la opción --period={$periodOption} es una sincronización parcial.");
         }
 
-        // 6. Ejecutar Garbage Collector de borrados físicos no registrados (omitir en quick sync)
-        if (!$isQuickPeriod) {
-            $this->cleanupSalesOrphans();
+        // 6. Resolver borrados físicos. El quick sync concilia exclusivamente el día
+        // consultado; el resto de sincronizaciones conserva el GC global existente.
+        if ($isQuickPeriod) {
+            $this->cleanupQuickSalesOrphans($quickSalesDate);
         } else {
-            $this->info("Quick sync: omitiendo Garbage Collector de ventas huérfanas.");
+            $this->cleanupSalesOrphans();
         }
 
         return $processedHeadersCount;
@@ -1296,6 +1299,87 @@ class RiberaSyncToSupabase extends Command
             'orders_count' => $ordersCount,
             'synced_at' => now()
         ], ['year', 'month'], ['revenue', 'total_cost', 'gross_profit', 'orders_count', 'synced_at']);
+    }
+
+    /**
+     * Reconcilia las ventas del día del quick sync sin recorrer el histórico.
+     *
+     * Las cabeceras presentes en Supabase para hoy que ya no existen en ERP se
+     * eliminan junto con sus líneas. Así se cubren borrados físicos y cambios de
+     * fecha sin ejecutar el Garbage Collector global.
+     */
+    private function cleanupQuickSalesOrphans(string $salesDate): int
+    {
+        $this->info("Quick sync: conciliando borrados físicos de {$salesDate}...");
+
+        $erpHeaders = DB::connection('erp')->select("
+            SELECT cod_venta, tipo_venta, cod_empresa, cod_caja
+            FROM hist_ventas_cabecera
+            WHERE tipo_venta IN (2, 4, 5)
+                AND CAST(fecha_venta AS DATE) = ?
+        ", [$salesDate]);
+
+        $erpKeys = [];
+        foreach ($erpHeaders as $header) {
+            $erpKeys[$this->salesKey(
+                $header->cod_venta,
+                $header->tipo_venta,
+                $header->cod_empresa,
+                $header->cod_caja
+            )] = true;
+        }
+
+        $headersToDelete = DB::connection('supabase')->table('sales_headers')
+            ->select('cod_venta', 'tipo_venta', 'cod_empresa', 'cod_caja')
+            ->whereDate('fecha_venta', $salesDate)
+            ->get()
+            ->filter(fn ($header) => !isset($erpKeys[$this->salesKey(
+                $header->cod_venta,
+                $header->tipo_venta,
+                $header->cod_empresa,
+                $header->cod_caja
+            )]));
+
+        foreach (array_chunk($headersToDelete->all(), 100) as $headersChunk) {
+            DB::connection('supabase')->transaction(function () use ($headersChunk) {
+                $linesQuery = DB::connection('supabase')->table('sales_lines');
+                $this->applySalesCompositeKeyFilter($linesQuery, $headersChunk);
+                $linesQuery->delete();
+
+                $headersQuery = DB::connection('supabase')->table('sales_headers');
+                $this->applySalesCompositeKeyFilter($headersQuery, $headersChunk);
+                $headersQuery->delete();
+            });
+        }
+
+        $deletedCount = $headersToDelete->count();
+        $this->info("Quick sync: conciliación diaria finalizada ({$deletedCount} cabeceras eliminadas).");
+
+        return $deletedCount;
+    }
+
+    private function applySalesCompositeKeyFilter($query, array $headers): void
+    {
+        $query->where(function ($keysQuery) use ($headers) {
+            foreach ($headers as $header) {
+                $keysQuery->orWhere(function ($keyQuery) use ($header) {
+                    $keyQuery->where('cod_venta', $header->cod_venta)
+                        ->where('tipo_venta', $header->tipo_venta)
+                        ->where('cod_empresa', $header->cod_empresa)
+                        ->where('cod_caja', $header->cod_caja);
+                });
+            }
+        });
+    }
+
+    private function salesKey($codVenta, $tipoVenta, $codEmpresa, $codCaja): string
+    {
+        return implode('-', [
+            trim((string) $codVenta),
+            (int) $tipoVenta,
+            trim((string) $codEmpresa),
+            trim((string) $codCaja),
+        ]);
     }
 
     /**
