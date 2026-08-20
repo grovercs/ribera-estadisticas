@@ -91,6 +91,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   const lastSyncAt = syncRunsRes.data?.completed_at
   const lastSync = lastSyncAt
     ? new Date(lastSyncAt).toLocaleTimeString('es-ES', {
+        timeZone: 'Europe/Madrid',
         hour: '2-digit',
         minute: '2-digit',
       })
@@ -134,10 +135,16 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number.isFinite(val) ? val : 0)
   const fmtNum = (val: number) =>
     new Intl.NumberFormat('es-ES').format(Number.isFinite(val) ? val : 0)
-  const fmtPct = (val: number) =>
-    new Intl.NumberFormat('es-ES', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(
-      Number.isFinite(val) ? val / 100 : 0,
-    )
+  const fmtPct = (val: number) => {
+    const safeValue = Number.isFinite(val) ? val : 0
+    const truncatedValue = Math.trunc(safeValue * 100) / 100
+
+    return new Intl.NumberFormat('es-ES', {
+      style: 'percent',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(truncatedValue / 100)
+  }
 
   // --- VENTAS (Hoy / Ayer / Quincena Actual / Quincena Anterior / Anteriores) ---
   const hoyPontImp = getStoreValue(salesData.hoy, PONT, 'importe')
