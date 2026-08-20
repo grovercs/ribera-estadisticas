@@ -25,9 +25,8 @@ interface ExecutiveMobileCardsProps {
 export default function ExecutiveMobileCards({ sections }: ExecutiveMobileCardsProps) {
   const truncateTo2Decimals = (value: number) => {
     const safeValue = Number.isFinite(value) ? value : 0
-    const epsilon = Number.EPSILON * Math.max(1, Math.abs(safeValue))
 
-    return Math.trunc((safeValue + Math.sign(safeValue || 1) * epsilon) * 100) / 100
+    return Math.trunc(safeValue * 100) / 100
   }
 
   const currencyFormatter = new Intl.NumberFormat('es-ES', {
@@ -37,11 +36,15 @@ export default function ExecutiveMobileCards({ sections }: ExecutiveMobileCardsP
     maximumFractionDigits: 2,
   })
   const numberFormatter = new Intl.NumberFormat('es-ES')
-  const percentFormatter = new Intl.NumberFormat('es-ES', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  const percentFormatter = new Intl.NumberFormat('es-ES', {
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
 
   const fmt = (value: number | undefined, format?: MobileRow['format']) => {
     const v = Number(value) || 0
-    if (format === 'pct') return percentFormatter.format(v / 100)
+    if (format === 'pct') return percentFormatter.format(truncateTo2Decimals(v) / 100)
     if (format === 'num') return numberFormatter.format(v)
     return currencyFormatter.format(truncateTo2Decimals(v))
   }
