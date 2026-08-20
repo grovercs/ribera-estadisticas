@@ -23,7 +23,19 @@ interface ExecutiveMobileCardsProps {
 }
 
 export default function ExecutiveMobileCards({ sections }: ExecutiveMobileCardsProps) {
-  const currencyFormatter = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+  const truncateTo2Decimals = (value: number) => {
+    const safeValue = Number.isFinite(value) ? value : 0
+    const epsilon = Number.EPSILON * Math.max(1, Math.abs(safeValue))
+
+    return Math.trunc((safeValue + Math.sign(safeValue || 1) * epsilon) * 100) / 100
+  }
+
+  const currencyFormatter = new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
   const numberFormatter = new Intl.NumberFormat('es-ES')
   const percentFormatter = new Intl.NumberFormat('es-ES', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
@@ -31,7 +43,7 @@ export default function ExecutiveMobileCards({ sections }: ExecutiveMobileCardsP
     const v = Number(value) || 0
     if (format === 'pct') return percentFormatter.format(v / 100)
     if (format === 'num') return numberFormatter.format(v)
-    return currencyFormatter.format(v)
+    return currencyFormatter.format(truncateTo2Decimals(v))
   }
 
   const ValueLine = ({
@@ -93,7 +105,7 @@ export default function ExecutiveMobileCards({ sections }: ExecutiveMobileCardsP
 
               const v = Number(row.vielhaValue) || 0
               const p = Number(row.pontValue) || 0
-              const total = v + p
+              const total = row.totalValue !== undefined ? Number(row.totalValue) || 0 : v + p
               const c1 = Number(row.vielhaCount) || 0
               const c2 = Number(row.pontCount) || 0
               const totalCount = c1 + c2
