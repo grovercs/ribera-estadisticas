@@ -110,6 +110,86 @@ function MobileDrawer({ menuItems, userInitial, userEmail, syncTimeText, isDelay
   )
 }
 
+interface DesktopDrawerProps {
+  menuItems: MenuItem[]
+  onClose: () => void
+}
+
+function DesktopDrawer({ menuItems, onClose }: DesktopDrawerProps) {
+  const pathname = usePathname()
+
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40 hidden bg-black/40 backdrop-blur-sm lg:block"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <aside className="fixed inset-y-0 left-0 z-50 hidden w-72 flex-col border-r border-[#e1e2e6] bg-[#f8f9fc] text-base font-semibold shadow-2xl animate-in slide-in-from-left duration-200 lg:flex">
+        <div className="flex items-center justify-between gap-3.5 border-b border-[#e1e2e6] p-6">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded bg-[#181919] text-white shadow-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-6 w-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A4.86 4.86 0 0012 8c-2.316 0-4.329.805-5.918 2.148V21M3 9.75V21h18V9.75" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-2xl font-black leading-none tracking-tight text-[#191c1e]">Ribera</h1>
+              <p className="mt-0.5 text-sm font-semibold uppercase tracking-wider text-[#747878]">Estadísticas</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 transition-colors hover:bg-[#e1e2e6]"
+            aria-label="Cerrar menú"
+          >
+            <X className="h-5 w-5 text-[#747878]" />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-1.5 overflow-y-auto py-6 pr-3">
+          {menuItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
+            return item.active ? (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onClose}
+                className={`flex items-center gap-3.5 rounded-r-xl py-3 px-5 transition-all duration-100 ${
+                  isActive
+                    ? 'bg-white text-[#206393] border-l-[5px] border-[#206393] shadow-md font-black'
+                    : 'text-[#191c1e] hover:bg-white/70 hover:text-[#206393] font-semibold'
+                }`}
+              >
+                <span className="shrink-0 text-2xl">{item.icon}</span>
+                <span className="text-base tracking-tight">{item.name}</span>
+              </Link>
+            ) : (
+              <div
+                key={item.name}
+                className="flex cursor-not-allowed select-none items-center justify-between rounded-r-xl py-2.5 px-5 text-[#c8cacc] opacity-60"
+              >
+                <div className="flex items-center gap-3.5">
+                  <span className="shrink-0 text-xl opacity-30">{item.icon}</span>
+                  <span className="text-sm font-medium">{item.name}</span>
+                </div>
+                <span className="scale-90 rounded bg-slate-200/50 px-1.5 py-0.5 text-xs font-normal uppercase text-[#747878]">
+                  Pronto
+                </span>
+              </div>
+            )
+          })}
+        </nav>
+
+        <div className="border-t border-[#e1e2e6] p-5">
+          <LogoutButton />
+        </div>
+      </aside>
+    </>
+  )
+}
+
 function SyncBadge({ syncTimeText, isDelayed, isSyncing }: { syncTimeText: string; isDelayed: boolean; isSyncing: boolean }) {
   let badgeClass: string
   let dotClass: string
@@ -151,18 +231,32 @@ interface ShellProps {
 
 export default function DashboardShell({ menuItems, userInitial, userEmail, syncTimeText, isDelayed, isSyncing, children }: ShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [desktopOpen, setDesktopOpen] = useState(false)
   const pathname = usePathname()
 
-  // Cerrar drawer al cambiar de ruta
+  // Cerrar drawers al cambiar de ruta
   useEffect(() => {
     setMobileOpen(false)
+    setDesktopOpen(false)
   }, [pathname])
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileOpen(false)
+        setDesktopOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f8f9fc] text-[#191c1e] font-sans antialiased">
 
       {/* ── Sidebar Desktop ───────────────────────────────────────────── */}
-      <aside className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#f8f9fc] border-r border-[#e1e2e6] hidden lg:flex text-base font-semibold">
+      <aside className="hidden">
 
         {/* Logo */}
         <div className="flex items-center gap-3.5 p-6 border-b border-[#e1e2e6]">
@@ -230,8 +324,15 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
         />
       )}
 
+      {desktopOpen && (
+        <DesktopDrawer
+          menuItems={menuItems}
+          onClose={() => setDesktopOpen(false)}
+        />
+      )}
+
       {/* ── Área Principal ────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col lg:ml-72 relative min-w-0">
+      <div className="flex-1 flex flex-col relative min-w-0">
 
         {/* Topbar */}
         <header className="flex justify-between items-center w-full h-14 px-4 md:px-6 bg-white border-b border-[#e1e2e6] shadow-sm z-40 flex-shrink-0">
@@ -243,6 +344,14 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
               aria-label="Abrir menú"
             >
               <Menu className="w-5 h-5 text-[#191c1e]" />
+            </button>
+
+            <button
+              className="hidden rounded-lg p-2 transition-colors hover:bg-[#f0f4f8] lg:inline-flex"
+              onClick={() => setDesktopOpen(true)}
+              aria-label="Abrir menú de navegación"
+            >
+              <Menu className="h-5 w-5 text-[#191c1e]" />
             </button>
 
             <span className="text-lg font-black tracking-tight text-[#191c1e] lg:hidden">Ribera</span>
@@ -276,5 +385,3 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
     </div>
   )
 }
-
-
