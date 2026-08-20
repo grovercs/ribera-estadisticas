@@ -341,11 +341,11 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   ]
 
   return (
-    <div className="space-y-5 text-[#191c1e] text-sm max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-[#e1e2e6] pb-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-3xl md:text-4xl font-black text-[#191c1e] tracking-tight">Cuadro de Dirección</h1>
-          <p className="text-base text-[#747878] font-medium">
+    <div className="w-full max-w-none space-y-5 text-sm text-[#191c1e] md:space-y-2 lg:space-y-3 2xl:space-y-5">
+      <div className="flex flex-col gap-3 border-b border-[#e1e2e6] pb-4 sm:flex-row sm:items-start sm:justify-between md:hidden">
+        <div className="flex flex-col gap-1 md:gap-0">
+          <h1 className="text-3xl font-black tracking-tight text-[#191c1e] md:text-xl lg:text-2xl 2xl:text-3xl">Cuadro de Dirección</h1>
+          <p className="text-base font-medium text-[#747878] md:text-xs lg:text-sm 2xl:text-base">
             Fotografía diaria del negocio · Últimos datos: {todayLabel} · Sync {lastSync}
           </p>
         </div>
@@ -355,8 +355,8 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       </div>
 
       {/* Tabla principal VIELHA | PONT | TOTAL */}
-      <div className="hidden md:block overflow-x-auto rounded-xl border border-[#e1e2e6] shadow-sm bg-white min-w-0">
-        <div className="min-w-[768px]">
+      <div className="hidden">
+        <div className="min-w-[720px] lg:min-w-[768px]">
         <table className="w-full border-collapse text-sm md:text-base">
           <thead>
             <tr className="bg-[#f0f4f8]">
@@ -442,6 +442,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
             ))}
 
             <tr><td colSpan={4} className="h-px bg-[#e1e2e6]" /></tr>
+          </tbody>
+
+          {/* Estos bloques se presentan en el grid desktop inferior. */}
+          <tbody className="hidden">
 
             {/* 3. IMPAGADOS Y PENDIENTES */}
             <tr>
@@ -478,8 +482,8 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
 
             {/* HOY */}
             {(() => {
-              const vielha = marginStore(marginsData.hoy_rows || [], VIELHA)
-              const pont = marginStore(marginsData.hoy_rows || [], PONT)
+              const vielha = marginVielhaHoy
+              const pont = marginPontHoy
               return (
                 <>
                   <tr className="bg-[#f8f9fc]">
@@ -511,8 +515,8 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
 
             {/* AÑO 2026 */}
             {(() => {
-              const vielha = marginStore(marginsData.year_rows || [], VIELHA)
-              const pont = marginStore(marginsData.year_rows || [], PONT)
+              const vielha = marginVielhaYear
+              const pont = marginPontYear
               return (
                 <>
                   <tr className="bg-[#f8f9fc]">
@@ -618,10 +622,296 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       </div>
       </div>
 
+      <div className="hidden space-y-3 md:block lg:space-y-4 xl:grid xl:grid-cols-2 xl:gap-5 xl:space-y-0">
+        <section className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+          <div className="min-w-[560px]">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 lg:[&_td]:px-2.5 lg:[&_th]:px-2.5 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <thead>
+                <tr>
+                  <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>1 · Ventas</span>
+                      <span className="flex items-center gap-1 whitespace-nowrap text-[10px] font-bold normal-case tracking-normal text-white/90">
+                        Cuadro de Dirección
+                        <span className="rounded-full border border-white/25 bg-white/10 px-1 py-px text-[9px] font-semibold">Sinc: {lastSync}</span>
+                      </span>
+                    </div>
+                  </th>
+                </tr>
+                <tr className="border-b border-[#e1e2e6] bg-[#f0f4f8] text-[11px] font-bold uppercase tracking-wide text-[#747878]">
+                  <th className="w-1/4 text-left">Concepto</th>
+                  <th className="text-right">Vielha</th>
+                  <th className="text-right">Pont de Suert</th>
+                  <th className="bg-[#e3eaf1] text-right text-[#191c1e]">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0f4f8]">
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#191c1e]">{todayLabel}</div></td>
+                  <td className="text-right">{fmtEur(hoyVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({hoyVielhaCnt})</span></td>
+                  <td className="text-right">{fmtEur(hoyPontImp)} <span className="text-[11px] text-[#9aa0a6]">({hoyPontCnt})</span></td>
+                  <td className="text-right font-bold">{fmtEur(hoyTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({hoyTotalCnt})</span></td>
+                </tr>
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#191c1e]">{yesterdayLabel}</div></td>
+                  <td className="text-right">{fmtEur(ayerVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({ayerVielhaCnt})</span></td>
+                  <td className="text-right">{fmtEur(ayerPontImp)} <span className="text-[11px] text-[#9aa0a6]">({ayerPontCnt})</span></td>
+                  <td className="text-right font-bold">{fmtEur(ayerTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({ayerTotalCnt})</span></td>
+                </tr>
+                <tr className="bg-blue-50/30">
+                  <td><div className="text-sm font-bold text-[#206393]">Quincena Actual</div></td>
+                  <td className="text-right">{fmtEur(qActVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({qActVielhaCnt})</span></td>
+                  <td className="text-right">{fmtEur(qActPontImp)} <span className="text-[11px] text-[#9aa0a6]">({qActPontCnt})</span></td>
+                  <td className="text-right font-bold">{fmtEur(qActTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({qActTotalCnt})</span></td>
+                </tr>
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#191c1e]">Quincena Anterior</div></td>
+                  <td className="text-right">{fmtEur(qAntVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({qAntVielhaCnt})</span></td>
+                  <td className="text-right">{fmtEur(qAntPontImp)} <span className="text-[11px] text-[#9aa0a6]">({qAntPontCnt})</span></td>
+                  <td className="text-right font-bold">{fmtEur(qAntTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({qAntTotalCnt})</span></td>
+                </tr>
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#747878]">Anteriores</div></td>
+                  <td className="text-right text-[#747878]">{fmtEur(antVielhaImp)} <span className="text-[11px]">({antVielhaCnt})</span></td>
+                  <td className="text-right text-[#747878]">{fmtEur(antPontImp)} <span className="text-[11px]">({antPontCnt})</span></td>
+                  <td className="text-right font-bold text-[#747878]">{fmtEur(antTotalImp)} <span className="text-[11px]">({antTotalCnt})</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+          <div className="min-w-[560px]">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 lg:[&_td]:px-2.5 lg:[&_th]:px-2.5 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <thead>
+                <tr>
+                  <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>2 · Facturas de Venta</span>
+                      {user && <SyncButton initialActiveRequest={activeSyncRequest} userId={user.id} variant="header" />}
+                    </div>
+                  </th>
+                </tr>
+                <tr className="border-b border-[#e1e2e6] bg-[#f0f4f8] text-[11px] font-bold uppercase tracking-wide text-[#747878]">
+                  <th className="w-1/4 text-left">Concepto</th>
+                  <th className="text-right">Vielha</th>
+                  <th className="text-right">Pont de Suert</th>
+                  <th className="bg-[#e3eaf1] text-right text-[#191c1e]">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0f4f8]">
+                {[
+                  ['Quincena Actual', 'quincena_actual'],
+                  ['Quincena Anterior', 'quincena_anterior'],
+                  [`Año ${year}`, 'year'],
+                  ['Año Ant. (mismo período)', 'year_ant_periodo'],
+                  ['Año Anterior', 'year_anterior'],
+                ].map(([label, key]) => (
+                  <tr key={key} className={key === 'year' ? 'bg-blue-50/30' : 'hover:bg-[#f8f9fc]/60'}>
+                    <td><div className={`text-sm font-bold ${key === 'year' ? 'text-[#206393]' : 'text-[#191c1e]'}`}>{label}</div></td>
+                    <td className="text-right">{fmtEur(salesPeriodValue(key, VIELHA, 'importe'))} <span className="text-[11px] text-[#9aa0a6]">({salesPeriodCount(key, VIELHA, 'tickets')})</span></td>
+                    <td className="text-right">{fmtEur(salesPeriodValue(key, PONT, 'importe'))} <span className="text-[11px] text-[#9aa0a6]">({salesPeriodCount(key, PONT, 'tickets')})</span></td>
+                    <td className="text-right font-bold">{fmtEur(factTotalImp(key))} <span className="text-[11px] text-[#9aa0a6]">({factTotalCnt(key)})</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div className="hidden grid-cols-2 gap-3 md:grid lg:gap-4 xl:gap-5">
+        <div className="space-y-3 xl:space-y-4">
+          <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <thead>
+                <tr>
+                  <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
+                    3 · Impagados y Pendientes de Cobro
+                  </th>
+                </tr>
+                <tr className="border-b border-[#e1e2e6] bg-[#f0f4f8] text-[11px] font-bold uppercase tracking-wide text-[#747878]">
+                  <th className="text-left">Concepto</th>
+                  <th className="text-right">Vielha</th>
+                  <th className="text-right">Pont</th>
+                  <th className="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0f4f8]">
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#191c1e]">Impagados (Vía Judicial/Devol.)</div></td>
+                  <td className="text-right font-bold text-rose-700">{fmtEur(impVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({impVielhaCnt})</span></td>
+                  <td className="text-right font-bold text-rose-700">{fmtEur(impPontImp)} <span className="text-[11px] text-[#9aa0a6]">({impPontCnt})</span></td>
+                  <td className="text-right font-black text-rose-700">{fmtEur(impTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({impTotalCnt})</span></td>
+                </tr>
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#191c1e]">Pendientes de Cobro</div></td>
+                  <td className="text-right">{fmtEur(pendVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({pendVielhaCnt})</span></td>
+                  <td className="text-right">{fmtEur(pendPontImp)} <span className="text-[11px] text-[#9aa0a6]">({pendPontCnt})</span></td>
+                  <td className="text-right font-bold">{fmtEur(pendTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({pendTotalCnt})</span></td>
+                </tr>
+                <tr className="bg-amber-50/50">
+                  <td><div className="text-sm font-bold text-[#191c1e]">Cartera Pendiente Total</div></td>
+                  <td colSpan={2} />
+                  <td className="text-right font-black text-amber-700">{fmtEur(carteraImpagada)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <thead>
+                <tr>
+                  <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
+                    4 · Márgenes Comerciales
+                  </th>
+                </tr>
+                <tr className="border-b border-[#e1e2e6] bg-[#f0f4f8] text-[11px] font-bold uppercase tracking-wide text-[#747878]">
+                  <th className="text-left">Concepto</th>
+                  <th className="text-right">Vielha</th>
+                  <th className="text-right">Pont</th>
+                  <th className="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#f0f4f8]">
+                {(() => {
+                  const vielha = marginVielhaHoy
+                  const pont = marginPontHoy
+                  return (
+                    <>
+                      <tr className="bg-[#f8f9fc]">
+                        <td colSpan={4} className="text-[11px] font-black uppercase tracking-wider text-[#206393]">Hoy</td>
+                      </tr>
+                      <tr className="hover:bg-[#f8f9fc]/60">
+                        <td><div className="text-sm font-bold text-[#191c1e]">Venta</div></td>
+                        <td className="text-right">{fmtEur(vielha.venta)}</td>
+                        <td className="text-right">{fmtEur(pont.venta)}</td>
+                        <td className="text-right font-bold">{fmtEur(marginsHoy.venta)}</td>
+                      </tr>
+                      <tr className="hover:bg-[#f8f9fc]/60">
+                        <td><div className="text-sm font-bold text-[#191c1e]">Coste</div></td>
+                        <td className="text-right">{fmtEur(vielha.coste)}</td>
+                        <td className="text-right">{fmtEur(pont.coste)}</td>
+                        <td className="text-right font-bold">{fmtEur(marginsHoy.coste)}</td>
+                      </tr>
+                      <tr className="bg-emerald-50/40">
+                        <td><div className="text-sm font-bold text-[#191c1e]">Margen %</div></td>
+                        <td className="text-right font-bold text-emerald-700">{fmtPct(vielha.margen_porcentaje)}</td>
+                        <td className="text-right font-bold text-emerald-700">{fmtPct(pont.margen_porcentaje)}</td>
+                        <td className="text-right font-black text-emerald-700">{fmtPct(marginsHoy.margen_porcentaje)}</td>
+                      </tr>
+                    </>
+                  )
+                })()}
+                {(() => {
+                  const vielha = marginVielhaYear
+                  const pont = marginPontYear
+                  return (
+                    <>
+                      <tr className="bg-[#f8f9fc]">
+                        <td colSpan={4} className="text-[11px] font-black uppercase tracking-wider text-[#206393]">Año {year}</td>
+                      </tr>
+                      <tr className="hover:bg-[#f8f9fc]/60">
+                        <td><div className="text-sm font-bold text-[#191c1e]">Venta</div></td>
+                        <td className="text-right">{fmtEur(vielha.venta)}</td>
+                        <td className="text-right">{fmtEur(pont.venta)}</td>
+                        <td className="text-right font-bold">{fmtEur(marginsYear.venta)}</td>
+                      </tr>
+                      <tr className="hover:bg-[#f8f9fc]/60">
+                        <td><div className="text-sm font-bold text-[#191c1e]">Coste</div></td>
+                        <td className="text-right">{fmtEur(vielha.coste)}</td>
+                        <td className="text-right">{fmtEur(pont.coste)}</td>
+                        <td className="text-right font-bold">{fmtEur(marginsYear.coste)}</td>
+                      </tr>
+                      <tr className="bg-emerald-50/40">
+                        <td><div className="text-sm font-bold text-[#191c1e]">Margen %</div></td>
+                        <td className="text-right font-bold text-emerald-700">{fmtPct(vielha.margen_porcentaje)}</td>
+                        <td className="text-right font-bold text-emerald-700">{fmtPct(pont.margen_porcentaje)}</td>
+                        <td className="text-right font-black text-emerald-700">{fmtPct(marginsYear.margen_porcentaje)}</td>
+                      </tr>
+                    </>
+                  )
+                })()}
+              </tbody>
+            </table>
+          </section>
+        </div>
+
+        <div className="space-y-3 xl:space-y-4">
+          <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <tbody className="divide-y divide-[#f0f4f8]">
+                <tr><th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">5 · Albaranes de Compra — Mes Actual</th></tr>
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#191c1e]">Operaciones</div></td>
+                  <td className="text-right">{albVielhaCnt}</td>
+                  <td className="text-right">{albPontCnt}</td>
+                  <td className="text-right font-bold">{albTotalCnt}</td>
+                </tr>
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td><div className="text-sm font-bold text-[#191c1e]">Importe</div></td>
+                  <td className="text-right">{fmtEur(albVielhaImp)}</td>
+                  <td className="text-right">{fmtEur(albPontImp)}</td>
+                  <td className="text-right font-bold">{fmtEur(albTotalImp)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <tbody className="divide-y divide-[#f0f4f8]">
+                <tr><th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">6 · Facturas de Compras y Gastos</th></tr>
+                {[
+                  ['Mes Actual', 'mes_actual', 'text-[#206393]'],
+                  ['Mes Anterior', 'mes_anterior', 'text-[#191c1e]'],
+                  ['Año Actual', 'year_actual', 'text-[#206393]'],
+                  ['Año Ant. (mismo período)', 'year_anterior_periodo', 'text-[#747878]'],
+                ].map(([label, key, color]) => (
+                  <tr key={key} className={key === 'mes_actual' ? 'bg-blue-50/30' : 'hover:bg-[#f8f9fc]/60'}>
+                    <td><div className={`text-sm font-bold ${color}`}>{label}</div></td>
+                    <td colSpan={2} />
+                    <td className={`text-right ${key === 'year_anterior_periodo' ? 'text-[#747878]' : key === 'mes_actual' || key === 'year_actual' ? 'font-bold' : ''}`}>
+                      {fmtEur(purchaseValue(key, 'importe'))}
+                      {key !== 'year_anterior_periodo' && <span className="text-[11px] text-[#9aa0a6]"> ({purchaseValue(key, 'count')})</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <tbody className="divide-y divide-[#f0f4f8]">
+                <tr><th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">7 · Pagos Pendientes Proveedores</th></tr>
+                {orderedPeriodos.map((p) => (
+                  <tr key={p.periodo} className="hover:bg-[#f8f9fc]/60">
+                    <td><div className="text-sm font-bold text-[#191c1e]">{p.periodo}</div></td>
+                    <td colSpan={2} />
+                    <td className="text-right font-bold text-amber-700">{fmtEur(p.importe)} <span className="text-[11px] text-[#9aa0a6]">({p.ops})</span></td>
+                  </tr>
+                ))}
+                <tr className="bg-amber-50/50">
+                  <td><div className="text-sm font-bold text-[#191c1e]">Total Pagos</div></td>
+                  <td colSpan={2} />
+                  <td className="text-right font-black text-amber-700">{fmtEur(payablesData.total_importe || 0)} <span className="text-[11px] text-[#9aa0a6]">({payablesData.total_ops || 0})</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </div>
+      </div>
+
       <ExecutiveMobileCards sections={mobileSections} />
 
-      <p className="text-sm text-[#747878] font-medium px-1">
+      <p className="px-1 text-sm font-medium text-[#747878] md:hidden">
         Fuente: ERP INTEGRAL (SQL Server) · Sincronizado vía Supabase · Datos en tiempo real diferido · Sync {lastSync}
+      </p>
+      <p className="hidden whitespace-nowrap px-1 text-xs font-medium text-[#747878] md:block">
+        Fuente: ERP INTEGRAL (SQL Server) · Sincronizado vía Supabase · Últimos datos: {todayLabel} · Sync {lastSync}
       </p>
     </div>
   )

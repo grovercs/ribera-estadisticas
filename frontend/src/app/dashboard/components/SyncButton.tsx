@@ -18,6 +18,7 @@ interface SyncRequest {
 interface SyncButtonProps {
   initialActiveRequest: SyncRequest | null
   userId: string
+  variant?: 'default' | 'header'
 }
 
 const POLL_INTERVAL_MS = 10000 // 10 segundos
@@ -26,7 +27,7 @@ const TIMEOUT_MINUTES = 60
 const FINISHED_DISPLAY_MS = 5000
 const MAX_POLL_ERRORS = 3
 
-export default function SyncButton({ initialActiveRequest, userId }: SyncButtonProps) {
+export default function SyncButton({ initialActiveRequest, userId, variant = 'default' }: SyncButtonProps) {
   const router = useRouter()
   const [activeRequest, setActiveRequest] = useState<SyncRequest | null>(initialActiveRequest)
   const [justFinished, setJustFinished] = useState<'success' | 'failed' | null>(null)
@@ -206,36 +207,43 @@ export default function SyncButton({ initialActiveRequest, userId }: SyncButtonP
     disabled = true
   }
 
+  const presentationClass = variant === 'header'
+    ? 'border border-white/50 bg-white/15 text-white hover:bg-white/25'
+    : buttonClass
+  const sizeClass = variant === 'header'
+    ? 'gap-1 px-1.5 py-0.5 text-[10px] [&_svg]:h-3.5 [&_svg]:w-3.5'
+    : 'gap-2 px-3 py-1.5 text-sm md:gap-1.5 md:px-2 md:py-1 md:text-xs'
+
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-end gap-1 md:gap-0.5">
       <button
         onClick={handleClick}
         disabled={disabled}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${buttonClass}`}
+        className={`inline-flex items-center rounded-lg font-semibold transition-colors ${sizeClass} ${presentationClass}`}
       >
         {icon}
         <span>{buttonText}</span>
       </button>
 
-      {lastError && !isActive && (
+      {variant === 'default' && lastError && !isActive && (
         <p className="text-xs text-rose-600 font-medium max-w-[220px] text-right">
           {lastError}
         </p>
       )}
 
-      {isConnectionLost && (
+      {variant === 'default' && isConnectionLost && (
         <p className="text-xs text-amber-600 font-medium max-w-[220px] text-right">
           Problema de conexión. Esperando señal del servidor...
         </p>
       )}
 
-      {isLongRunning && !isTimedOut && !isConnectionLost && (
+      {variant === 'default' && isLongRunning && !isTimedOut && !isConnectionLost && (
         <p className="text-xs text-amber-600 font-medium max-w-[220px] text-right">
           La sincronización está tardando más de lo habitual...
         </p>
       )}
 
-      {isTimedOut && (
+      {variant === 'default' && isTimedOut && (
         <p className="text-xs text-rose-600 font-medium max-w-[220px] text-right">
           La sincronización ha superado el tiempo máximo. Inténtalo de nuevo más tarde.
         </p>

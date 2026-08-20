@@ -112,10 +112,12 @@ function MobileDrawer({ menuItems, userInitial, userEmail, syncTimeText, isDelay
 
 interface DesktopDrawerProps {
   menuItems: MenuItem[]
+  userInitial: string
+  userEmail: string
   onClose: () => void
 }
 
-function DesktopDrawer({ menuItems, onClose }: DesktopDrawerProps) {
+function DesktopDrawer({ menuItems, userInitial, userEmail, onClose }: DesktopDrawerProps) {
   const pathname = usePathname()
 
   return (
@@ -182,7 +184,16 @@ function DesktopDrawer({ menuItems, onClose }: DesktopDrawerProps) {
           })}
         </nav>
 
-        <div className="border-t border-[#e1e2e6] p-5">
+        <div className="space-y-3 border-t border-[#e1e2e6] p-5">
+          <div className="flex items-center gap-3 px-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#206393] text-sm font-bold text-white">
+              {userInitial}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold leading-none text-[#191c1e]">{userEmail.split('@')[0]}</p>
+              <p className="mt-0.5 truncate text-xs text-[#747878]">{userEmail}</p>
+            </div>
+          </div>
           <LogoutButton />
         </div>
       </aside>
@@ -210,9 +221,9 @@ function SyncBadge({ syncTimeText, isDelayed, isSyncing }: { syncTimeText: strin
   }
 
   return (
-    <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs ${badgeClass}`}>
+    <div className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs md:gap-1 md:px-2 md:py-0.5 md:text-[10px] ${badgeClass}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
-      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+      <span className="text-xs font-bold uppercase tracking-wider md:text-[10px]">{label}</span>
     </div>
   )
 }
@@ -327,6 +338,8 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
       {desktopOpen && (
         <DesktopDrawer
           menuItems={menuItems}
+          userInitial={userInitial}
+          userEmail={userEmail}
           onClose={() => setDesktopOpen(false)}
         />
       )}
@@ -335,11 +348,11 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
       <div className="flex-1 flex flex-col relative min-w-0">
 
         {/* Topbar */}
-        <header className="flex justify-between items-center w-full h-14 px-4 md:px-6 bg-white border-b border-[#e1e2e6] shadow-sm z-40 flex-shrink-0">
-          <div className="flex items-center gap-3">
+        <header className="z-40 flex h-14 w-full flex-shrink-0 items-center justify-between border-b border-[#e1e2e6] bg-white px-4 shadow-sm md:h-9 md:px-2 lg:h-10 lg:px-3">
+          <div className="flex items-center gap-3 md:gap-2">
             {/* Hamburger (solo mobile) */}
             <button
-              className="p-2 rounded-lg hover:bg-[#f0f4f8] transition-colors lg:hidden"
+              className="rounded-lg p-2 transition-colors hover:bg-[#f0f4f8] md:p-1.5 lg:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Abrir menú"
             >
@@ -347,35 +360,35 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
             </button>
 
             <button
-              className="hidden rounded-lg p-2 transition-colors hover:bg-[#f0f4f8] lg:inline-flex"
+              className="hidden rounded-lg p-2 transition-colors hover:bg-[#f0f4f8] lg:inline-flex lg:p-1.5"
               onClick={() => setDesktopOpen(true)}
               aria-label="Abrir menú de navegación"
             >
               <Menu className="h-5 w-5 text-[#191c1e]" />
             </button>
 
-            <span className="text-lg font-black tracking-tight text-[#191c1e] lg:hidden">Ribera</span>
+            <span className="text-lg font-black tracking-tight text-[#191c1e] md:hidden">Ribera</span>
 
             {/* Badge de sincronización */}
-            <div className="hidden sm:flex items-center">
+            <div className="hidden items-center sm:flex md:hidden">
               <SyncBadge syncTimeText={syncTimeText} isDelayed={isDelayed} isSyncing={isSyncing} />
             </div>
           </div>
 
           {/* Usuario */}
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-[#191c1e] leading-none">{userEmail.split('@')[0]}</p>
-              <p className="text-xs text-[#747878] mt-0.5">{userEmail}</p>
+          <div className="flex items-center gap-3 md:hidden">
+            <div className="hidden text-right sm:block">
+              <p className="text-sm font-bold leading-none text-[#191c1e] md:text-xs">{userEmail.split('@')[0]}</p>
+              <p className="mt-0.5 text-xs text-[#747878] md:mt-0 md:text-[10px]">{userEmail}</p>
             </div>
-            <div className="h-8 w-8 rounded-full bg-[#206393] text-white flex items-center justify-center font-bold text-sm shrink-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#206393] text-sm font-bold text-white md:h-7 md:w-7 md:text-xs">
               {userInitial}
             </div>
           </div>
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-[#f8f9fc] relative z-0">
+        <main className="relative z-0 flex-1 overflow-y-auto bg-[#f8f9fc] p-4 md:px-4 md:py-2.5 lg:px-5 lg:py-3 xl:px-6 xl:py-3 2xl:p-8">
           <div className="w-full space-y-6">
             {children}
           </div>
