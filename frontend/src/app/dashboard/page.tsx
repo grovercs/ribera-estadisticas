@@ -345,7 +345,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   ]
 
   return (
-    <div className="w-full max-w-none space-y-5 text-sm text-[#191c1e] md:space-y-2 lg:space-y-3 2xl:space-y-5">
+    <div className="w-full max-w-none space-y-5 text-sm text-[#191c1e] md:space-y-2 lg:space-y-2 xl:space-y-3 2xl:space-y-5">
       <div className="flex flex-col gap-3 border-b border-[#e1e2e6] pb-4 sm:flex-row sm:items-start sm:justify-between md:hidden">
         <div className="flex flex-col gap-1 md:gap-0">
           <h1 className="text-3xl font-black tracking-tight text-[#191c1e] md:text-xl lg:text-2xl 2xl:text-3xl">Cuadro de Dirección</h1>
@@ -626,10 +626,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       </div>
       </div>
 
-      <div className="hidden space-y-3 md:block lg:space-y-4 xl:grid xl:grid-cols-2 xl:gap-5 xl:space-y-0">
+      <div className="hidden space-y-2 md:block lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:gap-5">
         <section className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-          <div className="min-w-[560px]">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 lg:[&_td]:px-2.5 lg:[&_th]:px-2.5 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+          <div className="min-w-[560px] lg:min-w-[500px]">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] lg:[&_td]:px-2 lg:[&_th]:px-2 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <thead>
                 <tr>
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
@@ -726,8 +726,8 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
         </section>
 
         <section className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-          <div className="min-w-[560px]">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 lg:[&_td]:px-2.5 lg:[&_th]:px-2.5 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+          <div className="min-w-[560px] lg:min-w-[500px]">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] lg:[&_td]:px-2 lg:[&_th]:px-2 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <thead>
                 <tr>
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
@@ -765,10 +765,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
         </section>
       </div>
 
-      <div className="hidden grid-cols-2 gap-3 md:grid lg:gap-4 xl:gap-5">
-        <div className="space-y-3 xl:space-y-4">
+      <div className="hidden grid-cols-2 gap-2 md:grid lg:gap-3 xl:gap-5">
+        <div className="space-y-2 xl:space-y-4">
           <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <thead>
                 <tr>
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
@@ -805,7 +805,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
           </section>
 
           <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <thead>
                 <tr>
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
@@ -883,9 +883,9 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
           </section>
         </div>
 
-        <div className="space-y-3 xl:space-y-4">
+        <div className="space-y-2 xl:space-y-4">
           <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <tbody className="divide-y divide-[#f0f4f8]">
                 <tr><th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">5 · Albaranes de Compra — Mes Actual</th></tr>
                 <tr className="hover:bg-[#f8f9fc]/60">
@@ -905,7 +905,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
           </section>
 
           <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <tbody className="divide-y divide-[#f0f4f8]">
                 <tr><th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">6 · Facturas de Compras y Gastos</th></tr>
                 {[
@@ -928,7 +928,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
           </section>
 
           <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-2 md:[&_th]:px-2 md:[&_td]:py-1.5 md:[&_th]:py-1.5 xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <tbody className="divide-y divide-[#f0f4f8]">
                 <tr><th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">7 · Pagos Pendientes Proveedores</th></tr>
                 {orderedPeriodos.map((p) => (

@@ -388,7 +388,7 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
         </header>
 
         {/* Main content */}
-        <main className="relative z-0 flex-1 overflow-y-auto bg-[#f8f9fc] p-4 md:px-4 md:py-2.5 lg:px-5 lg:py-3 xl:px-6 xl:py-3 2xl:p-8">
+        <main className="relative z-0 flex-1 overflow-y-auto bg-[#f8f9fc] p-4 md:px-3 md:py-2 lg:px-4 lg:py-2.5 xl:px-6 xl:py-3 2xl:p-8">
           <div className="w-full space-y-6">
             {children}
           </div>
