@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import ExecutiveMobileCards from './components/ExecutiveMobileCards'
 import SyncButton from './components/SyncButton'
+import Link from 'next/link'
+import { Search } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -647,7 +649,21 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
               </thead>
               <tbody className="divide-y divide-[#f0f4f8]">
                 <tr className="hover:bg-[#f8f9fc]/60">
-                  <td><div className="text-sm font-bold text-[#191c1e]">{todayLabel}</div></td>
+                  <td>
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-sm font-bold text-[#191c1e]">{todayLabel}</div>
+                      {salesData.ultimo_dia && (
+                        <Link
+                          href={`/dashboard/ventas/detalle?period=today&date=${encodeURIComponent(salesData.ultimo_dia)}`}
+                          className="hidden rounded p-1 text-[#206393] transition-colors hover:bg-[#e3eaf1] hover:text-[#1a5078] md:inline-flex"
+                          aria-label={`Ver detalle de ventas de ${todayLabel}`}
+                          title="Ver detalle de ventas"
+                        >
+                          <Search className="h-3.5 w-3.5" aria-hidden="true" />
+                        </Link>
+                      )}
+                    </div>
+                  </td>
                   <td className="text-right">{fmtEur(hoyVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({hoyVielhaCnt})</span></td>
                   <td className="text-right">{fmtEur(hoyPontImp)} <span className="text-[11px] text-[#9aa0a6]">({hoyPontCnt})</span></td>
                   <td className="text-right font-bold">{fmtEur(hoyTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({hoyTotalCnt})</span></td>
