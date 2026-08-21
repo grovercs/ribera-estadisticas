@@ -628,9 +628,15 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       </div>
 
       <div className="dashboard-direction-top-grid hidden space-y-2 md:block lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 xl:gap-5">
-        <section className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
-          <div className="min-w-[560px] lg:min-w-[500px]">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] lg:[&_td]:px-2 lg:[&_th]:px-2 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+        <section className="dashboard-sales-card overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
+          <div className="min-w-0">
+            <table className="dashboard-sales-table w-full table-fixed border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] lg:[&_td]:px-2 lg:[&_th]:px-2 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+              <colgroup>
+                <col className="w-[34%]" />
+                <col className="w-[22%]" />
+                <col className="w-[22%]" />
+                <col className="w-[22%]" />
+              </colgroup>
               <thead>
                 <tr>
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">

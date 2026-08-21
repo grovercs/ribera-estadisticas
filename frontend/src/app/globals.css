@@ -110,4 +110,33 @@ body {
     font-size: 9px !important;
     line-height: 1 !important;
   }
+
+  .dashboard-sales-table th:first-child,
+  .dashboard-sales-table td:first-child {
+    white-space: normal !important;
+  }
+
+  .dashboard-sales-table td:first-child > div {
+    min-width: 0;
+  }
+
+  .dashboard-sales-table td:first-child > div > div {
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .dashboard-sales-table td:not(:first-child) {
+    letter-spacing: -0.02em;
+  }
+
+  .dashboard-sales-table td:not(:first-child) > span {
+    font-size: 10px !important;
+  }
+
+  .dashboard-sales-table tbody tr:last-child td:not(:first-child) > span {
+    display: block;
+    margin-top: 1px;
+    font-size: 9px !important;
+    line-height: 1.1;
+  }
 }
