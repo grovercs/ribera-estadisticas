@@ -24,3 +24,90 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media (min-width: 1024px) and (max-height: 700px) {
+  .dashboard-direction-topbar {
+    height: 28px;
+    min-height: 28px;
+    padding-right: 4px;
+    padding-left: 4px;
+  }
+
+  .dashboard-direction-topbar button {
+    padding: 2px;
+  }
+
+  .dashboard-direction-topbar svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .dashboard-direction-main {
+    padding: 4px 8px;
+  }
+
+  .dashboard-direction-main > div {
+    row-gap: 0;
+  }
+
+  .dashboard-direction {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .dashboard-direction > * {
+    margin-block: 0 !important;
+  }
+
+  .dashboard-direction-top-grid,
+  .dashboard-direction-bottom-grid {
+    gap: 8px !important;
+  }
+
+  .dashboard-direction-bottom-grid > div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dashboard-direction-bottom-grid > div > * {
+    margin-block: 0 !important;
+  }
+
+  .dashboard-direction section {
+    border-radius: 0.375rem;
+  }
+
+  .dashboard-direction table {
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+  }
+
+  .dashboard-direction table th,
+  .dashboard-direction table td {
+    padding: 3px 5px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap;
+  }
+
+  .dashboard-direction table td > div {
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+    white-space: nowrap;
+  }
+
+  .dashboard-direction table thead tr:first-child th,
+  .dashboard-direction table tbody > tr:first-child th,
+  .dashboard-direction table thead tr:nth-child(2) th {
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+  }
+
+  .dashboard-direction-footer {
+    padding: 0 4px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+  }
+}

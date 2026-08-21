@@ -244,6 +244,7 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
   const [mobileOpen, setMobileOpen] = useState(false)
   const [desktopOpen, setDesktopOpen] = useState(false)
   const pathname = usePathname()
+  const isDirectionDashboard = pathname === '/dashboard'
 
   // Cerrar drawers al cambiar de ruta
   useEffect(() => {
@@ -348,7 +349,7 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
       <div className="flex-1 flex flex-col relative min-w-0">
 
         {/* Topbar */}
-        <header className="z-40 flex h-14 w-full flex-shrink-0 items-center justify-between border-b border-[#e1e2e6] bg-white px-4 shadow-sm md:h-9 md:px-2 lg:h-10 lg:px-3">
+        <header className={`z-40 flex h-14 w-full flex-shrink-0 items-center justify-between border-b border-[#e1e2e6] bg-white px-4 shadow-sm md:h-9 md:px-2 lg:h-10 lg:px-3 ${isDirectionDashboard ? 'dashboard-direction-topbar' : ''}`}>
           <div className="flex items-center gap-3 md:gap-2">
             {/* Hamburger (solo mobile) */}
             <button
@@ -388,7 +389,7 @@ export default function DashboardShell({ menuItems, userInitial, userEmail, sync
         </header>
 
         {/* Main content */}
-        <main className="relative z-0 flex-1 overflow-y-auto bg-[#f8f9fc] p-4 md:px-3 md:py-2 lg:px-4 lg:py-2.5 xl:px-6 xl:py-3 2xl:p-8">
+        <main className={`relative z-0 flex-1 overflow-y-auto bg-[#f8f9fc] p-4 md:px-3 md:py-2 lg:px-4 lg:py-2.5 xl:px-6 xl:py-3 2xl:p-8 ${isDirectionDashboard ? 'dashboard-direction-main' : ''}`}>
           <div className="w-full space-y-6">
             {children}
           </div>
