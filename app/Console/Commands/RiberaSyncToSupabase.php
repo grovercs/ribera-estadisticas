@@ -10,7 +10,7 @@ use Carbon\Carbon;
 class RiberaSyncToSupabase extends Command
 {
     protected $signature = 'ribera:sync-to-supabase
-                            {dataset? : Dataset específico (kpis, warehouses, sellers, stock, clients, suppliers, monthly_history, sales, receivables, historical)}
+                            {dataset? : Dataset específico (kpis, warehouses, sellers, stock, clients, suppliers, monthly_history, sales, purchases, receivables, historical)}
                             {--period= : Período personalizado para ventas. Opciones: test_1month, current_month, today}';
 
     protected $description = 'Sincroniza datos del ERP SQL Server local hacia la base de datos de reporting en Supabase';
@@ -27,6 +27,7 @@ class RiberaSyncToSupabase extends Command
             'suppliers',
             'monthly_history',
             'sales',
+            'purchases',
             'receivables',
             'historical'
         ];
@@ -36,7 +37,11 @@ class RiberaSyncToSupabase extends Command
             return self::INVALID;
         }
 
-        $datasetsToSync = $dataset ? [$dataset] : $availableDatasets;
+        // purchases requiere un periodo explícito y no debe alterar el recorrido
+        // histórico de una ejecución global existente.
+        $datasetsToSync = $dataset
+            ? [$dataset]
+            : array_values(array_filter($availableDatasets, fn ($name) => $name !== 'purchases'));
 
         $this->info("=== INICIANDO PROCESO DE SINCRONIZACIÓN RIBERA ESTADÍSTICAS ===");
 
@@ -58,6 +63,7 @@ class RiberaSyncToSupabase extends Command
                     'suppliers' => $this->syncSuppliers($runId),
                     'monthly_history' => $this->syncMonthlyHistory($runId),
                     'sales' => $this->syncSales($runId),
+                    'purchases' => $this->syncPurchases($runId),
                     'receivables' => $this->syncReceivables($runId),
                     'historical' => $this->syncHistorical($runId),
                     default => 0
@@ -995,6 +1001,262 @@ class RiberaSyncToSupabase extends Command
                 );
             $processedLinesCount += count($lineChunk);
         }
+    }
+
+    /**
+     * Albaranes de compra del mes actual.
+     *
+     * El ERP no ofrece una fecha de modificación confirmada para este histórico,
+     * así que cada ejecución relee y reconcilia únicamente el mes actual.
+     */
+    private function syncPurchases(string $runId): int
+    {
+        if ($this->option('period') !== 'current_month') {
+            throw new \InvalidArgumentException('El dataset purchases solo admite --period=current_month.');
+        }
+
+        $nowMadrid = now('Europe/Madrid');
+        $currentYear = (int) $nowMadrid->format('Y');
+        $currentMonth = (int) $nowMadrid->format('m');
+        $periodStart = $nowMadrid->copy()->startOfMonth();
+        $periodEnd = $periodStart->copy()->addMonth();
+        $syncedAt = now();
+        $processedHeadersCount = 0;
+        $processedLinesCount = 0;
+        $erpKeys = [];
+        $headerChunk = [];
+
+        try {
+            $this->info("Sincronizando albaranes de compra de {$currentYear}-" . str_pad((string) $currentMonth, 2, '0', STR_PAD_LEFT) . '...');
+
+            $statement = DB::connection('erp')->getPdo()->prepare("
+                SELECT
+                    cod_compra, tipo_compra, cod_empresa, cod_proveedor, cod_almacen,
+                    nombre_comercial, razon_social, fecha_compra, importe
+                FROM hist_compras_cabecera
+                WHERE tipo_compra = 2
+                    AND YEAR(fecha_compra) = ?
+                    AND MONTH(fecha_compra) = ?
+                ORDER BY cod_compra, tipo_compra, cod_empresa, cod_proveedor
+            ");
+            $statement->execute([$currentYear, $currentMonth]);
+
+            while ($erpRow = $statement->fetch(\PDO::FETCH_ASSOC)) {
+                $row = $this->normalizePurchaseErpRow($erpRow);
+                $header = [
+                    'cod_compra' => (int) $row['cod_compra'],
+                    'tipo_compra' => (int) $row['tipo_compra'],
+                    'cod_empresa' => (int) $row['cod_empresa'],
+                    'cod_proveedor' => (int) $row['cod_proveedor'],
+                    'cod_almacen' => $row['cod_almacen'] === null ? null : (int) $row['cod_almacen'],
+                    'nombre_comercial' => $row['nombre_comercial'] ? trim($row['nombre_comercial']) : null,
+                    'razon_social' => $row['razon_social'] ? trim($row['razon_social']) : null,
+                    'fecha_compra' => $this->parseLocalDate($row['fecha_compra']),
+                    'importe' => (float) ($row['importe'] ?? 0),
+                    'source_modified_at' => null,
+                    'synced_at' => $syncedAt,
+                ];
+
+                $erpKeys[$this->purchaseKey(
+                    $header['cod_compra'],
+                    $header['tipo_compra'],
+                    $header['cod_empresa'],
+                    $header['cod_proveedor']
+                )] = true;
+                $headerChunk[] = $header;
+
+                if (count($headerChunk) >= 100) {
+                    $this->processChunkOfPurchases($headerChunk, $syncedAt, $processedLinesCount);
+                    $processedHeadersCount += count($headerChunk);
+                    $headerChunk = [];
+                }
+            }
+
+            if (!empty($headerChunk)) {
+                $this->processChunkOfPurchases($headerChunk, $syncedAt, $processedLinesCount);
+                $processedHeadersCount += count($headerChunk);
+            }
+
+            $removedCount = $this->reconcileCurrentMonthPurchases(
+                $erpKeys,
+                $periodStart->toDateTimeString(),
+                $periodEnd->toDateTimeString()
+            );
+
+            DB::connection('supabase')->table('sync_state')->upsert([
+                'dataset' => 'purchases',
+                'active_batch_id' => null,
+                'last_success_at' => now(),
+                'last_run_status' => 'success',
+                'last_error_message' => null,
+            ], ['dataset'], ['last_success_at', 'last_run_status', 'last_error_message']);
+
+            $this->info("Sincronización de albaranes completada (Cabeceras: {$processedHeadersCount}, Líneas: {$processedLinesCount}, Eliminados: {$removedCount}).");
+
+            return $processedHeadersCount;
+        } catch (\Throwable $e) {
+            DB::connection('supabase')->table('sync_state')->upsert([
+                'dataset' => 'purchases',
+                'active_batch_id' => null,
+                'last_success_at' => null,
+                'last_run_status' => 'failed',
+                'last_error_message' => substr($e->getMessage(), 0, 1000),
+            ], ['dataset'], ['last_run_status', 'last_error_message']);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Inserta cabeceras en lote y sustituye por conjunto las líneas de sus documentos.
+     */
+    private function processChunkOfPurchases(array $headerChunk, $syncedAt, int &$processedLinesCount): void
+    {
+        $orQueries = [];
+        $params = [];
+        foreach ($headerChunk as $header) {
+            $orQueries[] = '(cod_compra = ? AND tipo_compra = ? AND cod_empresa = ? AND cod_proveedor = ?)';
+            $params[] = $header['cod_compra'];
+            $params[] = $header['tipo_compra'];
+            $params[] = $header['cod_empresa'];
+            $params[] = $header['cod_proveedor'];
+        }
+
+        $erpLines = DB::connection('erp')->select("
+            SELECT
+                cod_compra, tipo_compra, cod_empresa, cod_proveedor, linea,
+                cod_articulo, referencia_proveedor, descripcion, cantidad, tarifa,
+                precio_coste, dto1, dto2, dto3, dto4, importe, cod_almacen
+            FROM hist_compras_linea
+            WHERE " . implode(' OR ', $orQueries), $params);
+
+        $linesToUpsert = [];
+        foreach ($erpLines as $erpLine) {
+            $line = $this->normalizePurchaseErpRow($erpLine);
+            $linesToUpsert[] = [
+                'cod_compra' => (int) $line['cod_compra'],
+                'tipo_compra' => (int) $line['tipo_compra'],
+                'cod_empresa' => (int) $line['cod_empresa'],
+                'cod_proveedor' => (int) $line['cod_proveedor'],
+                'linea' => (int) $line['linea'],
+                'cod_articulo' => $line['cod_articulo'] ? trim($line['cod_articulo']) : null,
+                'referencia_proveedor' => $line['referencia_proveedor'] ? trim($line['referencia_proveedor']) : null,
+                'descripcion' => $line['descripcion'] ? trim($line['descripcion']) : null,
+                'cantidad' => (float) ($line['cantidad'] ?? 0),
+                'tarifa' => (float) ($line['tarifa'] ?? 0),
+                'precio_coste' => (float) ($line['precio_coste'] ?? 0),
+                'dto1' => (float) ($line['dto1'] ?? 0),
+                'dto2' => (float) ($line['dto2'] ?? 0),
+                'dto3' => (float) ($line['dto3'] ?? 0),
+                'dto4' => (float) ($line['dto4'] ?? 0),
+                'importe' => (float) ($line['importe'] ?? 0),
+                'cod_almacen' => $line['cod_almacen'] === null ? null : (int) $line['cod_almacen'],
+                'source_modified_at' => null,
+                'synced_at' => $syncedAt,
+            ];
+        }
+
+        DB::connection('supabase')->transaction(function () use ($headerChunk, $linesToUpsert, &$processedLinesCount) {
+            DB::connection('supabase')->table('purchase_headers')->upsert(
+                $headerChunk,
+                ['cod_compra', 'tipo_compra', 'cod_empresa', 'cod_proveedor'],
+                ['cod_almacen', 'nombre_comercial', 'razon_social', 'fecha_compra', 'importe', 'source_modified_at', 'synced_at']
+            );
+
+            $linesQuery = DB::connection('supabase')->table('purchase_lines');
+            $this->applyPurchaseCompositeKeyFilter($linesQuery, $headerChunk);
+            $linesQuery->delete();
+
+            foreach (array_chunk($linesToUpsert, 100) as $lineChunk) {
+                DB::connection('supabase')->table('purchase_lines')->upsert(
+                    $lineChunk,
+                    ['cod_compra', 'tipo_compra', 'cod_empresa', 'cod_proveedor', 'linea'],
+                    ['cod_articulo', 'referencia_proveedor', 'descripcion', 'cantidad', 'tarifa', 'precio_coste', 'dto1', 'dto2', 'dto3', 'dto4', 'importe', 'cod_almacen', 'source_modified_at', 'synced_at']
+                );
+                $processedLinesCount += count($lineChunk);
+            }
+        });
+    }
+
+    /**
+     * Normaliza filas usadas por purchases a un array asociativo.
+     */
+    private function normalizePurchaseErpRow(mixed $row): array
+    {
+        if (is_array($row)) {
+            return $row;
+        }
+
+        if (is_object($row)) {
+            return get_object_vars($row);
+        }
+
+        throw new \UnexpectedValueException(
+            'Fila ERP de purchases con tipo inesperado: ' . get_debug_type($row)
+        );
+    }
+
+    /**
+     * Elimina solo cabeceras del mes actual que ya no existan en el ERP.
+     */
+    private function reconcileCurrentMonthPurchases(array $erpKeys, string $periodStart, string $periodEnd): int
+    {
+        $this->info('Conciliando borrados físicos de albaranes del mes actual...');
+
+        $headersToDelete = DB::connection('supabase')->table('purchase_headers')
+            ->select('cod_compra', 'tipo_compra', 'cod_empresa', 'cod_proveedor')
+            ->where('tipo_compra', 2)
+            ->where('fecha_compra', '>=', $periodStart)
+            ->where('fecha_compra', '<', $periodEnd)
+            ->get()
+            ->filter(fn ($header) => !isset($erpKeys[$this->purchaseKey(
+                $header->cod_compra,
+                $header->tipo_compra,
+                $header->cod_empresa,
+                $header->cod_proveedor
+            )]));
+
+        foreach (array_chunk($headersToDelete->all(), 100) as $headersChunk) {
+            DB::connection('supabase')->transaction(function () use ($headersChunk) {
+                $linesQuery = DB::connection('supabase')->table('purchase_lines');
+                $this->applyPurchaseCompositeKeyFilter($linesQuery, $headersChunk);
+                $linesQuery->delete();
+
+                $headersQuery = DB::connection('supabase')->table('purchase_headers');
+                $this->applyPurchaseCompositeKeyFilter($headersQuery, $headersChunk);
+                $headersQuery->delete();
+            });
+        }
+
+        $deletedCount = $headersToDelete->count();
+        $this->info("Conciliación de albaranes finalizada ({$deletedCount} cabeceras eliminadas).");
+
+        return $deletedCount;
+    }
+
+    private function applyPurchaseCompositeKeyFilter($query, array $headers): void
+    {
+        $query->where(function ($keysQuery) use ($headers) {
+            foreach ($headers as $header) {
+                $key = $this->normalizePurchaseErpRow($header);
+                $keysQuery->orWhere(function ($keyQuery) use ($key) {
+                    $keyQuery->where('cod_compra', $key['cod_compra'])
+                        ->where('tipo_compra', $key['tipo_compra'])
+                        ->where('cod_empresa', $key['cod_empresa'])
+                        ->where('cod_proveedor', $key['cod_proveedor']);
+                });
+            }
+        });
+    }
+
+    private function purchaseKey($codCompra, $tipoCompra, $codEmpresa, $codProveedor): string
+    {
+        return implode('-', [
+            (int) $codCompra,
+            (int) $tipoCompra,
+            (int) $codEmpresa,
+            (int) $codProveedor,
+        ]);
     }
 
     /**

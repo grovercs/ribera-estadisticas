@@ -272,6 +272,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   const todayLabel = formatDashDate(salesData.ultimo_dia)
   const yesterdayLabel = formatDashDate(salesData.penultimo_dia)
   const currentFortnight = getCurrentFortnightRange()
+  const currentMonth = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Madrid',
+    month: '2-digit',
+  }).formatToParts(new Date()).find((part) => part.type === 'month')?.value || '01'
 
   const mobileSections = [
     {
@@ -895,7 +899,21 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
           <section className="overflow-hidden rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
             <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
               <tbody className="divide-y divide-[#f0f4f8]">
-                <tr><th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">5 · Albaranes de Compra — Mes Actual</th></tr>
+                <tr>
+                  <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
+                    <div className="flex items-center justify-between gap-2">
+                      <span>5 · Albaranes de Compra — Mes Actual</span>
+                      <Link
+                        href={`/dashboard/compras/albaranes/detalle?year=${year}&month=${currentMonth}`}
+                        className="hidden rounded p-1 text-white transition-colors hover:bg-white/15 md:inline-flex"
+                        aria-label="Ver detalle de albaranes de compra del mes actual"
+                        title="Ver detalle de albaranes de compra"
+                      >
+                        <Search className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </th>
+                </tr>
                 <tr className="hover:bg-[#f8f9fc]/60">
                   <td><div className="text-sm font-bold text-[#191c1e]">Operaciones</div></td>
                   <td className="text-right">{albVielhaCnt}</td>
