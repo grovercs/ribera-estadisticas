@@ -20,6 +20,7 @@ interface SalesDrilldownTableProps {
   sort: SalesSortColumn
   direction: 'asc' | 'desc'
   search: string
+  periodLabel: string
 }
 
 const columns: Array<{ key: SalesSortColumn; label: string; align?: 'right' }> = [
@@ -57,6 +58,7 @@ export default function SalesDrilldownTable({
   sort,
   direction,
   search,
+  periodLabel,
 }: SalesDrilldownTableProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -103,7 +105,7 @@ export default function SalesDrilldownTable({
     <>
       <div className="flex flex-col gap-3 border-b border-[#e1e2e6] pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-wider text-[#206393]">Ventas de hoy</p>
+          <p className="text-xs font-black uppercase tracking-wider text-[#206393]">Ventas · {periodLabel}</p>
           <p className="mt-1 text-sm font-medium text-[#747878]">{totalCount} ventas encontradas</p>
         </div>
         <label className="relative block w-full sm:w-80">

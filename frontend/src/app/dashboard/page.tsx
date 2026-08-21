@@ -3,6 +3,7 @@ import ExecutiveMobileCards from './components/ExecutiveMobileCards'
 import SyncButton from './components/SyncButton'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
+import { getCurrentFortnightRange } from '@/lib/salesPeriods'
 
 export const dynamic = 'force-dynamic'
 
@@ -269,6 +270,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   }
   const todayLabel = formatDashDate(salesData.ultimo_dia)
   const yesterdayLabel = formatDashDate(salesData.penultimo_dia)
+  const currentFortnight = getCurrentFortnightRange()
 
   const mobileSections = [
     {
@@ -669,13 +671,39 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
                   <td className="text-right font-bold">{fmtEur(hoyTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({hoyTotalCnt})</span></td>
                 </tr>
                 <tr className="hover:bg-[#f8f9fc]/60">
-                  <td><div className="text-sm font-bold text-[#191c1e]">{yesterdayLabel}</div></td>
+                  <td>
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-sm font-bold text-[#191c1e]">{yesterdayLabel}</div>
+                      {salesData.penultimo_dia && (
+                        <Link
+                          href={`/dashboard/ventas/detalle?period=yesterday&date=${encodeURIComponent(salesData.penultimo_dia)}`}
+                          className="hidden rounded p-1 text-[#206393] transition-colors hover:bg-[#e3eaf1] hover:text-[#1a5078] md:inline-flex"
+                          aria-label={`Ver detalle de ventas de ${yesterdayLabel}`}
+                          title="Ver detalle de ventas"
+                        >
+                          <Search className="h-3.5 w-3.5" aria-hidden="true" />
+                        </Link>
+                      )}
+                    </div>
+                  </td>
                   <td className="text-right">{fmtEur(ayerVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({ayerVielhaCnt})</span></td>
                   <td className="text-right">{fmtEur(ayerPontImp)} <span className="text-[11px] text-[#9aa0a6]">({ayerPontCnt})</span></td>
                   <td className="text-right font-bold">{fmtEur(ayerTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({ayerTotalCnt})</span></td>
                 </tr>
                 <tr className="bg-blue-50/30">
-                  <td><div className="text-sm font-bold text-[#206393]">Quincena Actual</div></td>
+                  <td>
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-sm font-bold text-[#206393]">Quincena Actual</div>
+                      <Link
+                        href={`/dashboard/ventas/detalle?period=current_fortnight&start=${currentFortnight.start}&end=${currentFortnight.end}`}
+                        className="hidden rounded p-1 text-[#206393] transition-colors hover:bg-[#e3eaf1] hover:text-[#1a5078] md:inline-flex"
+                        aria-label="Ver detalle de ventas de la quincena actual"
+                        title="Ver detalle de ventas"
+                      >
+                        <Search className="h-3.5 w-3.5" aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </td>
                   <td className="text-right">{fmtEur(qActVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({qActVielhaCnt})</span></td>
                   <td className="text-right">{fmtEur(qActPontImp)} <span className="text-[11px] text-[#9aa0a6]">({qActPontCnt})</span></td>
                   <td className="text-right font-bold">{fmtEur(qActTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({qActTotalCnt})</span></td>
