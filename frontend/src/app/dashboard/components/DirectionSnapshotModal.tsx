@@ -59,7 +59,7 @@ function SnapshotCard({ section, className = '' }: { section: SnapshotSection; c
   const hasStoreColumns = section.rows.some((row) => !row.totalOnly && !row.subheader)
 
   return (
-    <section className={`flex h-full flex-col overflow-hidden rounded-md border border-[#cfd9e3] bg-white shadow-sm ${className}`}>
+    <section className={`flex h-full flex-col overflow-hidden rounded-md border border-[#d7e1e9] bg-[#fbfcfd] shadow-none ${className}`}>
       <h2 className="truncate bg-[#206393] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white">
         {section.title}
       </h2>
@@ -148,7 +148,7 @@ export default function DirectionSnapshotModal({ sections, lastDataLabel, lastSy
 
       {isOpen && (
         <div
-          className="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-950/55 p-3 backdrop-blur-[1px] md:flex"
+          className="fixed inset-0 z-[70] hidden items-center justify-center bg-[#102536]/60 p-3 backdrop-blur-[1px] md:flex"
           role="presentation"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setIsOpen(false)
@@ -158,9 +158,9 @@ export default function DirectionSnapshotModal({ sections, lastDataLabel, lastSy
             role="dialog"
             aria-modal="true"
             aria-labelledby="direction-snapshot-title"
-            className="flex h-[86vh] max-h-[88vh] w-[92vw] max-w-[1160px] flex-col overflow-hidden rounded-xl border border-[#b8c6d3] bg-[#f5f7fa] shadow-2xl"
+            className="flex h-[86vh] max-h-[88vh] w-[92vw] max-w-[1160px] flex-col overflow-hidden rounded-xl border border-[#afc0cf] bg-[#f2f6f9] shadow-[0_24px_60px_rgba(15,38,58,0.28)]"
           >
-            <header className="flex h-7 flex-none items-center justify-between border-b border-[#cfd9e3] bg-white px-3">
+            <header className="flex h-7 flex-none items-center justify-between border-b border-[#d1dde6] bg-[#edf3f7] px-3">
               <div className="flex min-w-0 items-baseline gap-2">
                 <h1 id="direction-snapshot-title" className="truncate text-[12px] font-black uppercase tracking-wide text-[#206393]">Cuadro de Dirección · Vista compacta</h1>
                 <p className="truncate text-[10px] font-medium text-[#747878]">Últimos datos: {lastDataLabel} · Sync {lastSync}</p>
@@ -186,7 +186,7 @@ export default function DirectionSnapshotModal({ sections, lastDataLabel, lastSy
               </div>
             </div>
 
-            <footer className="flex h-5 flex-none items-center border-t border-[#dce4eb] bg-white px-3 text-[9px] font-medium text-[#747878]">
+            <footer className="flex h-5 flex-none items-center border-t border-[#d1dde6] bg-[#edf3f7] px-3 text-[9px] font-medium text-[#747878]">
               Fuente: ERP INTEGRAL (SQL Server) · Sincronizado vía Supabase
             </footer>
           </div>
