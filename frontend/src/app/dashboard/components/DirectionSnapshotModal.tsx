@@ -60,7 +60,7 @@ function SnapshotCard({ section, className = '' }: { section: SnapshotSection; c
 
   return (
     <section className={`flex h-full flex-col overflow-hidden rounded-md border border-[#d7e1e9] bg-[#fbfcfd] shadow-none ${className}`}>
-      <h2 className="truncate bg-[#206393] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white">
+      <h2 className="shrink-0 truncate bg-[#206393] px-2 py-1 text-[10px] font-black uppercase tracking-wide text-white">
         {section.title}
       </h2>
       <div className="flex flex-1 flex-col justify-center divide-y divide-[#edf1f5] text-[10px] leading-tight tabular-nums">
@@ -158,7 +158,7 @@ export default function DirectionSnapshotModal({ sections, lastDataLabel, lastSy
             role="dialog"
             aria-modal="true"
             aria-labelledby="direction-snapshot-title"
-            className="flex h-[86vh] max-h-[88vh] w-[92vw] max-w-[1160px] flex-col overflow-hidden rounded-xl border border-[#afc0cf] bg-[#f2f6f9] shadow-[0_24px_60px_rgba(15,38,58,0.28)]"
+            className="flex h-[88vh] max-h-[88vh] w-[92vw] max-w-[1160px] flex-col overflow-x-hidden overflow-y-auto rounded-xl border border-[#afc0cf] bg-[#f2f6f9] shadow-[0_24px_60px_rgba(15,38,58,0.28)]"
           >
             <header className="flex h-7 flex-none items-center justify-between border-b border-[#d1dde6] bg-[#edf3f7] px-3">
               <div className="flex min-w-0 items-baseline gap-2">
@@ -171,13 +171,13 @@ export default function DirectionSnapshotModal({ sections, lastDataLabel, lastSy
             </header>
 
             <div className="min-h-0 flex-1 p-2">
-              <div className="grid h-full grid-cols-2 gap-2">
-                <div className="grid min-h-0 grid-rows-[1.15fr_0.7fr_1.45fr] gap-2">
+              <div className="grid min-h-full grid-cols-2 gap-2">
+                <div className="grid min-h-0 grid-rows-[minmax(min-content,1.15fr)_minmax(min-content,0.7fr)_minmax(min-content,1.45fr)] gap-2">
                   <SnapshotCard section={sections[0]} />
                   <SnapshotCard section={sections[2]} />
                   <SnapshotCard section={sections[3]} />
                 </div>
-                <div className="grid min-h-0 grid-rows-[1.2fr_0.45fr_0.9fr_1.1fr] gap-2">
+                <div className="grid min-h-0 grid-rows-[minmax(min-content,1.2fr)_minmax(min-content,0.45fr)_minmax(min-content,0.9fr)_minmax(min-content,1.1fr)] gap-2">
                   <SnapshotCard section={sections[1]} />
                   <SnapshotCard section={sections[4]} />
                   <SnapshotCard section={sections[5]} />
