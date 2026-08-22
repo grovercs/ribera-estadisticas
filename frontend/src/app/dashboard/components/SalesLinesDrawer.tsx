@@ -20,6 +20,7 @@ interface SalesLine {
   cantidad: string | number | null
   precio: string | number | null
   precio_coste: string | number | null
+  net_amount: string | number | null
   total_amount: string | number | null
 }
 
@@ -39,9 +40,31 @@ const quantityFormatter = new Intl.NumberFormat('es-ES', {
   maximumFractionDigits: 3,
 })
 
+const percentageFormatter = new Intl.NumberFormat('es-ES', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})
+
 function toNumber(value: string | number | null): number {
   const numeric = typeof value === 'string' ? Number.parseFloat(value) : Number(value)
   return Number.isFinite(numeric) ? numeric : 0
+}
+
+function toNullableNumber(value: string | number | null): number | null {
+  if (value === null) return null
+  const numeric = typeof value === 'string' ? Number.parseFloat(value) : Number(value)
+  return Number.isFinite(numeric) ? numeric : null
+}
+
+function formatMarginPercentage(value: number): string {
+  const truncated = Math.trunc(value * 100) / 100
+  return `${percentageFormatter.format(Object.is(truncated, -0) ? 0 : truncated)} %`
+}
+
+function marginColor(value: number): string {
+  if (value > 0) return 'text-emerald-700'
+  if (value < 0) return 'text-rose-700'
+  return 'text-[#5a5e60]'
 }
 
 export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawerProps) {
@@ -64,7 +87,7 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
 
       const { data, error: queryError } = await supabase
         .from('sales_lines')
-        .select('linea, cod_articulo, descripcion, cantidad, precio, precio_coste, total_amount')
+        .select('linea, cod_articulo, descripcion, cantidad, precio, precio_coste, net_amount, total_amount')
         .eq('cod_venta', selectedDocument.cod_venta)
         .eq('tipo_venta', selectedDocument.tipo_venta)
         .eq('cod_empresa', selectedDocument.cod_empresa)
@@ -100,6 +123,25 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
   }, [document, onClose])
 
   if (!document) return null
+
+  const totals = lines.reduce(
+    (result, line) => {
+      const netAmount = toNullableNumber(line.net_amount)
+      result.cost += toNumber(line.cantidad) * toNumber(line.precio_coste)
+      result.totalWithTax += toNumber(line.total_amount)
+      if (netAmount === null) {
+        result.netDataComplete = false
+      } else {
+        result.net += netAmount
+      }
+      return result
+    },
+    { net: 0, cost: 0, totalWithTax: 0, netDataComplete: true },
+  )
+  const totalMargin = totals.netDataComplete ? totals.net - totals.cost : null
+  const totalMarginPercentage = totalMargin !== null && totals.net !== 0
+    ? (totalMargin / totals.net) * 100
+    : null
 
   return (
     <>
@@ -146,32 +188,89 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
           )}
 
           {!loading && !error && lines.length > 0 && (
-            <div className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm">
-              <table className="w-full min-w-[760px] border-collapse text-sm tabular-nums">
-                <thead className="border-b border-[#e1e2e6] bg-[#f0f4f8] text-left text-[11px] font-black uppercase tracking-wide text-[#747878]">
-                  <tr>
-                    <th className="px-3 py-2">Artículo</th>
-                    <th className="px-3 py-2">Descripción</th>
-                    <th className="px-3 py-2 text-right">Cantidad</th>
-                    <th className="px-3 py-2 text-right">Precio</th>
-                    <th className="px-3 py-2 text-right">Coste</th>
-                    <th className="px-3 py-2 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f0f4f8]">
-                  {lines.map((line) => (
-                    <tr key={line.linea} className="hover:bg-[#f8f9fc]">
-                      <td className="px-3 py-2 font-semibold text-[#191c1e]">{line.cod_articulo || '—'}</td>
-                      <td className="px-3 py-2 text-[#5a5e60]">{line.descripcion || '—'}</td>
-                      <td className="px-3 py-2 text-right">{quantityFormatter.format(toNumber(line.cantidad))}</td>
-                      <td className="px-3 py-2 text-right">{moneyFormatter.format(toNumber(line.precio))}</td>
-                      <td className="px-3 py-2 text-right">{moneyFormatter.format(toNumber(line.precio_coste))}</td>
-                      <td className="px-3 py-2 text-right font-bold text-[#191c1e]">{moneyFormatter.format(toNumber(line.total_amount))}</td>
+            <>
+              <div className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm">
+                <table className="w-full min-w-[920px] border-collapse text-sm tabular-nums">
+                  <thead className="border-b border-[#e1e2e6] bg-[#f0f4f8] text-left text-[11px] font-black uppercase tracking-wide text-[#747878]">
+                    <tr>
+                      <th className="px-3 py-2">Artículo</th>
+                      <th className="px-3 py-2">Descripción</th>
+                      <th className="px-3 py-2 text-right">Cantidad</th>
+                      <th className="px-3 py-2 text-right">Precio</th>
+                      <th className="px-3 py-2 text-right">Coste</th>
+                      <th className="px-3 py-2 text-right">Margen</th>
+                      <th className="px-3 py-2 text-right">Total con IVA</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-[#f0f4f8]">
+                    {lines.map((line) => {
+                      const netAmount = toNullableNumber(line.net_amount)
+                      const lineCost = toNumber(line.cantidad) * toNumber(line.precio_coste)
+                      const lineMargin = netAmount === null ? null : netAmount - lineCost
+                      const lineMarginPercentage = lineMargin !== null && netAmount !== null && netAmount !== 0
+                        ? (lineMargin / netAmount) * 100
+                        : null
+
+                      return (
+                        <tr key={line.linea} className="hover:bg-[#f8f9fc]">
+                          <td className="px-3 py-2 font-semibold text-[#191c1e]">{line.cod_articulo || '—'}</td>
+                          <td className="px-3 py-2 text-[#5a5e60]">{line.descripcion || '—'}</td>
+                          <td className="px-3 py-2 text-right">{quantityFormatter.format(toNumber(line.cantidad))}</td>
+                          <td className="px-3 py-2 text-right">{moneyFormatter.format(toNumber(line.precio))}</td>
+                          <td className="px-3 py-2 text-right">{moneyFormatter.format(toNumber(line.precio_coste))}</td>
+                          <td className="px-3 py-2 text-right">
+                            {lineMargin === null ? (
+                              <span className="text-[#9a9d9f]">—</span>
+                            ) : (
+                              <>
+                                <span className={`block font-bold ${marginColor(lineMargin)}`}>{moneyFormatter.format(lineMargin)}</span>
+                                <span className="block text-[11px] text-[#747878]">
+                                  {lineMarginPercentage === null ? '—' : formatMarginPercentage(lineMarginPercentage)}
+                                </span>
+                              </>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-right font-bold text-[#191c1e]">{moneyFormatter.format(toNumber(line.total_amount))}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-[#e1e2e6] bg-white p-3 text-right tabular-nums sm:grid-cols-3 lg:grid-cols-5">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wide text-[#747878]">Base / venta neta</p>
+                  <p className="mt-0.5 text-sm font-bold text-[#191c1e]">
+                    {totals.netDataComplete ? moneyFormatter.format(totals.net) : '—'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wide text-[#747878]">Coste total</p>
+                  <p className="mt-0.5 text-sm font-bold text-[#191c1e]">{moneyFormatter.format(totals.cost)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wide text-[#747878]">Margen total</p>
+                  <p className={`mt-0.5 text-sm font-black ${totalMargin === null ? 'text-[#9a9d9f]' : marginColor(totalMargin)}`}>
+                    {totalMargin === null ? '—' : moneyFormatter.format(totalMargin)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wide text-[#747878]">Margen %</p>
+                  <p className={`mt-0.5 text-sm font-black ${totalMargin === null ? 'text-[#9a9d9f]' : marginColor(totalMargin)}`}>
+                    {totalMarginPercentage === null ? '—' : formatMarginPercentage(totalMarginPercentage)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wide text-[#747878]">Total con IVA</p>
+                  <p className="mt-0.5 text-sm font-bold text-[#191c1e]">{moneyFormatter.format(totals.totalWithTax)}</p>
+                </div>
+              </div>
+
+              {!totals.netDataComplete && (
+                <p className="mt-2 text-xs font-medium text-[#747878]">El margen estará disponible cuando se complete el importe neto de todas las líneas.</p>
+              )}
+            </>
           )}
         </div>
       </aside>

@@ -195,6 +195,7 @@ CREATE TABLE sales_lines (
     cantidad NUMERIC(15, 6) DEFAULT 0.0,
     precio NUMERIC(15, 6) DEFAULT 0.0,
     precio_coste NUMERIC(15, 6) DEFAULT 0.0,
+    net_amount NUMERIC(15, 6),
     total_amount NUMERIC(15, 6) DEFAULT 0.0,
     source_modified_at TIMESTAMP WITH TIME ZONE,
     synced_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

@@ -948,7 +948,7 @@ class RiberaSyncToSupabase extends Command
 
         $erpLines = DB::connection('erp')->select("
             SELECT 
-                cod_venta, tipo_venta, cod_empresa, cod_caja, linea, cod_articulo, descripcion, cantidad, precio, precio_coste, importe_impuestos as total_amount, fecha_modificacion
+                cod_venta, tipo_venta, cod_empresa, cod_caja, linea, cod_articulo, descripcion, cantidad, precio, precio_coste, importe as net_amount, importe_impuestos as total_amount, fecha_modificacion
             FROM hist_ventas_linea
             WHERE {$whereClause}
         ", $params);
@@ -986,6 +986,7 @@ class RiberaSyncToSupabase extends Command
                 'cantidad' => (float)($line->cantidad ?? 0),
                 'precio' => (float)($line->precio ?? 0),
                 'precio_coste' => (float)($line->precio_coste ?? 0),
+                'net_amount' => isset($line->net_amount) ? (float)$line->net_amount : null,
                 'total_amount' => (float)($line->total_amount ?? 0),
                 'source_modified_at' => $this->parseDateToUtc($line->fecha_modificacion),
                 'synced_at' => $syncedAt
@@ -997,7 +998,7 @@ class RiberaSyncToSupabase extends Command
             DB::connection('supabase')->table('sales_lines')->upsert(
                 $lineChunk,
                 ['cod_venta', 'tipo_venta', 'cod_empresa', 'cod_caja', 'linea'],
-                ['cod_articulo', 'descripcion', 'cantidad', 'precio', 'precio_coste', 'total_amount', 'source_modified_at', 'synced_at']
+                ['cod_articulo', 'descripcion', 'cantidad', 'precio', 'precio_coste', 'net_amount', 'total_amount', 'source_modified_at', 'synced_at']
                 );
             $processedLinesCount += count($lineChunk);
         }
