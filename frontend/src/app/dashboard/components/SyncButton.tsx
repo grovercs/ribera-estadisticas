@@ -60,7 +60,7 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
     }
   }, [])
 
-  const isActive = activeRequest?.status === 'pending' || activeRequest?.status === 'running'
+  const isActive = mode !== 'local_erp' && (activeRequest?.status === 'pending' || activeRequest?.status === 'running')
 
   const fetchRequest = useCallback(async (id: string): Promise<SyncRequest | null> => {
     const { data, error } = await supabase
@@ -82,8 +82,9 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
     return data as SyncRequest
   }, [supabase])
 
-  // Polling de la solicitud activa
+  // Polling de la solicitud activa (únicamente en modo supabase)
   useEffect(() => {
+    if (mode === 'local_erp') return
     if (!activeRequest || !isActive) return
 
     let intervalId: NodeJS.Timeout
@@ -123,7 +124,7 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
       isCancelled = true
       clearInterval(intervalId)
     }
-  }, [activeRequest, isActive, fetchRequest, router, clearFinishTimeout])
+  }, [mode, activeRequest, isActive, fetchRequest, router, clearFinishTimeout])
 
   const handleClick = async () => {
     if (mode === 'local_erp') {

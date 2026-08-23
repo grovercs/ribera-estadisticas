@@ -661,7 +661,14 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
                     <div className="flex items-center justify-between gap-2">
                       <span>2 · Facturas de Venta</span>
-                      {user && <SyncButton initialActiveRequest={activeSyncRequest} userId={user.id} variant="header" />}
+                      {user && (
+                        <SyncButton
+                          initialActiveRequest={activeSyncRequest}
+                          userId={user.id}
+                          variant="header"
+                          mode={dashboardPayload.mode}
+                        />
+                      )}
                     </div>
                   </th>
                 </tr>
