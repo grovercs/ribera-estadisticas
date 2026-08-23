@@ -99,13 +99,18 @@ function SnapshotCard({ section, className = '' }: { section: SnapshotSection; c
           const pont = Number(row.pontValue) || 0
           const total = row.totalValue !== undefined ? Number(row.totalValue) || 0 : vielha + pont
           const totalCount = (Number(row.vielhaCount) || 0) + (Number(row.pontCount) || 0)
+          const isMarginPercentageRow = section.title.startsWith('4 · Márgenes Comerciales')
+            && row.label === 'Margen %'
+            && row.format === 'pct'
 
           return (
-            <div key={`${row.label}-${index}`} className={`grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-baseline gap-1 px-2 py-0.5 ${textTone}`}>
+            <div key={`${row.label}-${index}`} className={`grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-baseline gap-1 px-2 py-0.5 ${textTone} ${isMarginPercentageRow ? 'bg-emerald-50/70' : ''}`}>
               <span className="truncate font-semibold">{row.label}</span>
-              <span className="whitespace-nowrap text-right">{formatValue(vielha, row.format)}{row.vielhaCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({numberFormatter.format(row.vielhaCount)})</span>}</span>
-              <span className="whitespace-nowrap text-right">{formatValue(pont, row.format)}{row.pontCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({numberFormatter.format(row.pontCount)})</span>}</span>
-              <span className="whitespace-nowrap text-right font-bold">{formatValue(total, row.format)}{totalCount > 0 && <span className="ml-0.5 text-[9px] font-normal text-[#8a929a]">({numberFormatter.format(totalCount)})</span>}</span>
+              <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[12px] font-bold text-emerald-700' : ''}`}>{formatValue(vielha, row.format)}{row.vielhaCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({numberFormatter.format(row.vielhaCount)})</span>}</span>
+              <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[12px] font-bold text-emerald-700' : ''}`}>{formatValue(pont, row.format)}{row.pontCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({numberFormatter.format(row.pontCount)})</span>}</span>
+              <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[13px] font-black text-emerald-800' : 'font-bold'}`}>
+                {formatValue(total, row.format)}{totalCount > 0 && <span className="ml-0.5 text-[9px] font-normal text-[#8a929a]">({numberFormatter.format(totalCount)})</span>}
+              </span>
             </div>
           )
         })}
@@ -187,7 +192,7 @@ export default function DirectionSnapshotModal({ sections, lastDataLabel, lastSy
             </div>
 
             <footer className="flex h-5 flex-none items-center border-t border-[#d1dde6] bg-[#edf3f7] px-3 text-[9px] font-medium text-[#747878]">
-              Fuente: ERP INTEGRAL (SQL Server) · Sincronizado vía Supabase
+              Fuente: ERP INTEGRAL
             </footer>
           </div>
         </div>

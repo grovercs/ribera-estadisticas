@@ -980,10 +980,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       <ExecutiveMobileCards sections={mobileSections} />
 
       <p className="px-1 text-sm font-medium text-[#747878] md:hidden">
-        Fuente: ERP INTEGRAL (SQL Server) · Sincronizado vía Supabase · Datos en tiempo real diferido · Sync {lastSync}
+        Fuente: ERP INTEGRAL · Datos actualizados · Sync {lastSync}
       </p>
       <p className="dashboard-direction-footer hidden whitespace-nowrap px-1 text-xs font-medium text-[#747878] md:block">
-        Fuente: ERP INTEGRAL (SQL Server) · Sincronizado vía Supabase · Últimos datos: {todayLabel} · Sync {lastSync}
+        Fuente: ERP INTEGRAL · Últimos datos: {todayLabel} · Sync {lastSync}
       </p>
     </div>
   )

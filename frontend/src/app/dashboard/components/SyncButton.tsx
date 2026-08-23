@@ -233,7 +233,7 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
 
       {variant === 'default' && isConnectionLost && (
         <p className="text-xs text-amber-600 font-medium max-w-[220px] text-right">
-          Problema de conexión. Esperando señal del servidor...
+          Problema de conexión. Esperando que se restablezca...
         </p>
       )}
 
