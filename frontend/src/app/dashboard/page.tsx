@@ -901,21 +901,23 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
               <tbody className="divide-y divide-[#f0f4f8]">
                 <tr>
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">
-                    <div className="flex items-center justify-between gap-2">
-                      <span>5 · Albaranes de Compra — Mes Actual</span>
+                    5 · Albaranes de Compra — Mes Actual
+                  </th>
+                </tr>
+                <tr className="hover:bg-[#f8f9fc]/60">
+                  <td>
+                    <div className="flex items-center gap-1.5">
+                      <div className="text-sm font-bold text-[#191c1e]">Operaciones</div>
                       <Link
                         href={`/dashboard/compras/albaranes/detalle?year=${year}&month=${currentMonth}`}
-                        className="hidden rounded p-1 text-white transition-colors hover:bg-white/15 md:inline-flex"
+                        className="hidden rounded p-1 text-[#206393] transition-colors hover:bg-[#e3eaf1] hover:text-[#1a5078] md:inline-flex"
                         aria-label="Ver detalle de albaranes de compra del mes actual"
                         title="Ver detalle de albaranes de compra"
                       >
                         <Search className="h-3.5 w-3.5" aria-hidden="true" />
                       </Link>
                     </div>
-                  </th>
-                </tr>
-                <tr className="hover:bg-[#f8f9fc]/60">
-                  <td><div className="text-sm font-bold text-[#191c1e]">Operaciones</div></td>
+                  </td>
                   <td className="text-right">{albVielhaCnt}</td>
                   <td className="text-right">{albPontCnt}</td>
                   <td className="text-right font-bold">{albTotalCnt}</td>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, X } from 'lucide-react'
+import { ArrowLeft, Loader2, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 export interface SalesDocumentKey {
@@ -153,14 +153,25 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
       />
 
       <aside
-        className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-4xl flex-col border-l border-[#e1e2e6] bg-[#f8f9fc] shadow-2xl"
+        className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-4xl flex-col border-l border-[#e1e2e6] bg-[#f8f9fc] shadow-2xl md:inset-y-auto md:left-1/2 md:right-auto md:top-[5vh] md:w-[92vw] md:max-w-[1600px] md:-translate-x-1/2 md:rounded-xl md:border md:shadow-2xl"
         aria-label={`Líneas de la venta ${document.cod_venta}`}
       >
-        <header className="flex items-start justify-between gap-4 border-b border-[#e1e2e6] bg-white px-5 py-4">
-          <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-wider text-[#206393]">Detalle de venta</p>
-            <h2 className="mt-0.5 text-xl font-black tracking-tight text-[#191c1e]">Venta {document.cod_venta}</h2>
-            <p className="mt-1 truncate text-sm font-medium text-[#747878]">
+        <header className="flex w-full shrink-0 items-start justify-between gap-4 border-b border-[#e1e2e6] bg-white px-5 py-4 md:rounded-t-xl md:px-5 md:py-3">
+          <div className="min-w-0 md:flex-1">
+            <div className="md:flex md:items-center md:gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="hidden items-center gap-1 rounded-md px-1.5 py-1 text-sm font-bold text-[#206393] transition-colors hover:bg-[#e3eaf1] hover:text-[#1a5078] md:inline-flex"
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Volver
+              </button>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-[#206393] md:hidden">Detalle de venta</p>
+                <h2 className="mt-0.5 text-xl font-black tracking-tight text-[#191c1e] md:mt-0 md:text-lg">Venta {document.cod_venta}</h2>
+              </div>
+            </div>
+            <p className="mt-1 truncate text-sm font-medium text-[#747878] md:mt-0.5 md:text-xs">
               {document.cod_cliente || 'Cliente no indicado'} · {document.razon_social || 'Sin razón social'}
             </p>
           </div>
@@ -174,7 +185,7 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
           </button>
         </header>
 
-        <div className="flex-1 overflow-auto p-5">
+        <div className="flex min-h-0 w-full flex-1 flex-col p-5 md:max-h-[calc(90vh-5rem)] md:p-5">
           {loading && (
             <div className="flex items-center gap-2 py-8 text-sm font-semibold text-[#747878]">
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Cargando líneas…
@@ -189,17 +200,27 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
 
           {!loading && !error && lines.length > 0 && (
             <>
-              <div className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm">
-                <table className="w-full min-w-[920px] border-collapse text-sm tabular-nums">
+              <div className="min-h-0 flex-1 overflow-auto">
+                <div className="w-full overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm md:overflow-x-hidden">
+                  <table className="w-full min-w-[920px] border-collapse text-sm tabular-nums md:min-w-0 md:table-fixed">
+                  <colgroup className="hidden md:table-column-group">
+                    <col className="w-[9%]" />
+                    <col className="w-[41%]" />
+                    <col className="w-[8%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[10%]" />
+                    <col className="w-[11%]" />
+                    <col className="w-[11%]" />
+                  </colgroup>
                   <thead className="border-b border-[#e1e2e6] bg-[#f0f4f8] text-left text-[11px] font-black uppercase tracking-wide text-[#747878]">
                     <tr>
-                      <th className="px-3 py-2">Artículo</th>
-                      <th className="px-3 py-2">Descripción</th>
-                      <th className="px-3 py-2 text-right">Cantidad</th>
-                      <th className="px-3 py-2 text-right">Precio</th>
-                      <th className="px-3 py-2 text-right">Coste</th>
-                      <th className="px-3 py-2 text-right">Margen</th>
-                      <th className="px-3 py-2 text-right">Total con IVA</th>
+                      <th className="px-3 py-2 md:px-1.5 md:py-1.5">Artículo</th>
+                      <th className="px-3 py-2 md:px-1.5 md:py-1.5">Descripción</th>
+                      <th className="px-3 py-2 text-right md:px-1.5 md:py-1.5">Cantidad</th>
+                      <th className="px-3 py-2 text-right md:px-1.5 md:py-1.5">Precio</th>
+                      <th className="px-3 py-2 text-right md:px-1.5 md:py-1.5">Coste</th>
+                      <th className="px-3 py-2 text-right md:px-1.5 md:py-1.5">Margen</th>
+                      <th className="px-3 py-2 text-right md:px-1.5 md:py-1.5">Total con IVA</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f0f4f8]">
@@ -213,12 +234,12 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
 
                       return (
                         <tr key={line.linea} className="hover:bg-[#f8f9fc]">
-                          <td className="px-3 py-2 font-semibold text-[#191c1e]">{line.cod_articulo || '—'}</td>
-                          <td className="px-3 py-2 text-[#5a5e60]">{line.descripcion || '—'}</td>
-                          <td className="px-3 py-2 text-right">{quantityFormatter.format(toNumber(line.cantidad))}</td>
-                          <td className="px-3 py-2 text-right">{moneyFormatter.format(toNumber(line.precio))}</td>
-                          <td className="px-3 py-2 text-right">{moneyFormatter.format(toNumber(line.precio_coste))}</td>
-                          <td className="px-3 py-2 text-right">
+                          <td className="px-3 py-2 font-semibold text-[#191c1e] md:px-1.5 md:py-1.5">{line.cod_articulo || '—'}</td>
+                          <td className="px-3 py-2 text-[#5a5e60] md:px-1.5 md:py-1.5">{line.descripcion || '—'}</td>
+                          <td className="px-3 py-2 text-right md:whitespace-nowrap md:px-1.5 md:py-1.5">{quantityFormatter.format(toNumber(line.cantidad))}</td>
+                          <td className="px-3 py-2 text-right md:whitespace-nowrap md:px-1.5 md:py-1.5">{moneyFormatter.format(toNumber(line.precio))}</td>
+                          <td className="px-3 py-2 text-right md:whitespace-nowrap md:px-1.5 md:py-1.5">{moneyFormatter.format(toNumber(line.precio_coste))}</td>
+                          <td className="px-3 py-2 text-right md:whitespace-nowrap md:px-1.5 md:py-1.5">
                             {lineMargin === null ? (
                               <span className="text-[#9a9d9f]">—</span>
                             ) : (
@@ -230,15 +251,16 @@ export default function SalesLinesDrawer({ document, onClose }: SalesLinesDrawer
                               </>
                             )}
                           </td>
-                          <td className="px-3 py-2 text-right font-bold text-[#191c1e]">{moneyFormatter.format(toNumber(line.total_amount))}</td>
+                          <td className="px-3 py-2 text-right font-bold text-[#191c1e] md:whitespace-nowrap md:px-1.5 md:py-1.5">{moneyFormatter.format(toNumber(line.total_amount))}</td>
                         </tr>
                       )
                     })}
                   </tbody>
-                </table>
+                  </table>
+                </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg border border-[#e1e2e6] bg-white p-3 text-right tabular-nums sm:grid-cols-3 lg:grid-cols-5">
+              <div className="mt-3 grid w-full shrink-0 grid-cols-2 gap-2 rounded-lg border border-[#e1e2e6] bg-white p-3 text-right tabular-nums sm:grid-cols-3 lg:grid-cols-5 md:gap-3 md:p-3">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-wide text-[#747878]">Base / venta neta</p>
                   <p className="mt-0.5 text-sm font-bold text-[#191c1e]">
