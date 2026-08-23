@@ -63,24 +63,18 @@ function cardMeta(section: DashboardMobileSection): { title: string; descriptor:
   }
 }
 
-const toneClasses: Record<Tone, { accent: string; metric: string; detail: string }> = {
-  blue: { accent: 'border-l-[#206393]', metric: 'text-[#206393]', detail: 'text-[#466276]' },
-  green: { accent: 'border-l-emerald-600', metric: 'text-emerald-700', detail: 'text-emerald-800' },
-  red: { accent: 'border-l-red-600', metric: 'text-red-700', detail: 'text-red-800' },
-  orange: { accent: 'border-l-orange-600', metric: 'text-orange-700', detail: 'text-orange-800' },
+const toneClasses: Record<Tone, { metric: string; detail: string }> = {
+  blue: { metric: 'text-[#206393]', detail: 'text-[#466276]' },
+  green: { metric: 'text-emerald-700', detail: 'text-emerald-800' },
+  red: { metric: 'text-red-700', detail: 'text-red-800' },
+  orange: { metric: 'text-orange-700', detail: 'text-orange-800' },
 }
 
 export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) {
   const [openSectionId, setOpenSectionId] = useState<DashboardMobileSection['id'] | null>(null)
-  const referenceDate = sections.find((section) => section.id === 'sales')?.rows[0]?.label || 'Últimos datos disponibles'
 
   return (
     <div className="mx-auto w-full max-w-[450px] bg-[#f7f8fa] px-4 pb-8 pt-5 text-[#191c1e] sm:rounded-2xl sm:border sm:border-[#eef0f2]">
-      <header className="mb-5 px-1">
-        <h1 className="text-[22px] font-bold tracking-tight">Cuadro de Dirección</h1>
-        <p className="mt-1 text-[13px] text-[#747878]">Últimos datos: {referenceDate}</p>
-      </header>
-
       <div className="space-y-3">
         {sections.map((section) => {
           const isOpen = openSectionId === section.id
@@ -90,7 +84,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
           const sectionDomId = `mobile-v3-${section.id}`
 
           return (
-            <section key={section.id} className={`overflow-hidden rounded-xl border border-[#e5e7eb] border-l-[3px] bg-white ${tone.accent} shadow-[0_1px_2px_rgba(15,23,42,0.035)]`}>
+            <section key={section.id} className="overflow-hidden rounded-xl border border-[#e5e7eb] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.035)]">
               <button
                 type="button"
                 aria-expanded={isOpen}
@@ -122,7 +116,11 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                       const rowCount = totalCount(row)
 
                       if (row.totalOnly) {
-                        const totalOnlyTone = section.id === 'payables' ? 'text-orange-700' : row.highlight ? 'text-[#206393]' : row.muted ? 'text-[#747878]' : 'text-[#191c1e]'
+                        const totalOnlyTone = section.id === 'receivables'
+                          ? 'text-red-700'
+                          : section.id === 'payables'
+                            ? 'text-orange-700'
+                            : 'text-[#206393]'
                         return (
                           <div key={`${row.label}-${index}`} className="rounded-lg bg-[#fafbfc] px-3 py-2.5">
                             <p className="text-[14px] font-medium text-[#466276]">{row.label}</p>
@@ -133,10 +131,26 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                         )
                       }
 
+                      const expandedTotalTone = isMargin
+                        ? 'text-emerald-800'
+                        : section.id === 'receivables'
+                          ? 'text-red-700'
+                          : section.id === 'payables'
+                            ? 'text-orange-700'
+                            : 'text-[#206393]'
+
                       return (
                         <div key={`${row.label}-${index}`} className={`rounded-lg px-3 py-3 ${isMargin ? 'bg-emerald-50/80' : 'bg-[#fafbfc]'}`}>
-                          <p className={`text-[14px] font-semibold ${isMargin ? 'text-emerald-800' : 'text-[#466276]'}`}>{row.label}</p>
-                          <div className="mt-2 grid grid-cols-2 gap-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <p className={`min-w-0 text-[14px] font-semibold ${isMargin ? 'text-emerald-800' : 'text-[#466276]'}`}>{row.label}</p>
+                            <div className="shrink-0 text-right">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a9298]">Total</p>
+                              <p className={`mt-0.5 whitespace-nowrap text-[17px] ${isMargin ? 'font-black' : 'font-bold'} ${expandedTotalTone}`}>
+                                {formatValue(rowTotal, row.format)}{rowCount > 0 && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-3">
                             {[
                               ['Vielha', row.vielhaValue, row.vielhaCount],
                               ['Pont', row.pontValue, row.pontCount],
@@ -148,12 +162,6 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                                 </p>
                               </div>
                             ))}
-                          </div>
-                          <div className={`mt-3 border-t pt-2 ${isMargin ? 'border-emerald-100' : 'border-[#e5e7eb]'}`}>
-                            <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a9298]">Total</p>
-                            <p className={`mt-0.5 whitespace-nowrap text-[16px] ${isMargin ? 'font-black text-emerald-800' : 'font-bold text-[#191c1e]'}`}>
-                              {formatValue(rowTotal, row.format)}{rowCount > 0 && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
-                            </p>
                           </div>
                         </div>
                       )

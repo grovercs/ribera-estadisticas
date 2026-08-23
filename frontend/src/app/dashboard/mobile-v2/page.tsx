@@ -1,15 +1,15 @@
-import ExecutiveMobileV3 from '../components/ExecutiveMobileV3'
+import ExecutiveMobileV2 from '../components/ExecutiveMobileV2'
 import MobileDashboardHeader from '../components/MobileDashboardHeader'
 import { createDashboardMobileSections } from '@/lib/dashboardMobileSections'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-interface MobileV3PageProps {
+interface MobileV2PageProps {
   searchParams: Promise<{ year?: string; anio_ant?: string }>
 }
 
-export default async function MobileV3Page({ searchParams }: MobileV3PageProps) {
+export default async function MobileV2Page({ searchParams }: MobileV2PageProps) {
   const resolvedSearchParams = await searchParams
   const year = parseInt(resolvedSearchParams.year || '2026')
   const anioAnt = resolvedSearchParams.anio_ant || 'todos'
@@ -44,15 +44,15 @@ export default async function MobileV3Page({ searchParams }: MobileV3PageProps) 
   })
 
   return (
-    <div className="w-full py-1">
-      <div className="mx-auto w-full max-w-[450px] px-4 pt-3">
+    <div className="w-full pt-3">
+      <div className="mx-auto w-full max-w-[430px] px-3">
         <MobileDashboardHeader
           referenceDate={sections.find((section) => section.id === 'sales')?.rows[0]?.label || 'Últimos datos disponibles'}
           userId={user?.id || null}
           activeSyncRequest={activeSyncRes.data || null}
         />
       </div>
-      <ExecutiveMobileV3 sections={sections} />
+      <ExecutiveMobileV2 sections={sections} />
     </div>
   )
 }
