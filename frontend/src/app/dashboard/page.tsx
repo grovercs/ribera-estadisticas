@@ -1,10 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
-import ExecutiveMobileCards from './components/ExecutiveMobileCards'
+import ExecutiveMobileV3 from './components/ExecutiveMobileV3'
+import MobileDashboardHeader from './components/MobileDashboardHeader'
 import DirectionSnapshotModal from './components/DirectionSnapshotModal'
 import SyncButton from './components/SyncButton'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { getCurrentFortnightRange } from '@/lib/salesPeriods'
+import { createDashboardMobileSections } from '@/lib/dashboardMobileSections'
+import { getDashboardData } from '@/lib/data-provider'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,28 +25,9 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
 
   const supabase = await createClient()
 
-  // Usuario autenticado y solicitud de sync activa
-  const { data: { user } } = await supabase.auth.getUser()
-
-  // 7 RPCs reales validados + estado de sync
-  const [
-    salesRes,
-    salesPeriodsRes,
-    marginsRes,
-    impagadosRes,
-    albaranesRes,
-    purchasesPeriodsRes,
-    payablesRes,
-    syncRunsRes,
-    activeSyncRes,
-  ] = await Promise.all([
-    supabase.rpc('get_store_dashboard_sales', { p_year: year, p_anio_ant: anioAnt }),
-    supabase.rpc('get_store_dashboard_sales_periods', { p_year: year }),
-    supabase.rpc('get_store_dashboard_margins', { p_periodo: 'year' }),
-    supabase.rpc('get_store_dashboard_impagados'),
-    supabase.rpc('get_store_dashboard_albaranes', { p_year: year }),
-    supabase.rpc('get_store_dashboard_purchases_periods', { p_year: year }),
-    supabase.rpc('get_store_dashboard_payables'),
+  // Usuario autenticado y última sincronización registrada
+  const [{ data: { user } }, { data: syncRun }, dashboardPayload] = await Promise.all([
+    supabase.auth.getUser(),
     supabase.from('sync_runs')
       .select('completed_at')
       .eq('dataset', 'sales')
@@ -51,15 +35,10 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       .order('completed_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase.from('sync_requests')
-      .select('id, status, source, requested_at, started_at, finished_at, error_message')
-      .eq('dataset', 'sales')
-      .in('status', ['pending', 'running'])
-      .order('requested_at', { ascending: false })
-      .maybeSingle(),
+    getDashboardData({ year, anioAnt, periodo: 'year' }),
   ])
 
-  const salesDataRaw = salesRes.data || {}
+  const salesDataRaw = dashboardPayload.sales || {}
   const salesData = {
     ultimo_dia: salesDataRaw.ultimo_dia || null,
     penultimo_dia: salesDataRaw.penultimo_dia || null,
@@ -70,29 +49,29 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     anteriores: salesDataRaw.anteriores || [],
   }
 
-  const salesPeriods = salesPeriodsRes.data || {
+  const salesPeriods = dashboardPayload.sales_periods || {
     quincena_actual: [],
     quincena_anterior: [],
     year: [],
     year_ant_periodo: [],
     year_anterior: [],
   }
-  const marginsData = marginsRes.data || { periodo: 'year', periodo_rows: [], hoy_rows: [], year_rows: [] }
-  const impagadosData = impagadosRes.data || {
+  const marginsData = dashboardPayload.margins || { periodo: 'year', periodo_rows: [], hoy_rows: [], year_rows: [] }
+  const impagadosData = dashboardPayload.impagados || {
     impagados_por_almacen: [],
     pendientes_por_almacen: [],
     totales: {},
   }
-  const albaranesData = albaranesRes.data || []
-  const purchasesPeriods = purchasesPeriodsRes.data || {
+  const albaranesData = dashboardPayload.albaranes || []
+  const purchasesPeriods = dashboardPayload.purchases_periods || {
     mes_actual: { count: 0, importe: 0 },
     mes_anterior: { count: 0, importe: 0 },
     year_actual: { count: 0, importe: 0 },
     year_anterior_periodo: { count: 0, importe: 0 },
     year_anterior: { count: 0, importe: 0 },
   }
-  const payablesData = payablesRes.data || { periodos: [], total_importe: 0, total_ops: 0 }
-  const lastSyncAt = syncRunsRes.data?.completed_at
+  const payablesData = dashboardPayload.payables || { periodos: [], total_importe: 0, total_ops: 0 }
+  const lastSyncAt = syncRun?.completed_at
   const lastSync = lastSyncAt
     ? new Date(lastSyncAt).toLocaleTimeString('es-ES', {
         timeZone: 'Europe/Madrid',
@@ -101,7 +80,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       })
     : 'Reciente'
 
-  const activeSyncRequest = activeSyncRes.data || null
+  const activeSyncRequest = dashboardPayload.active_sync || null
 
   // Mapeo definitivo: cod_almacen 1 = Pont de Suert, 2 = Vielha
   const PONT = '1'
@@ -125,13 +104,13 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     return Number.isFinite(n) ? Math.trunc(n) : 0
   }
 
-  const getStoreValue = (arr: any[], storeCode: string | number, key: string) => {
-    const item = findStore(arr, storeCode)
+  const getStoreValue = (arr: any[] | undefined, storeCode: string | number, key: string) => {
+    const item = findStore(arr || [], storeCode)
     return toNum(item?.[key])
   }
 
-  const getStoreCount = (arr: any[], storeCode: string | number, key: string) => {
-    const item = findStore(arr, storeCode)
+  const getStoreCount = (arr: any[] | undefined, storeCode: string | number, key: string) => {
+    const item = findStore(arr || [], storeCode)
     return toInt(item?.[key])
   }
 
@@ -242,8 +221,8 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
   const albTotalCnt = albPontCnt + albVielhaCnt
 
   // --- FACTURAS DE COMPRAS Y GASTOS ---
-  const purchaseValue = (key: keyof typeof purchasesPeriods, field: 'importe' | 'count') => {
-    const val = purchasesPeriods[key]?.[field]
+  const purchaseValue = (key: string, field: 'importe' | 'count') => {
+    const val = (purchasesPeriods as any)[key]?.[field]
     return field === 'importe' ? toNum(val) : toInt(val)
   }
 
@@ -277,90 +256,27 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
     month: '2-digit',
   }).formatToParts(new Date()).find((part) => part.type === 'month')?.value || '01'
 
-  const mobileSections = [
-    {
-      title: '1 · Ventas',
-      rows: [
-        { label: todayLabel, vielhaValue: hoyVielhaImp, pontValue: hoyPontImp, vielhaCount: hoyVielhaCnt, pontCount: hoyPontCnt },
-        { label: yesterdayLabel, vielhaValue: ayerVielhaImp, pontValue: ayerPontImp, vielhaCount: ayerVielhaCnt, pontCount: ayerPontCnt },
-        { label: 'Quincena Actual', vielhaValue: qActVielhaImp, pontValue: qActPontImp, vielhaCount: qActVielhaCnt, pontCount: qActPontCnt, highlight: true },
-        { label: 'Quincena Anterior', vielhaValue: qAntVielhaImp, pontValue: qAntPontImp, vielhaCount: qAntVielhaCnt, pontCount: qAntPontCnt },
-        { label: 'Anteriores', vielhaValue: antVielhaImp, pontValue: antPontImp, vielhaCount: antVielhaCnt, pontCount: antPontCnt, muted: true },
-      ],
-    },
-    {
-      title: '2 · Facturas de Venta',
-      rows: [
-        { label: 'Quincena Actual', totalValue: factTotalImp('quincena_actual'), totalCount: factTotalCnt('quincena_actual'), totalOnly: true },
-        { label: 'Quincena Anterior', totalValue: factTotalImp('quincena_anterior'), totalCount: factTotalCnt('quincena_anterior'), totalOnly: true },
-        { label: `Año ${year}`, totalValue: factTotalImp('year'), totalCount: factTotalCnt('year'), totalOnly: true, highlight: true },
-        { label: 'Año Ant. (mismo período)', totalValue: factTotalImp('year_ant_periodo'), totalCount: factTotalCnt('year_ant_periodo'), totalOnly: true, muted: true },
-        { label: 'Año Anterior', totalValue: factTotalImp('year_anterior'), totalCount: factTotalCnt('year_anterior'), totalOnly: true, muted: true },
-      ],
-    },
-    {
-      title: '3 · Impagados y Pendientes de Cobro',
-      rows: [
-        { label: 'Impagados', vielhaValue: impVielhaImp, pontValue: impPontImp, vielhaCount: impVielhaCnt, pontCount: impPontCnt },
-        { label: 'Pendientes', vielhaValue: pendVielhaImp, pontValue: pendPontImp, vielhaCount: pendVielhaCnt, pontCount: pendPontCnt },
-        { label: 'Cartera Pendiente Total', totalValue: carteraImpagada, totalOnly: true },
-      ],
-    },
-    {
-      title: '4 · Márgenes Comerciales',
-      rows: [
-        { label: `Márgenes ${todayLabel}`, subheader: true },
-        { label: 'Venta', vielhaValue: marginVielhaHoy.venta, pontValue: marginPontHoy.venta, totalValue: marginsHoy.venta },
-        { label: 'Coste', vielhaValue: marginVielhaHoy.coste, pontValue: marginPontHoy.coste, totalValue: marginsHoy.coste },
-        { label: 'Margen %', vielhaValue: marginVielhaHoy.margen_porcentaje, pontValue: marginPontHoy.margen_porcentaje, totalValue: marginsHoy.margen_porcentaje, format: 'pct' as const },
-        { label: `Año ${year}`, subheader: true },
-        { label: 'Venta', vielhaValue: marginVielhaYear.venta, pontValue: marginPontYear.venta, totalValue: marginsYear.venta },
-        { label: 'Coste', vielhaValue: marginVielhaYear.coste, pontValue: marginPontYear.coste, totalValue: marginsYear.coste },
-        { label: 'Margen %', vielhaValue: marginVielhaYear.margen_porcentaje, pontValue: marginPontYear.margen_porcentaje, totalValue: marginsYear.margen_porcentaje, format: 'pct' as const },
-      ],
-    },
-    {
-      title: '5 · Albaranes de Compra — Mes Actual',
-      rows: [
-        { label: 'Operaciones', totalValue: albTotalCnt, totalOnly: true, format: 'num' as const },
-        { label: 'Importe', vielhaValue: albVielhaImp, pontValue: albPontImp, totalValue: albTotalImp },
-      ],
-    },
-    {
-      title: '6 · Facturas de Compras y Gastos',
-      rows: [
-        { label: 'Mes Actual', totalValue: purchaseValue('mes_actual', 'importe'), totalCount: purchaseValue('mes_actual', 'count'), totalOnly: true, highlight: true },
-        { label: 'Mes Anterior', totalValue: purchaseValue('mes_anterior', 'importe'), totalCount: purchaseValue('mes_anterior', 'count'), totalOnly: true },
-        { label: 'Año Actual', totalValue: purchaseValue('year_actual', 'importe'), totalCount: purchaseValue('year_actual', 'count'), totalOnly: true, highlight: true },
-        { label: 'Año Ant. (mismo período)', totalValue: purchaseValue('year_anterior_periodo', 'importe'), totalCount: purchaseValue('year_anterior_periodo', 'count'), totalOnly: true, muted: true },
-      ],
-    },
-    {
-      title: '7 · Pagos Pendientes Proveedores',
-      rows: [
-        ...orderedPeriodos.map((p) => ({
-          label: p.periodo,
-          totalValue: p.importe,
-          totalCount: p.ops,
-          totalOnly: true as const,
-        })),
-        { label: 'Total Pagos', totalValue: payablesData.total_importe || 0, totalCount: payablesData.total_ops || 0, totalOnly: true },
-      ],
-    },
-  ]
+  const mobileSections = createDashboardMobileSections({
+    year,
+    salesDataRaw,
+    salesPeriodsRaw: salesPeriods,
+    marginsDataRaw: marginsData,
+    impagadosDataRaw: impagadosData,
+    albaranesDataRaw: albaranesData,
+    purchasesPeriodsRaw: purchasesPeriods,
+    payablesDataRaw: payablesData,
+  })
 
   return (
     <div className="dashboard-direction w-full max-w-none space-y-5 text-sm text-[#191c1e] md:space-y-2 lg:space-y-2 xl:space-y-3 2xl:space-y-5">
-      <div className="flex flex-col gap-3 border-b border-[#e1e2e6] pb-4 sm:flex-row sm:items-start sm:justify-between md:hidden">
-        <div className="flex flex-col gap-1 md:gap-0">
-          <h1 className="text-3xl font-black tracking-tight text-[#191c1e] md:text-xl lg:text-2xl 2xl:text-3xl">Cuadro de Dirección</h1>
-          <p className="text-base font-medium text-[#747878] md:text-xs lg:text-sm 2xl:text-base">
-            Fotografía diaria del negocio · Últimos datos: {todayLabel} · Sync {lastSync}
-          </p>
-        </div>
-        {user && (
-          <SyncButton initialActiveRequest={activeSyncRequest} userId={user.id} />
-        )}
+      {/* Cabecera Móvil Oficial (V3) */}
+      <div className="mx-auto w-full max-w-[450px] px-1 pt-1 md:hidden">
+        <MobileDashboardHeader
+          referenceDate={mobileSections.find((section) => section.id === 'sales')?.rows[0]?.label || todayLabel}
+          userId={user?.id || null}
+          activeSyncRequest={activeSyncRequest}
+          mode={dashboardPayload.mode}
+        />
       </div>
 
       {/* Tabla principal VIELHA | PONT | TOTAL */}
@@ -977,11 +893,11 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
         </div>
       </div>
 
-      <ExecutiveMobileCards sections={mobileSections} />
+      {/* Vista móvil oficial (V3) */}
+      <div className="md:hidden">
+        <ExecutiveMobileV3 sections={mobileSections} />
+      </div>
 
-      <p className="px-1 text-sm font-medium text-[#747878] md:hidden">
-        Fuente: ERP INTEGRAL · Datos actualizados · Sync {lastSync}
-      </p>
       <p className="dashboard-direction-footer hidden whitespace-nowrap px-1 text-xs font-medium text-[#747878] md:block">
         Fuente: ERP INTEGRAL · Últimos datos: {todayLabel} · Sync {lastSync}
       </p>

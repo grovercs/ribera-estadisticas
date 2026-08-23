@@ -19,6 +19,7 @@ interface SyncButtonProps {
   initialActiveRequest: SyncRequest | null
   userId: string
   variant?: 'default' | 'header'
+  mode?: 'local_erp' | 'supabase'
 }
 
 const POLL_INTERVAL_MS = 10000 // 10 segundos
@@ -27,11 +28,12 @@ const TIMEOUT_MINUTES = 60
 const FINISHED_DISPLAY_MS = 5000
 const MAX_POLL_ERRORS = 3
 
-export default function SyncButton({ initialActiveRequest, userId, variant = 'default' }: SyncButtonProps) {
+export default function SyncButton({ initialActiveRequest, userId, variant = 'default', mode = 'supabase' }: SyncButtonProps) {
   const router = useRouter()
   const [activeRequest, setActiveRequest] = useState<SyncRequest | null>(initialActiveRequest)
   const [justFinished, setJustFinished] = useState<'success' | 'failed' | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isRefreshingLocal, setIsRefreshingLocal] = useState(false)
   const [lastError, setLastError] = useState<string | null>(null)
   const [pollErrorCount, setPollErrorCount] = useState(0)
 
@@ -124,6 +126,20 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
   }, [activeRequest, isActive, fetchRequest, router, clearFinishTimeout])
 
   const handleClick = async () => {
+    if (mode === 'local_erp') {
+      if (isRefreshingLocal) return
+      setIsRefreshingLocal(true)
+      try {
+        router.refresh()
+        await new Promise((resolve) => setTimeout(resolve, 800))
+      } finally {
+        if (mountedRef.current) {
+          setIsRefreshingLocal(false)
+        }
+      }
+      return
+    }
+
     if (isActive || isSubmitting) return
 
     setIsSubmitting(true)
@@ -182,7 +198,12 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
     'bg-[#206393] hover:bg-[#184a70] text-white border border-[#206393]'
   let disabled = false
 
-  if (justFinished === 'success') {
+  if (mode === 'local_erp' && isRefreshingLocal) {
+    buttonText = 'Actualizando...'
+    icon = <Loader2 className="w-4 h-4 animate-spin" />
+    buttonClass = 'bg-[#9aa0a6] text-white border border-[#9aa0a6] cursor-not-allowed'
+    disabled = true
+  } else if (justFinished === 'success') {
     buttonText = 'Datos actualizados'
     icon = <CheckCircle className="w-4 h-4" />
     buttonClass = 'bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-600'

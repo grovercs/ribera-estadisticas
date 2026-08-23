@@ -1,6 +1,7 @@
 import ExecutiveMobileV3 from '../components/ExecutiveMobileV3'
 import MobileDashboardHeader from '../components/MobileDashboardHeader'
 import { createDashboardMobileSections } from '@/lib/dashboardMobileSections'
+import { getDashboardData } from '@/lib/data-provider'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
@@ -13,34 +14,21 @@ export default async function MobileV3Page({ searchParams }: MobileV3PageProps) 
   const resolvedSearchParams = await searchParams
   const year = parseInt(resolvedSearchParams.year || '2026')
   const anioAnt = resolvedSearchParams.anio_ant || 'todos'
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [salesRes, salesPeriodsRes, marginsRes, impagadosRes, albaranesRes, purchasesPeriodsRes, payablesRes, activeSyncRes] = await Promise.all([
-    supabase.rpc('get_store_dashboard_sales', { p_year: year, p_anio_ant: anioAnt }),
-    supabase.rpc('get_store_dashboard_sales_periods', { p_year: year }),
-    supabase.rpc('get_store_dashboard_margins', { p_periodo: 'year' }),
-    supabase.rpc('get_store_dashboard_impagados'),
-    supabase.rpc('get_store_dashboard_albaranes', { p_year: year }),
-    supabase.rpc('get_store_dashboard_purchases_periods', { p_year: year }),
-    supabase.rpc('get_store_dashboard_payables'),
-    supabase.from('sync_requests')
-      .select('id, status, source, requested_at, started_at, finished_at, error_message')
-      .eq('dataset', 'sales')
-      .in('status', ['pending', 'running'])
-      .order('requested_at', { ascending: false })
-      .maybeSingle(),
-  ])
+  const dashboardPayload = await getDashboardData({ year, anioAnt, periodo: 'year' })
 
   const sections = createDashboardMobileSections({
     year,
-    salesDataRaw: salesRes.data,
-    salesPeriodsRaw: salesPeriodsRes.data,
-    marginsDataRaw: marginsRes.data,
-    impagadosDataRaw: impagadosRes.data,
-    albaranesDataRaw: albaranesRes.data,
-    purchasesPeriodsRaw: purchasesPeriodsRes.data,
-    payablesDataRaw: payablesRes.data,
+    salesDataRaw: dashboardPayload.sales,
+    salesPeriodsRaw: dashboardPayload.sales_periods,
+    marginsDataRaw: dashboardPayload.margins,
+    impagadosDataRaw: dashboardPayload.impagados,
+    albaranesDataRaw: dashboardPayload.albaranes,
+    purchasesPeriodsRaw: dashboardPayload.purchases_periods,
+    payablesDataRaw: dashboardPayload.payables,
   })
 
   return (
@@ -49,7 +37,8 @@ export default async function MobileV3Page({ searchParams }: MobileV3PageProps) 
         <MobileDashboardHeader
           referenceDate={sections.find((section) => section.id === 'sales')?.rows[0]?.label || 'Últimos datos disponibles'}
           userId={user?.id || null}
-          activeSyncRequest={activeSyncRes.data || null}
+          activeSyncRequest={dashboardPayload.active_sync || null}
+          mode={dashboardPayload.mode}
         />
       </div>
       <ExecutiveMobileV3 sections={sections} />
