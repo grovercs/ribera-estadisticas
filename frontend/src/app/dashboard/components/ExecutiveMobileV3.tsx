@@ -22,10 +22,14 @@ function truncateTo2Decimals(value: number) {
   return Math.trunc((Number.isFinite(value) ? value : 0) * 100) / 100
 }
 
+function roundTo2Decimals(value: number) {
+  return Math.round((Number.isFinite(value) ? value : 0) * 100) / 100
+}
+
 function formatValue(value: number | undefined, format: DashboardMobileRow['format']) {
   const safeValue = Number(value) || 0
   if (format === 'num') return numberFormatter.format(safeValue)
-  if (format === 'pct') return percentFormatter.format(truncateTo2Decimals(safeValue) / 100)
+  if (format === 'pct') return percentFormatter.format(roundTo2Decimals(safeValue) / 100)
   return currencyFormatter.format(truncateTo2Decimals(safeValue))
 }
 

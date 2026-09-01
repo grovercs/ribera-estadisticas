@@ -9,6 +9,7 @@ interface ExecutiveMobileV2Props {
 }
 
 const truncateTo2Decimals = (value: number) => Math.trunc((Number.isFinite(value) ? value : 0) * 100) / 100
+const roundTo2Decimals = (value: number) => Math.round((Number.isFinite(value) ? value : 0) * 100) / 100
 
 const currencyFormatter = new Intl.NumberFormat('es-ES', {
   style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2,
@@ -21,7 +22,7 @@ const percentFormatter = new Intl.NumberFormat('es-ES', {
 function formatValue(value: number | undefined, format: DashboardMobileRow['format']) {
   const safeValue = Number(value) || 0
   if (format === 'num') return numberFormatter.format(safeValue)
-  if (format === 'pct') return percentFormatter.format(truncateTo2Decimals(safeValue) / 100)
+  if (format === 'pct') return percentFormatter.format(roundTo2Decimals(safeValue) / 100)
   return currencyFormatter.format(truncateTo2Decimals(safeValue))
 }
 
