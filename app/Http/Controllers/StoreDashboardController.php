@@ -520,6 +520,9 @@ class StoreDashboardController extends Controller
         }
 
         // === ALBARANES DE COMPRA MES ===
+        // Referencia temporal propia del bloque 6: si el último día con ventas es día 1 del
+        // mes siguiente, el cierre operativo/Delphi sigue siendo el mes anterior. Reutilizamos
+        // aquí la misma referencia que el bloque 6 para mantener coherencia mensual.
         $albaranesCompraMesRaw = $erp->select("
             SELECT
                 c.cod_almacen,
@@ -541,19 +544,41 @@ class StoreDashboardController extends Controller
         }, $albaranesCompraMesRaw);
 
         // === FACTURAS COMPRAS Y GASTOS (Unificado en 1 sola consulta con CASE WHEN) ===
+        // Referencia temporal propia del bloque 6: si el último día con ventas en ERP
+        // es el día 1 del mes, significa que aún hay datos parciales del nuevo mes y
+        // el cierre operativo/Delphi sigue siendo el mes anterior. En ese caso usamos
+        // el penúltimo día con ventas como cierre, alineándonos con Delphi 31/08/2026.
+        // Esto evita depender de la fecha del sistema ni de MAX(fecha_venta) a secas.
+        $fcUltimoDia = ((int)(new \DateTime($ultimoDiaVentas))->format('d')) === 1
+            ? $penultimoDiaVentas
+            : $ultimoDiaVentas;
+        $fcRefDate = new \DateTime($fcUltimoDia);
+        if ($year !== (int)$fcRefDate->format('Y')) {
+            $fcRefDate->setDate($year, (int)$fcRefDate->format('m'), (int)$fcRefDate->format('d'));
+        }
+        $fcRefYear = (int)$fcRefDate->format('Y');
+        $fcRefMonth = (int)$fcRefDate->format('m');
+        $fcRefPrevMonth = $fcRefMonth === 1 ? 12 : $fcRefMonth - 1;
+        $fcYearPrev = $fcRefYear - 1;
+        // Límite superior exclusivo para "Año Anterior mismo período": se usa el día del cierre
+        // operativo ($fcRefDate) del año anterior. Formato ISO sin hora y CONVERT(date, ..., 23)
+        // evita conversiones erróneas de nvarchar en smalldatetime con regionalización española.
+        $fcYearAntPeriodoStart = (clone $fcRefDate)->setDate($fcYearPrev, 1, 1)->format('Y-m-d');
+        $fcYearAntPeriodoEnd = (clone $fcRefDate)->setDate($fcYearPrev, (int)$fcRefDate->format('m'), (int)$fcRefDate->format('d'))->format('Y-m-d');
+
         $fcRow = $erp->select("
             SELECT
-                COUNT(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = MONTH(GETDATE()) THEN 1 END) as mes_actual_count,
-                SUM(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = MONTH(GETDATE()) THEN i.importe ELSE 0 END) as mes_actual_importe,
+                COUNT(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = ? THEN 1 END) as mes_actual_count,
+                SUM(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = ? THEN i.importe ELSE 0 END) as mes_actual_importe,
 
-                COUNT(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = MONTH(DATEADD(MONTH, -1, GETDATE())) THEN 1 END) as mes_anterior_count,
-                SUM(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = MONTH(DATEADD(MONTH, -1, GETDATE())) THEN i.importe ELSE 0 END) as mes_anterior_importe,
+                COUNT(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = ? THEN 1 END) as mes_anterior_count,
+                SUM(CASE WHEN YEAR(c.fecha_factura) = ? AND MONTH(c.fecha_factura) = ? THEN i.importe ELSE 0 END) as mes_anterior_importe,
 
                 COUNT(CASE WHEN YEAR(c.fecha_factura) = ? THEN 1 END) as year_actual_count,
                 SUM(CASE WHEN YEAR(c.fecha_factura) = ? THEN i.importe ELSE 0 END) as year_actual_importe,
 
-                COUNT(CASE WHEN c.fecha_factura >= ? AND c.fecha_factura <= ? THEN 1 END) as year_ant_periodo_count,
-                SUM(CASE WHEN c.fecha_factura >= ? AND c.fecha_factura <= ? THEN i.importe ELSE 0 END) as year_ant_periodo_importe,
+                COUNT(CASE WHEN c.fecha_factura >= CONVERT(date, ?, 23) AND c.fecha_factura <= CONVERT(date, ?, 23) THEN 1 END) as year_ant_periodo_count,
+                SUM(CASE WHEN c.fecha_factura >= CONVERT(date, ?, 23) AND c.fecha_factura <= CONVERT(date, ?, 23) THEN i.importe ELSE 0 END) as year_ant_periodo_importe,
 
                 COUNT(CASE WHEN YEAR(c.fecha_factura) = ? THEN 1 END) as year_anterior_count,
                 SUM(CASE WHEN YEAR(c.fecha_factura) = ? THEN i.importe ELSE 0 END) as year_anterior_importe
@@ -561,14 +586,20 @@ class StoreDashboardController extends Controller
             JOIN facturas_compras_cabecera c
               ON i.cod_factura = c.cod_factura AND i.cod_empresa = c.cod_empresa AND i.cod_proveedor = c.cod_proveedor
             WHERE c.cod_empresa = 1
-              AND (YEAR(c.fecha_factura) IN (?, ?) OR (c.fecha_factura >= ? AND c.fecha_factura <= ?))
+              AND (
+                  YEAR(c.fecha_factura) IN (?, ?)
+                  OR (
+                      c.fecha_factura >= CONVERT(date, ?, 23)
+                      AND c.fecha_factura <= CONVERT(date, ?, 23)
+                  )
+              )
         ", [
-            $year, $year,
-            $year, $year,
-            $year, $year,
-            $yearAntPeriodoStart, $yearAntPeriodoEnd, $yearAntPeriodoStart, $yearAntPeriodoEnd,
-            $yearPrev, $yearPrev,
-            $year, $yearPrev, $yearAntPeriodoStart, $yearAntPeriodoEnd
+            $fcRefYear, $fcRefMonth, $fcRefYear, $fcRefMonth,
+            $fcRefYear, $fcRefPrevMonth, $fcRefYear, $fcRefPrevMonth,
+            $fcRefYear, $fcRefYear,
+            $fcYearAntPeriodoStart, $fcYearAntPeriodoEnd, $fcYearAntPeriodoStart, $fcYearAntPeriodoEnd,
+            $fcYearPrev, $fcYearPrev,
+            $fcRefYear, $fcYearPrev, $fcYearAntPeriodoStart, $fcYearAntPeriodoEnd
         ])[0] ?? null;
 
         $fcRowArr = (array)($fcRow ?? []);
