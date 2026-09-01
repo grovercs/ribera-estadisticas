@@ -99,7 +99,6 @@ export default async function ComprasPage({ searchParams }: PageProps) {
 
   // Null handling explícito: diferenciar dato real 0 de campo inexistente
   const totalPayables = payables.total_importe != null ? parseFloat(payables.total_importe) : null
-  const totalOps = payables.total_ops != null ? parseInt(payables.total_ops, 10) : null
 
   const orderedPeriods = ['Mes Actual', 'Mes Siguiente', 'En 2 meses', 'En 3 meses']
   const periodos = orderedPeriods
@@ -109,10 +108,9 @@ export default async function ComprasPage({ searchParams }: PageProps) {
       return {
         periodo: found.periodo,
         importe: found.importe != null ? parseFloat(found.importe) : null,
-        ops: found.ops != null ? parseInt(found.ops, 10) : null,
       }
     })
-    .filter((p): p is { periodo: string; importe: number | null; ops: number | null } => p !== null)
+    .filter((p): p is { periodo: string; importe: number | null } => p !== null)
 
   const years = Array.from({ length: 15 }, (_, i) => 2012 + i)
   const months = Array.from({ length: 12 }, (_, i) => i + 1)
@@ -202,10 +200,6 @@ export default async function ComprasPage({ searchParams }: PageProps) {
             <p className="text-2xl md:text-3xl font-black text-[#191c1e] tracking-tight mt-1">{totalPayables != null ? currencyFormatter.format(totalPayables) : '—'}</p>
           </div>
           <div className="mt-2 pt-2 border-t border-[#f2f3f7] space-y-1">
-            <div className="flex justify-between text-xs text-[#747878] font-semibold">
-              <span>Vencimientos</span>
-              <span className="text-[#191c1e]">{totalOps != null ? numberFormatter.format(totalOps) : '—'}</span>
-            </div>
             {periodos.map((p) => (
               <div key={p.periodo} className="flex justify-between text-xs text-[#747878] font-semibold">
                 <span>{p.periodo}</span>
@@ -241,7 +235,6 @@ export default async function ComprasPage({ searchParams }: PageProps) {
               <thead className="text-[#747878] text-sm uppercase border-b border-[#e1e2e6]">
                 <tr>
                   <th className="py-2.5 px-3">Periodo</th>
-                  <th className="py-2.5 px-3 text-right">Operaciones</th>
                   <th className="py-2.5 px-3 text-right">Importe</th>
                 </tr>
               </thead>
@@ -249,7 +242,6 @@ export default async function ComprasPage({ searchParams }: PageProps) {
                 {periodos.map((p) => (
                   <tr key={p.periodo} className="hover:bg-[#f8f9fc]">
                     <td className="py-3 px-3 font-semibold text-[#191c1e]">{p.periodo}</td>
-                    <td className="py-3 px-3 text-right font-medium">{p.ops != null ? numberFormatter.format(p.ops) : '—'}</td>
                     <td className="py-3 px-3 text-right font-bold text-[#206393]">{p.importe != null ? currencyFormatter.format(p.importe) : '—'}</td>
                   </tr>
                 ))}

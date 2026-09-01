@@ -538,13 +538,13 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
               <tr key={p.periodo} className="hover:bg-[#f8f9fc]/60">
                 <td className="px-3 py-2 text-left"><div className="font-bold text-[#191c1e] text-sm">{p.periodo}</div></td>
                 <td colSpan={2} className="px-3 py-2" />
-                <td className="px-3 py-2 text-right tabular-nums font-bold text-amber-700">{fmtEur(p.importe)} <span className="text-xs text-[#9aa0a6]">({p.ops})</span></td>
+                <td className="px-3 py-2 text-right tabular-nums font-bold text-amber-700">{fmtEur(p.importe)}</td>
               </tr>
             ))}
             <tr className="hover:bg-[#f8f9fc]/60 bg-amber-50/50">
               <td className="px-3 py-2 text-left"><div className="font-bold text-[#191c1e] text-sm">Total Pagos</div></td>
               <td colSpan={2} className="px-3 py-2" />
-              <td className="px-3 py-2 text-right tabular-nums font-black text-amber-700">{fmtEur(payablesData.total_importe || 0)} <span className="text-xs text-[#9aa0a6]">({payablesData.total_ops || 0})</span></td>
+              <td className="px-3 py-2 text-right tabular-nums font-black text-amber-700">{fmtEur(payablesData.total_importe || 0)}</td>
             </tr>
 
           </tbody>
@@ -892,13 +892,13 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
                   <tr key={p.periodo} className="hover:bg-[#f8f9fc]/60">
                     <td><div className="text-sm font-bold text-[#191c1e]">{p.periodo}</div></td>
                     <td colSpan={2} />
-                    <td className="text-right font-bold text-amber-700">{fmtEur(p.importe)} <span className="text-[11px] text-[#9aa0a6]">({p.ops})</span></td>
+                    <td className="text-right font-bold text-amber-700">{fmtEur(p.importe)}</td>
                   </tr>
                 ))}
                 <tr className="bg-amber-50/50">
                   <td><div className="text-sm font-bold text-[#191c1e]">Total Pagos</div></td>
                   <td colSpan={2} />
-                  <td className="text-right font-black text-amber-700">{fmtEur(payablesData.total_importe || 0)} <span className="text-[11px] text-[#9aa0a6]">({payablesData.total_ops || 0})</span></td>
+                  <td className="text-right font-black text-amber-700">{fmtEur(payablesData.total_importe || 0)}</td>
                 </tr>
               </tbody>
             </table>

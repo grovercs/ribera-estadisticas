@@ -102,7 +102,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                 </span>
                 <span className="min-w-0 text-right">
                   <span className={`block whitespace-nowrap text-[21px] font-bold tracking-tight ${tone.metric}`}>{formatValue(totalValue(meta.row), meta.row.format)}</span>
-                  {metricCount > 0 && <span className="mt-0.5 block text-[11px] text-[#9aa0a6]">{numberFormatter.format(metricCount)} operaciones</span>}
+                  {metricCount > 0 && section.id !== 'payables' && <span className="mt-0.5 block text-[11px] text-[#9aa0a6]">{numberFormatter.format(metricCount)} operaciones</span>}
                 </span>
                 <ChevronRight aria-hidden="true" className={`h-5 w-5 shrink-0 text-[#9aa0a6] transition-transform ${isOpen ? 'rotate-90' : ''}`} />
               </button>
@@ -129,7 +129,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                           <div key={`${row.label}-${index}`} className="rounded-lg bg-[#fafbfc] px-3 py-2.5">
                             <p className="text-[14px] font-medium text-[#466276]">{row.label}</p>
                             <p className={`mt-1 whitespace-nowrap text-[16px] font-bold ${totalOnlyTone}`}>
-                              {formatValue(rowTotal, row.format)}{rowCount > 0 && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
+                              {formatValue(rowTotal, row.format)}{rowCount > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
                             </p>
                           </div>
                         )
@@ -150,7 +150,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                             <div className="shrink-0 text-right">
                               <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a9298]">Total</p>
                               <p className={`mt-0.5 whitespace-nowrap text-[17px] ${isMargin ? 'font-black' : 'font-bold'} ${expandedTotalTone}`}>
-                                {formatValue(rowTotal, row.format)}{rowCount > 0 && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
+                                {formatValue(rowTotal, row.format)}{rowCount > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
                               </p>
                             </div>
                           </div>
@@ -162,7 +162,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                               <div key={String(store)} className="min-w-0">
                                 <p className="text-[12px] text-[#747878]">{store}</p>
                                 <p className={`mt-0.5 whitespace-nowrap text-[15px] ${isMargin ? 'font-bold text-emerald-700' : 'font-semibold text-[#191c1e]'}`}>
-                                  {formatValue(Number(value), row.format)}{Number(count) > 0 && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(Number(count))})</span>}
+                                  {formatValue(Number(value), row.format)}{Number(count) > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(Number(count))})</span>}
                                 </p>
                               </div>
                             ))}
