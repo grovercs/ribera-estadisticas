@@ -2,6 +2,9 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import DashboardShell from './components/DashboardShell'
 
+const DATA_SOURCE_MODE = process.env.DATA_SOURCE_MODE || 'supabase'
+const IS_LOCAL_MODE = DATA_SOURCE_MODE === 'local'
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -9,54 +12,57 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient()
 
-  // 1. Verificar sesión
+  // 1. Verificar sesión (conservar en todos los modos por seguridad)
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     redirect('/login')
   }
 
-  // 2. Obtener estado de sincronización (sync_runs refleja full + quick; sync_state solo full)
+  // 2. En modo local los datos vienen del ERP, no de Supabase: evitamos
+  //    consultar sync_runs/sync_state/sync_requests en cada render SSR.
   let lastSuccessAt: string | null = null
   let isSyncing = false
 
-  try {
-    const { data: runData } = await supabase
-      .from('sync_runs')
-      .select('completed_at')
-      .eq('dataset', 'sales')
-      .eq('status', 'success')
-      .order('completed_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    if (runData?.completed_at) {
-      lastSuccessAt = runData.completed_at
-    } else {
-      const { data: syncData } = await supabase
-        .from('sync_state')
-        .select('last_success_at')
+  if (!IS_LOCAL_MODE) {
+    try {
+      const { data: runData } = await supabase
+        .from('sync_runs')
+        .select('completed_at')
         .eq('dataset', 'sales')
+        .eq('status', 'success')
+        .order('completed_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
 
-      if (syncData?.last_success_at) {
-        lastSuccessAt = syncData.last_success_at
+      if (runData?.completed_at) {
+        lastSuccessAt = runData.completed_at
+      } else {
+        const { data: syncData } = await supabase
+          .from('sync_state')
+          .select('last_success_at')
+          .eq('dataset', 'sales')
+          .maybeSingle()
+
+        if (syncData?.last_success_at) {
+          lastSuccessAt = syncData.last_success_at
+        }
       }
+
+      // Detectar sync manual activa
+      const { data: activeRequest } = await supabase
+        .from('sync_requests')
+        .select('id')
+        .eq('dataset', 'sales')
+        .in('status', ['pending', 'running'])
+        .eq('source', 'manual')
+        .order('requested_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      isSyncing = !!activeRequest
+    } catch (err) {
+      console.error('Error al leer el estado de sincronización:', err)
     }
-
-    // Detectar sync manual activa
-    const { data: activeRequest } = await supabase
-      .from('sync_requests')
-      .select('id')
-      .eq('dataset', 'sales')
-      .in('status', ['pending', 'running'])
-      .eq('source', 'manual')
-      .order('requested_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    isSyncing = !!activeRequest
-  } catch (err) {
-    console.error('Error al leer el estado de sincronización:', err)
   }
 
   const { syncTimeText, isDelayed } = buildSyncBadgeText(lastSuccessAt, isSyncing)
@@ -95,7 +101,7 @@ function buildSyncBadgeText(lastSuccessAt: string | null, isSyncing: boolean): {
   }
 
   if (!lastSuccessAt) {
-    return { syncTimeText: 'Desconocido', isDelayed: false }
+    return { syncTimeText: IS_LOCAL_MODE ? 'ERP local' : 'Desconocido', isDelayed: false }
   }
 
   const lastSuccess = new Date(lastSuccessAt)

@@ -12,7 +12,9 @@ export async function fetchFromLocalErp(options: DataProviderOptions = {}): Prom
   url.searchParams.set('anio_ant', anioAnt)
   url.searchParams.set('periodo', periodo)
 
-  const timeoutMs = process.env.LOCAL_ERP_TIMEOUT_MS ? parseInt(process.env.LOCAL_ERP_TIMEOUT_MS, 10) : 4000
+  // Timeout: respetar variable de entorno; si no está definida, usar 15000 ms
+  // para no abortar respuestas locales que realmente tardan varios segundos.
+  const timeoutMs = process.env.LOCAL_ERP_TIMEOUT_MS ? parseInt(process.env.LOCAL_ERP_TIMEOUT_MS, 10) : 15000
 
   const res = await fetch(url.toString(), {
     method: 'GET',

@@ -18,6 +18,9 @@ interface PageProps {
   }>
 }
 
+const DATA_SOURCE_MODE = process.env.DATA_SOURCE_MODE || 'supabase'
+const IS_LOCAL_MODE = DATA_SOURCE_MODE === 'local'
+
 export default async function ExecutiveDashboardPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams
   const year = parseInt(resolvedSearchParams.year || '2026')
@@ -25,9 +28,25 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
 
   const supabase = await createClient()
 
-  // Usuario autenticado y última sincronización registrada
-  const [{ data: { user } }, { data: syncRun }, dashboardPayload] = await Promise.all([
-    supabase.auth.getUser(),
+  // En modo local evitamos la consulta a sync_runs: la sincronización no aplica
+  // porque los datos se leen directamente del ERP. Se conserva auth.getUser().
+  let syncRun: { completed_at: string | null } | null = null
+
+  const authPromise = supabase.auth.getUser()
+  const dataPromise = getDashboardData({ year, anioAnt, periodo: 'year' })
+
+  if (IS_LOCAL_MODE) {
+    const [{ data: { user } }, dashboardPayload] = await Promise.all([authPromise, dataPromise])
+    return buildPage({ user, dashboardPayload, syncRun, year })
+  }
+
+  // Usuario autenticado y última sincronización registrada (modo Supabase)
+  const [
+    { data: { user } },
+    { data: syncRunData },
+    dashboardPayload,
+  ] = await Promise.all([
+    authPromise,
     supabase.from('sync_runs')
       .select('completed_at')
       .eq('dataset', 'sales')
@@ -35,8 +54,23 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
       .order('completed_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
-    getDashboardData({ year, anioAnt, periodo: 'year' }),
+    dataPromise,
   ])
+
+  return buildPage({ user, dashboardPayload, syncRun: syncRunData, year })
+}
+
+function buildPage({
+  user,
+  dashboardPayload,
+  syncRun,
+  year,
+}: {
+  user: { id: string; email?: string | null } | null
+  dashboardPayload: import('@/lib/data-provider').DashboardCommonPayload
+  syncRun: { completed_at: string | null } | null
+  year: number
+}) {
 
   const salesDataRaw = dashboardPayload.sales || {}
   const salesData = {
@@ -78,7 +112,7 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
         hour: '2-digit',
         minute: '2-digit',
       })
-    : 'Reciente'
+    : (IS_LOCAL_MODE ? 'ERP local' : 'Reciente')
 
   const activeSyncRequest = dashboardPayload.active_sync || null
 

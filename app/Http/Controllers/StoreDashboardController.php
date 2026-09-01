@@ -560,23 +560,6 @@ class StoreDashboardController extends Controller
         $fcRefMonth = (int)$fcRefDate->format('m');
         $fcRefPrevMonth = $fcRefMonth === 1 ? 12 : $fcRefMonth - 1;
         $fcYearPrev = $fcRefYear - 1;
-
-        // === REFERENCIA TEMPORAL PARA PAGOS PENDIENTES ===
-        // Delphi cierra los pagos pendientes un mes antes que ventas/compras:
-        // si el cierre operativo es agosto, el "Mes Actual" de pagos es julio.
-        // Usamos el primer día del mes anterior a $fcRefDate como referencia fija.
-        $ppRefDate = (clone $fcRefDate)->modify('first day of previous month');
-        $ppPeriodStart = $ppRefDate->format('Y-m-d');
-        $ppPeriodEnd = (clone $ppRefDate)->modify('+3 months')->format('Y-m-t');
-        $ppMesActualStart = $ppRefDate->format('Y-m-d');
-        $ppMesActualEnd = $ppRefDate->format('Y-m-t');
-        $ppMesSigStart = (clone $ppRefDate)->modify('+1 month')->format('Y-m-d');
-        $ppMesSigEnd = (clone $ppRefDate)->modify('+1 month')->format('Y-m-t');
-        $pp2Start = (clone $ppRefDate)->modify('+2 months')->format('Y-m-d');
-        $pp2End = (clone $ppRefDate)->modify('+2 months')->format('Y-m-t');
-        $pp3Start = (clone $ppRefDate)->modify('+3 months')->format('Y-m-d');
-        $pp3End = (clone $ppRefDate)->modify('+3 months')->format('Y-m-t');
-
         // Límite superior exclusivo para "Año Anterior mismo período": se usa el día del cierre
         // operativo ($fcRefDate) del año anterior. Formato ISO sin hora y CONVERT(date, ..., 23)
         // evita conversiones erróneas de nvarchar en smalldatetime con regionalización española.
@@ -654,17 +637,13 @@ class StoreDashboardController extends Controller
         }
 
         // === PAGOS PENDIENTES POR VENCIMIENTO ===
-        // Se reemplaza GETDATE() por la referencia de pagos ($ppRefDate), un mes
-        // anterior al cierre operativo de ventas, para alinear periodos con Delphi.
-        // Los límites se pasan como parámetros con CONVERT(date, ?, 23) para evitar
-        // conversiones erróneas de nvarchar a smalldatetime.
         $pagosPendientesRaw = $erp->select("
             SELECT
                 CASE
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'Mes Actual'
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'Mes Siguiente'
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'En 2 meses'
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'En 3 meses'
+                    WHEN p.fecha_vencimiento <= EOMONTH(GETDATE()) THEN 'Mes Actual'
+                    WHEN p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 1, GETDATE())) THEN 'Mes Siguiente'
+                    WHEN p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 2, GETDATE())) THEN 'En 2 meses'
+                    WHEN p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 3, GETDATE())) THEN 'En 3 meses'
                     ELSE 'Mas de 3 meses'
                 END as periodo,
                 SUM(p.importe - p.importe_pagado) as importe
@@ -672,27 +651,17 @@ class StoreDashboardController extends Controller
             WHERE (p.importe - p.importe_pagado) <> 0
                 AND p.fecha_vencimiento IS NOT NULL
                 AND (p.cod_confirming IS NULL OR p.cod_confirming = '')
-                AND p.fecha_vencimiento >= CONVERT(date, ?, 23)
-                AND p.fecha_vencimiento <= CONVERT(date, ?, 23)
+                AND p.fecha_vencimiento >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)
+                AND p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 3, GETDATE()))
             GROUP BY
                 CASE
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'Mes Actual'
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'Mes Siguiente'
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'En 2 meses'
-                    WHEN p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23) THEN 'En 3 meses'
+                    WHEN p.fecha_vencimiento <= EOMONTH(GETDATE()) THEN 'Mes Actual'
+                    WHEN p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 1, GETDATE())) THEN 'Mes Siguiente'
+                    WHEN p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 2, GETDATE())) THEN 'En 2 meses'
+                    WHEN p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 3, GETDATE())) THEN 'En 3 meses'
                     ELSE 'Mas de 3 meses'
                 END
-        ", [
-            $ppMesActualStart, $ppMesActualEnd,
-            $ppMesSigStart, $ppMesSigEnd,
-            $pp2Start, $pp2End,
-            $pp3Start, $pp3End,
-            $ppPeriodStart, $ppPeriodEnd,
-            $ppMesActualStart, $ppMesActualEnd,
-            $ppMesSigStart, $ppMesSigEnd,
-            $pp2Start, $pp2End,
-            $pp3Start, $pp3End,
-        ]);
+        ");
         $pagosPendientes = array_map(function($p) {
             $arr = (array)$p;
             return [
@@ -1109,57 +1078,24 @@ class StoreDashboardController extends Controller
         try {
             $erp = \DB::connection('erp');
 
-            // Referencia temporal igual que en buildDashboardData: un mes antes del
-            // cierre operativo de ventas, alineado con Delphi.
-            $ultimosDiasRows = $erp->select("
-                SELECT DISTINCT TOP 2 CAST(fecha_venta AS DATE) as dia
-                FROM hist_ventas_cabecera
-                WHERE tipo_venta IN (2, 4, 5) AND ISNULL(anulada,'') <> 'S'
-                ORDER BY dia DESC
-            ");
-            $ultimoDiaVentas = $ultimosDiasRows[0]->dia ?? date('Y-m-d');
-            $penultimoDiaVentas = $ultimosDiasRows[1]->dia ?? date('Y-m-d', strtotime($ultimoDiaVentas . ' -1 day'));
-            $fcUltimoDia = ((int)(new \DateTime($ultimoDiaVentas))->format('d')) === 1
-                ? $penultimoDiaVentas
-                : $ultimoDiaVentas;
-            $fcRefDate = new \DateTime($fcUltimoDia);
-            $ppRefDate = (clone $fcRefDate)->modify('first day of previous month');
-
-            $ppPeriodStart = $ppRefDate->format('Y-m-d');
-            $ppPeriodEnd = (clone $ppRefDate)->modify('+3 months')->format('Y-m-t');
-            $ppMesActualStart = $ppRefDate->format('Y-m-d');
-            $ppMesActualEnd = $ppRefDate->format('Y-m-t');
-            $ppMesSigStart = (clone $ppRefDate)->modify('+1 month')->format('Y-m-d');
-            $ppMesSigEnd = (clone $ppRefDate)->modify('+1 month')->format('Y-m-t');
-            $pp2Start = (clone $ppRefDate)->modify('+2 months')->format('Y-m-d');
-            $pp2End = (clone $ppRefDate)->modify('+2 months')->format('Y-m-t');
-            $pp3Start = (clone $ppRefDate)->modify('+3 months')->format('Y-m-d');
-            $pp3End = (clone $ppRefDate)->modify('+3 months')->format('Y-m-t');
-
-            $bindings = [
-                $ppPeriodStart, $ppPeriodEnd,
-            ];
-
+            // Base: vencimientos de compra con resto pendiente <> 0 (neto, incluye abonos),
+            // sin confirming, dentro de la ventana día 1 del mes en curso .. fin de mes +3.
             $where = [
                 "(p.importe - p.importe_pagado) <> 0",
                 "p.fecha_vencimiento IS NOT NULL",
                 "(p.cod_confirming IS NULL OR p.cod_confirming = '')",
-                "p.fecha_vencimiento >= CONVERT(date, ?, 23)",
-                "p.fecha_vencimiento <= CONVERT(date, ?, 23)",
+                "p.fecha_vencimiento >= DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1)",
+                "p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 3, GETDATE()))",
             ];
 
             if ($periodo === 'Mes Actual') {
-                $where[] = "p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23)";
-                array_push($bindings, $ppMesActualStart, $ppMesActualEnd);
+                $where[] = "p.fecha_vencimiento <= EOMONTH(GETDATE())";
             } elseif ($periodo === 'Mes Siguiente') {
-                $where[] = "p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23)";
-                array_push($bindings, $ppMesSigStart, $ppMesSigEnd);
+                $where[] = "p.fecha_vencimiento > EOMONTH(GETDATE()) AND p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 1, GETDATE()))";
             } elseif ($periodo === 'En 2 meses') {
-                $where[] = "p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23)";
-                array_push($bindings, $pp2Start, $pp2End);
+                $where[] = "p.fecha_vencimiento > EOMONTH(DATEADD(MONTH, 1, GETDATE())) AND p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 2, GETDATE()))";
             } elseif ($periodo === 'En 3 meses') {
-                $where[] = "p.fecha_vencimiento >= CONVERT(date, ?, 23) AND p.fecha_vencimiento <= CONVERT(date, ?, 23)";
-                array_push($bindings, $pp3Start, $pp3End);
+                $where[] = "p.fecha_vencimiento > EOMONTH(DATEADD(MONTH, 2, GETDATE())) AND p.fecha_vencimiento <= EOMONTH(DATEADD(MONTH, 3, GETDATE()))";
             }
 
             $whereClause = implode(" AND ", $where);
@@ -1178,7 +1114,7 @@ class StoreDashboardController extends Controller
                 ORDER BY p.fecha_vencimiento ASC
             ";
 
-            $rawResults = $erp->select($query, $bindings);
+            $rawResults = $erp->select($query);
 
             $formatted = array_map(function ($r) {
                 $r = (array)$r;
