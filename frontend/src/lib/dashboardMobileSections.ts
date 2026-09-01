@@ -204,6 +204,7 @@ export function createDashboardMobileSections({
         { label: 'Mes Anterior', totalValue: purchaseValue('mes_anterior', 'importe'), totalCount: purchaseValue('mes_anterior', 'count'), totalOnly: true },
         { label: 'Año Actual', totalValue: purchaseValue('year_actual', 'importe'), totalCount: purchaseValue('year_actual', 'count'), totalOnly: true, highlight: true },
         { label: 'Año Ant. (mismo período)', totalValue: purchaseValue('year_anterior_periodo', 'importe'), totalCount: purchaseValue('year_anterior_periodo', 'count'), totalOnly: true, muted: true },
+        { label: 'Año Anterior', totalValue: purchaseValue('year_anterior', 'importe'), totalCount: purchaseValue('year_anterior', 'count'), totalOnly: true, muted: true },
       ],
     },
     {

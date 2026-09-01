@@ -518,7 +518,12 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
             <tr className="hover:bg-[#f8f9fc]/60">
               <td className="px-3 py-2 text-left"><div className="font-bold text-[#747878] text-sm">Año Ant. (mismo período)</div></td>
               <td colSpan={2} className="px-3 py-2" />
-              <td className="px-3 py-2 text-right tabular-nums text-[#747878]">{fmtEur(purchaseValue('year_anterior_periodo', 'importe'))}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-[#747878]">{fmtEur(purchaseValue('year_anterior_periodo', 'importe'))} <span className="text-xs text-[#9aa0a6]">({purchaseValue('year_anterior_periodo', 'count')})</span></td>
+            </tr>
+            <tr className="hover:bg-[#f8f9fc]/60">
+              <td className="px-3 py-2 text-left"><div className="font-bold text-[#747878] text-sm">Año Anterior</div></td>
+              <td colSpan={2} className="px-3 py-2" />
+              <td className="px-3 py-2 text-right tabular-nums text-[#747878]">{fmtEur(purchaseValue('year_anterior', 'importe'))} <span className="text-xs text-[#9aa0a6]">({purchaseValue('year_anterior', 'count')})</span></td>
             </tr>
 
             <tr><td colSpan={4} className="h-px bg-[#e1e2e6]" /></tr>
@@ -864,13 +869,14 @@ export default async function ExecutiveDashboardPage({ searchParams }: PageProps
                   ['Mes Anterior', 'mes_anterior', 'text-[#191c1e]'],
                   ['Año Actual', 'year_actual', 'text-[#206393]'],
                   ['Año Ant. (mismo período)', 'year_anterior_periodo', 'text-[#747878]'],
+                  ['Año Anterior', 'year_anterior', 'text-[#747878]'],
                 ].map(([label, key, color]) => (
                   <tr key={key} className={key === 'mes_actual' ? 'bg-blue-50/30' : 'hover:bg-[#f8f9fc]/60'}>
                     <td><div className={`text-sm font-bold ${color}`}>{label}</div></td>
                     <td colSpan={2} />
-                    <td className={`text-right ${key === 'year_anterior_periodo' ? 'text-[#747878]' : key === 'mes_actual' || key === 'year_actual' ? 'font-bold' : ''}`}>
+                    <td className={`text-right ${color === 'text-[#747878]' ? 'text-[#747878]' : key === 'mes_actual' || key === 'year_actual' ? 'font-bold' : ''}`}>
                       {fmtEur(purchaseValue(key, 'importe'))}
-                      {key !== 'year_anterior_periodo' && <span className="text-[11px] text-[#9aa0a6]"> ({purchaseValue(key, 'count')})</span>}
+                      <span className="text-[11px] text-[#9aa0a6]"> ({purchaseValue(key, 'count')})</span>
                     </td>
                   </tr>
                 ))}
