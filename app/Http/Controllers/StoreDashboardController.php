@@ -385,16 +385,22 @@ class StoreDashboardController extends Controller
 
         $pendientesRaw = $erp->select("
             SELECT
-                f.cod_almacen,
+                COALESCE(f.cod_almacen, f_alt.cod_almacen) as cod_almacen,
                 COUNT(*) as tickets,
                 SUM(v.importe - v.importe_cobrado) as importe
             FROM vencimientos_facturas v
             LEFT JOIN facturas_ventas_cabecera f ON v.cod_factura = f.cod_factura
                 AND v.tipo_factura = f.tipo_factura
                 AND v.cod_empresa = f.cod_empresa
+            OUTER APPLY (
+                SELECT TOP 1 f2.cod_almacen
+                FROM facturas_ventas_cabecera f2
+                WHERE f2.cod_factura = v.cod_factura
+                  AND f2.cod_empresa = v.cod_empresa
+            ) f_alt
             WHERE v.cod_remesa IS NULL
               AND v.cod_forma_liquidacion NOT IN ('ZIMP', 'ZJUZ', 'ZPER', 'ZCYC')
-            GROUP BY f.cod_almacen
+            GROUP BY COALESCE(f.cod_almacen, f_alt.cod_almacen)
         ");
 
         $totalImpagadosTickets = array_sum(array_column(array_map(function($r){return (array)$r;}, $impagadosRaw), 'tickets'));
