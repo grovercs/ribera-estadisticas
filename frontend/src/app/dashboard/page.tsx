@@ -163,7 +163,7 @@ function buildPage({
     }).format(truncatedValue / 100)
   }
 
-  // --- VENTAS (Hoy / Ayer / Quincena Actual / Quincena Anterior / Anteriores) ---
+  // --- VENTAS (Hoy / Ayer / Quincena Actual / Anteriores) ---
   const hoyPontImp = getStoreValue(salesData.hoy, PONT, 'importe')
   const hoyVielhaImp = getStoreValue(salesData.hoy, VIELHA, 'importe')
   const hoyTotalImp = hoyPontImp + hoyVielhaImp
@@ -674,12 +674,6 @@ function buildPage({
                   <td className="text-right">{fmtEur(qActVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({qActVielhaCnt})</span></td>
                   <td className="text-right">{fmtEur(qActPontImp)} <span className="text-[11px] text-[#9aa0a6]">({qActPontCnt})</span></td>
                   <td className="text-right font-bold">{fmtEur(qActTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({qActTotalCnt})</span></td>
-                </tr>
-                <tr className="hover:bg-[#f8f9fc]/60">
-                  <td><div className="text-sm font-bold text-[#191c1e]">Quincena Anterior</div></td>
-                  <td className="text-right">{fmtEur(qAntVielhaImp)} <span className="text-[11px] text-[#9aa0a6]">({qAntVielhaCnt})</span></td>
-                  <td className="text-right">{fmtEur(qAntPontImp)} <span className="text-[11px] text-[#9aa0a6]">({qAntPontCnt})</span></td>
-                  <td className="text-right font-bold">{fmtEur(qAntTotalImp)} <span className="text-[11px] text-[#9aa0a6]">({qAntTotalCnt})</span></td>
                 </tr>
                 <tr className="hover:bg-[#f8f9fc]/60">
                   <td><div className="text-sm font-bold text-[#747878]">Anteriores</div></td>
