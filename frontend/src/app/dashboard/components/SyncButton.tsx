@@ -20,15 +20,16 @@ interface SyncButtonProps {
   userId: string
   variant?: 'default' | 'header'
   mode?: 'local_erp' | 'supabase'
+  currentGeneratedAt?: string | null
 }
 
-const POLL_INTERVAL_MS = 10000 // 10 segundos
+const POLL_INTERVAL_MS = 3000 // 3 segundos durante actualización activa
 const LONG_RUNNING_MINUTES = 10
 const TIMEOUT_MINUTES = 60
 const FINISHED_DISPLAY_MS = 5000
 const MAX_POLL_ERRORS = 3
 
-export default function SyncButton({ initialActiveRequest, userId, variant = 'default', mode = 'supabase' }: SyncButtonProps) {
+export default function SyncButton({ initialActiveRequest, userId, variant = 'default', mode = 'supabase', currentGeneratedAt }: SyncButtonProps) {
   const router = useRouter()
   const [activeRequest, setActiveRequest] = useState<SyncRequest | null>(initialActiveRequest)
   const [justFinished, setJustFinished] = useState<'success' | 'failed' | null>(null)
@@ -39,9 +40,10 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
 
   const supabase = useMemo(() => createClient(), [])
 
-  // Refs para controlar timeouts y carreras
+  // Refs para controlar timeouts, carreras y frescura del snapshot
   const finishTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const mountedRef = useRef(true)
+  const baselineGeneratedAtRef = useRef<string | null>(currentGeneratedAt || null)
 
   useEffect(() => {
     mountedRef.current = true
@@ -52,6 +54,12 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (currentGeneratedAt) {
+      baselineGeneratedAtRef.current = currentGeneratedAt
+    }
+  }, [currentGeneratedAt])
 
   const clearFinishTimeout = useCallback(() => {
     if (finishTimeoutRef.current) {
@@ -98,6 +106,37 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
 
       if (updated.status === 'success') {
         clearFinishTimeout()
+
+        // Esperar activamente a que el nuevo snapshot esté publicado y visible en Supabase
+        const baselineGenAt = baselineGeneratedAtRef.current
+        for (let i = 0; i < 12; i++) {
+          if (isCancelled || !mountedRef.current) return
+          try {
+            const { data: snap } = await supabase
+              .from('dashboard_snapshots')
+              .select('generated_at')
+              .eq('scope', 'store_dashboard')
+              .eq('year', 2026)
+              .eq('periodo', 'year')
+              .eq('anio_ant', 'todos')
+              .maybeSingle()
+
+            if (snap?.generated_at) {
+              if (!baselineGenAt || new Date(snap.generated_at).getTime() > new Date(baselineGenAt).getTime()) {
+                baselineGeneratedAtRef.current = snap.generated_at
+                break
+              }
+            }
+          } catch {
+            // Reintentar en siguiente ciclo
+          }
+          await new Promise((res) => setTimeout(res, 500))
+        }
+
+        // Breve margen de seguridad para consistencia en réplicas/pooler
+        await new Promise((res) => setTimeout(res, 300))
+        if (isCancelled || !mountedRef.current) return
+
         setJustFinished('success')
         router.refresh()
         finishTimeoutRef.current = setTimeout(() => {
@@ -124,7 +163,7 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
       isCancelled = true
       clearInterval(intervalId)
     }
-  }, [mode, activeRequest, isActive, fetchRequest, router, clearFinishTimeout])
+  }, [mode, activeRequest, isActive, fetchRequest, router, clearFinishTimeout, supabase])
 
   const handleClick = async () => {
     if (mode === 'local_erp') {
@@ -150,6 +189,24 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
     setPollErrorCount(0)
 
     try {
+      // Capturar timestamp del snapshot vigente previo a la solicitud
+      try {
+        const { data: currentSnap } = await supabase
+          .from('dashboard_snapshots')
+          .select('generated_at')
+          .eq('scope', 'store_dashboard')
+          .eq('year', 2026)
+          .eq('periodo', 'year')
+          .eq('anio_ant', 'todos')
+          .maybeSingle()
+
+        if (currentSnap?.generated_at) {
+          baselineGeneratedAtRef.current = currentSnap.generated_at
+        }
+      } catch {
+        // Si falla, se conserva el del ref
+      }
+
       const { data, error } = await supabase
         .from('sync_requests')
         .insert({

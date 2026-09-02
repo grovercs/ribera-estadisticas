@@ -296,6 +296,7 @@ function buildPage({
           userId={user?.id || null}
           activeSyncRequest={activeSyncRequest}
           mode={dashboardPayload.mode}
+          currentGeneratedAt={dashboardPayload.generated_at}
         />
       </div>
 
@@ -686,6 +687,7 @@ function buildPage({
                           userId={user.id}
                           variant="header"
                           mode={dashboardPayload.mode}
+                          currentGeneratedAt={dashboardPayload.generated_at}
                         />
                       )}
                     </div>

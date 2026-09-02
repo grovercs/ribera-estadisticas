@@ -15,17 +15,18 @@ interface MobileDashboardHeaderProps {
   userId: string | null
   activeSyncRequest: ActiveSyncRequest | null
   mode?: 'local_erp' | 'supabase'
+  currentGeneratedAt?: string | null
 }
 
 function capitalizeFirst(value: string) {
   return value ? value.charAt(0).toUpperCase() + value.slice(1) : value
 }
 
-export default function MobileDashboardHeader({ referenceDate, userId, activeSyncRequest, mode = 'supabase' }: MobileDashboardHeaderProps) {
+export default function MobileDashboardHeader({ referenceDate, userId, activeSyncRequest, mode = 'supabase', currentGeneratedAt }: MobileDashboardHeaderProps) {
   return (
     <header className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 px-1 pb-1">
       <h1 className="text-[21px] font-bold tracking-tight text-[#191c1e]">Cuadro de Dirección</h1>
-      {userId && <SyncButton initialActiveRequest={activeSyncRequest} userId={userId} mode={mode} />}
+      {userId && <SyncButton initialActiveRequest={activeSyncRequest} userId={userId} mode={mode} currentGeneratedAt={currentGeneratedAt} />}
       <p className="w-full text-[13px] text-[#747878]">{capitalizeFirst(referenceDate)}</p>
     </header>
   )
