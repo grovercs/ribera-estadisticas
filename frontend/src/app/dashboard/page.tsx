@@ -688,7 +688,7 @@ function buildPage({
 
         <section className="overflow-x-auto rounded-lg border border-[#e1e2e6] bg-white shadow-sm xl:rounded-xl">
           <div className="min-w-[560px] lg:min-w-[500px]">
-            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-1 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] lg:[&_td]:px-2 lg:[&_th]:px-2 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-2.5 2xl:[&_th]:py-2.5">
+            <table className="w-full border-collapse text-xs tabular-nums md:[&_td]:px-1.5 md:[&_th]:px-1.5 md:[&_td]:py-2 md:[&_th]:py-1.5 md:[&_td>div]:text-[13px] lg:[&_td]:px-2 lg:[&_th]:px-2 lg:[&_td]:py-2 xl:text-sm xl:[&_td]:px-3 xl:[&_th]:px-3 xl:[&_td]:py-2.5 xl:[&_th]:py-2 xl:[&_td>div]:text-sm 2xl:text-base 2xl:[&_td]:px-4 2xl:[&_th]:px-4 2xl:[&_td]:py-3 2xl:[&_th]:py-2.5">
               <thead>
                 <tr>
                   <th colSpan={4} className="bg-[#206393] text-left text-[11px] font-black uppercase tracking-wider text-white">

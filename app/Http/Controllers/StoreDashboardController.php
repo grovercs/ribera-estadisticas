@@ -172,7 +172,7 @@ class StoreDashboardController extends Controller
 
             // Previous quincena: 1 to 14 of the same month
             $qAntStart = $refDate->format('Ym01 00:00:00');
-            $qAntEnd   = $refDate->format('Ym14 23:59:59');
+            $qAntEnd   = $refDate->format('Ym14 23:59:00');
         } else {
             // First quincena of the month: 1 to 14
             $qActualStart = $refDate->format('Ym01 00:00:00');
@@ -182,13 +182,13 @@ class StoreDashboardController extends Controller
             $prevMonthDate = clone $refDate;
             $prevMonthDate->modify('first day of previous month');
             $qAntStart = $prevMonthDate->format('Ym15 00:00:00');
-            $qAntEnd   = $prevMonthDate->format('Ymt 23:59:59');
+            $qAntEnd   = $prevMonthDate->format('Ymt 23:59:00');
         }
 
         // Año anterior mismo periodo boundaries
         $yearPrev = $year - 1;
         $yearAntPeriodoStart = "{$yearPrev}0101 00:00:00";
-        $yearAntPeriodoEnd = "{$yearPrev}" . $refDate->format('md 23:59:59');
+        $yearAntPeriodoEnd = "{$yearPrev}" . $refDate->format('md 23:59:00');
 
         // === AGREGACIÓN DE VENTAS: 1) Períodos Recientes y Años (2025-2026) con CASE WHEN ===
         $ventasRecientesAgregadas = $erp->select("
