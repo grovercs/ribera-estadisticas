@@ -154,13 +154,12 @@ function buildPage({
     new Intl.NumberFormat('es-ES').format(Number.isFinite(val) ? val : 0)
   const fmtPct = (val: number) => {
     const safeValue = Number.isFinite(val) ? val : 0
-    const truncatedValue = Math.trunc(safeValue * 100) / 100
 
     return new Intl.NumberFormat('es-ES', {
       style: 'percent',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    }).format(truncatedValue / 100)
+    }).format(safeValue / 100)
   }
 
   // --- VENTAS (Hoy / Ayer / Quincena Actual / Anteriores) ---

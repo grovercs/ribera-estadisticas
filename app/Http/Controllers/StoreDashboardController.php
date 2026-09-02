@@ -489,41 +489,41 @@ class StoreDashboardController extends Controller
             return $m;
         }, $margenesYearRaw);
 
-        // Si el periodo es 'hoy', reutilizar margenesPeriodo en lugar de consultar de nuevo
-        if ($periodo === 'hoy') {
-            $margenesHoyRaw = $margenesPeriodoRaw;
-            $margenesHoy = $margenesPeriodo;
-        } else {
-            $margenesHoyRaw = $erp->select("
-                SELECT
-                    v.cod_almacen,
-                    SUM(v.importe) as venta,
-                    ISNULL((SELECT SUM(l.precio_coste * l.cantidad)
-                            FROM hist_ventas_linea l
-                            INNER JOIN hist_ventas_cabecera vc ON l.cod_venta = vc.cod_venta
-                                AND l.tipo_venta = vc.tipo_venta
-                                AND l.cod_empresa = vc.cod_empresa
-                                AND l.cod_caja = vc.cod_caja
-                            WHERE CAST(vc.fecha_venta AS DATE) = ?
-                                AND vc.tipo_venta IN (2, 4, 5)
-                                AND vc.cod_almacen = v.cod_almacen
-                                AND l.precio_coste IS NOT NULL
-                                AND ISNULL(vc.anulada,'') <> 'S'), 0) as coste
-                FROM hist_ventas_cabecera v
-                WHERE CAST(v.fecha_venta AS DATE) = ?
-                    AND v.tipo_venta IN (2, 4, 5)
-                    AND ISNULL(v.anulada, '') <> 'S'
-                GROUP BY v.cod_almacen
-            ", [$ultimoDiaVentas, $ultimoDiaVentas]);
+        // Calcular márgenes de HOY siempre desde hist_ventas_linea alineado con Delphi
+        $margenesHoyRaw = $erp->select("
+            SELECT
+                vc.cod_almacen,
+                SUM(l.importe) as venta,
+                SUM(
+                    CASE
+                        WHEN l.precio_coste IS NOT NULL
+                        THEN l.precio_coste * l.cantidad
+                        ELSE 0
+                    END
+                ) as coste
+            FROM hist_ventas_linea l
+            INNER JOIN hist_ventas_cabecera vc ON l.cod_venta = vc.cod_venta
+                AND l.tipo_venta = vc.tipo_venta
+                AND l.cod_empresa = vc.cod_empresa
+                AND l.cod_caja = vc.cod_caja
+            WHERE CAST(vc.fecha_venta AS DATE) = ?
+                AND vc.tipo_venta IN (2, 4, 5)
+                AND ISNULL(vc.anulada, '') <> 'S'
+            GROUP BY vc.cod_almacen
+        ", [$ultimoDiaVentas]);
 
-            $margenesHoy = array_map(function($m) {
-                $m = (array)$m;
-                $m['venta'] = (float)$m['venta'];
-                $m['coste'] = (float)$m['coste'];
-                $m['margen'] = $m['venta'] - $m['coste'];
-                $m['margen_porcentaje'] = $m['venta'] > 0 ? ($m['margen'] / $m['venta']) * 100 : 0;
-                return $m;
-            }, $margenesHoyRaw);
+        $margenesHoy = array_map(function($m) {
+            $m = (array)$m;
+            $m['venta'] = (float)$m['venta'];
+            $m['coste'] = (float)$m['coste'];
+            $m['margen'] = $m['venta'] - $m['coste'];
+            $m['margen_porcentaje'] = $m['venta'] > 0 ? ($m['margen'] / $m['venta']) * 100 : 0;
+            return $m;
+        }, $margenesHoyRaw);
+
+        if ($periodo === 'hoy') {
+            $margenesPeriodoRaw = $margenesHoyRaw;
+            $margenesPeriodo = $margenesHoy;
         }
 
         // === ALBARANES DE COMPRA MES ===
