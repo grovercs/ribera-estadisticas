@@ -3,6 +3,7 @@
 import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import type { DashboardMobileRow, DashboardMobileSection } from '@/lib/dashboardMobileSections'
+import { fmtEur, fmtPct, fmtCount } from '@/lib/formatters'
 
 interface ExecutiveMobileV3Props {
   sections: DashboardMobileSection[]
@@ -10,27 +11,10 @@ interface ExecutiveMobileV3Props {
 
 type Tone = 'blue' | 'green' | 'red' | 'orange'
 
-const currencyFormatter = new Intl.NumberFormat('es-ES', {
-  style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2,
-})
-const numberFormatter = new Intl.NumberFormat('es-ES')
-const percentFormatter = new Intl.NumberFormat('es-ES', {
-  style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2,
-})
-
-function truncateTo2Decimals(value: number) {
-  return Math.trunc((Number.isFinite(value) ? value : 0) * 100) / 100
-}
-
-function roundTo2Decimals(value: number) {
-  return Math.round((Number.isFinite(value) ? value : 0) * 100) / 100
-}
-
 function formatValue(value: number | undefined, format: DashboardMobileRow['format']) {
-  const safeValue = Number(value) || 0
-  if (format === 'num') return numberFormatter.format(safeValue)
-  if (format === 'pct') return percentFormatter.format(roundTo2Decimals(safeValue) / 100)
-  return currencyFormatter.format(truncateTo2Decimals(safeValue))
+  if (format === 'num') return fmtCount(value)
+  if (format === 'pct') return fmtPct(value)
+  return fmtEur(value)
 }
 
 function totalValue(row: DashboardMobileRow) {
@@ -102,7 +86,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                 </span>
                 <span className="min-w-0 text-right">
                   <span className={`block whitespace-nowrap text-[21px] font-bold tracking-tight ${tone.metric}`}>{formatValue(totalValue(meta.row), meta.row.format)}</span>
-                  {metricCount > 0 && section.id !== 'payables' && <span className="mt-0.5 block text-[11px] text-[#9aa0a6]">{numberFormatter.format(metricCount)} operaciones</span>}
+                  {metricCount > 0 && section.id !== 'payables' && <span className="mt-0.5 block text-[11px] text-[#9aa0a6]">{fmtCount(metricCount)} operaciones</span>}
                 </span>
                 <ChevronRight aria-hidden="true" className={`h-5 w-5 shrink-0 text-[#9aa0a6] transition-transform ${isOpen ? 'rotate-90' : ''}`} />
               </button>
@@ -129,7 +113,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                           <div key={`${row.label}-${index}`} className="rounded-lg bg-[#fafbfc] px-3 py-2.5">
                             <p className="text-[14px] font-medium text-[#466276]">{row.label}</p>
                             <p className={`mt-1 whitespace-nowrap text-[16px] font-bold ${totalOnlyTone}`}>
-                              {formatValue(rowTotal, row.format)}{rowCount > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
+                              {formatValue(rowTotal, row.format)}{rowCount > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({fmtCount(rowCount)})</span>}
                             </p>
                           </div>
                         )
@@ -150,7 +134,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                             <div className="shrink-0 text-right">
                               <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8a9298]">Total</p>
                               <p className={`mt-0.5 whitespace-nowrap text-[17px] ${isMargin ? 'font-black' : 'font-bold'} ${expandedTotalTone}`}>
-                                {formatValue(rowTotal, row.format)}{rowCount > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(rowCount)})</span>}
+                                {formatValue(rowTotal, row.format)}{rowCount > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({fmtCount(rowCount)})</span>}
                               </p>
                             </div>
                           </div>
@@ -162,7 +146,7 @@ export default function ExecutiveMobileV3({ sections }: ExecutiveMobileV3Props) 
                               <div key={String(store)} className="min-w-0">
                                 <p className="text-[12px] text-[#747878]">{store}</p>
                                 <p className={`mt-0.5 whitespace-nowrap text-[15px] ${isMargin ? 'font-bold text-emerald-700' : 'font-semibold text-[#191c1e]'}`}>
-                                  {formatValue(Number(value), row.format)}{Number(count) > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({numberFormatter.format(Number(count))})</span>}
+                                  {formatValue(Number(value), row.format)}{Number(count) > 0 && section.id !== 'payables' && <span className="ml-1 text-[11px] font-normal text-[#9aa0a6]">({fmtCount(Number(count))})</span>}
                                 </p>
                               </div>
                             ))}

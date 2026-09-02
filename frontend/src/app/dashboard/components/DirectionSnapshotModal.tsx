@@ -2,6 +2,7 @@
 
 import { LayoutPanelTop, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { fmtEur, fmtPct, fmtCount } from '@/lib/formatters'
 
 type SnapshotFormat = 'eur' | 'pct' | 'num'
 
@@ -31,28 +32,10 @@ interface DirectionSnapshotModalProps {
   lastSync: string
 }
 
-const truncateTo2Decimals = (value: number) => Math.trunc((Number.isFinite(value) ? value : 0) * 100) / 100
-
-const currencyFormatter = new Intl.NumberFormat('es-ES', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-const numberFormatter = new Intl.NumberFormat('es-ES')
-const percentFormatter = new Intl.NumberFormat('es-ES', {
-  style: 'percent',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
 function formatValue(value: number | undefined, format?: SnapshotFormat) {
-  const safeValue = Number(value) || 0
-
-  if (format === 'pct') return percentFormatter.format(truncateTo2Decimals(safeValue) / 100)
-  if (format === 'num') return numberFormatter.format(safeValue)
-  return currencyFormatter.format(truncateTo2Decimals(safeValue))
+  if (format === 'num') return fmtCount(value)
+  if (format === 'pct') return fmtPct(value)
+  return fmtEur(value)
 }
 
 function SnapshotCard({ section, className = '' }: { section: SnapshotSection; className?: string }) {
@@ -89,7 +72,7 @@ function SnapshotCard({ section, className = '' }: { section: SnapshotSection; c
                 <span className="truncate font-semibold">{row.label}</span>
                 <span className="whitespace-nowrap text-right font-bold">
                   {formatValue(row.totalValue, row.format)}
-                  {row.totalCount != null && <span className="ml-1 text-[9px] font-normal text-[#8a929a]">({numberFormatter.format(row.totalCount)})</span>}
+                  {row.totalCount != null && <span className="ml-1 text-[9px] font-normal text-[#8a929a]">({fmtCount(row.totalCount)})</span>}
                 </span>
               </div>
             )
@@ -106,10 +89,10 @@ function SnapshotCard({ section, className = '' }: { section: SnapshotSection; c
           return (
             <div key={`${row.label}-${index}`} className={`grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-baseline gap-1 px-2 py-0.5 ${textTone} ${isMarginPercentageRow ? 'bg-emerald-50/70' : ''}`}>
               <span className="truncate font-semibold">{row.label}</span>
-              <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[12px] font-bold text-emerald-700' : ''}`}>{formatValue(vielha, row.format)}{row.vielhaCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({numberFormatter.format(row.vielhaCount)})</span>}</span>
-              <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[12px] font-bold text-emerald-700' : ''}`}>{formatValue(pont, row.format)}{row.pontCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({numberFormatter.format(row.pontCount)})</span>}</span>
+              <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[12px] font-bold text-emerald-700' : ''}`}>{formatValue(vielha, row.format)}{row.vielhaCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({fmtCount(row.vielhaCount)})</span>}</span>
+              <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[12px] font-bold text-emerald-700' : ''}`}>{formatValue(pont, row.format)}{row.pontCount != null && <span className="ml-0.5 text-[9px] text-[#8a929a]">({fmtCount(row.pontCount)})</span>}</span>
               <span className={`whitespace-nowrap text-right ${isMarginPercentageRow ? 'text-[13px] font-black text-emerald-800' : 'font-bold'}`}>
-                {formatValue(total, row.format)}{totalCount > 0 && <span className="ml-0.5 text-[9px] font-normal text-[#8a929a]">({numberFormatter.format(totalCount)})</span>}
+                {formatValue(total, row.format)}{totalCount > 0 && <span className="ml-0.5 text-[9px] font-normal text-[#8a929a]">({fmtCount(totalCount)})</span>}
               </span>
             </div>
           )

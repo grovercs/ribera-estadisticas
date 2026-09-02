@@ -9,58 +9,57 @@ use Illuminate\Support\Facades\Artisan;
 class RiberaProcessSyncRequests extends Command
 {
     protected $signature = 'ribera:process-sync-requests
-                            {--dataset=sales : Dataset a procesar}';
+                            {--dataset= : Dataset a procesar (dashboard_snapshot, sales, o cualquiera si no se especifica)}';
 
     protected $description = 'Procesa solicitudes manuales de sincronización pendientes en Supabase';
 
     private const TIMEOUT_MINUTES = 60;
+    private const SUPPORTED_DATASETS = ['dashboard_snapshot', 'sales'];
 
     public function handle(): int
     {
-        $dataset = $this->option('dataset');
+        $datasetOption = $this->option('dataset');
+        $datasetsToProcess = $datasetOption ? [$datasetOption] : self::SUPPORTED_DATASETS;
 
-        $this->workerLog('info', "Worker iniciado para dataset: {$dataset}");
+        $this->workerLog('info', 'Worker iniciado. Datasets a evaluar: ' . implode(', ', $datasetsToProcess));
 
         try {
             // 1. Liberar solicitudes atascadas en running por más de 60 minutos
-            $this->releaseTimedOutRequests($dataset);
+            $this->releaseTimedOutRequests($datasetsToProcess);
 
             // 2. Buscar la solicitud pending más antigua
-            $pending = DB::connection('supabase')
+            $query = DB::connection('supabase')
                 ->table('sync_requests')
-                ->where('dataset', $dataset)
                 ->where('status', 'pending')
                 ->where('source', 'manual')
-                ->orderBy('requested_at', 'asc')
-                ->first();
+                ->orderBy('requested_at', 'asc');
+
+            if ($datasetOption) {
+                $query->where('dataset', $datasetOption);
+            } else {
+                $query->whereIn('dataset', $datasetsToProcess);
+            }
+
+            $pending = $query->first();
 
             if (!$pending) {
                 $this->workerLog('info', 'No hay solicitudes manuales pendientes.');
                 return self::SUCCESS;
             }
 
-            $this->workerLog('info', "Solicitud manual encontrada: {$pending->id}. Lanzando quick sync con lock...");
+            $this->workerLog('info', "Solicitud manual encontrada: [{$pending->id}] dataset: {$pending->dataset}");
 
-            // 3. Ejecutar el wrapper con lock global en modo quick (ventas de hoy)
-            $exitCode = Artisan::call('ribera:sync-sales-locked', [
-                '--source' => 'manual',
-                '--request-id' => $pending->id,
-                '--quick' => true,
-            ]);
-
-            $output = Artisan::output();
-            if ($output) {
-                $this->line($output);
-                $this->workerLog('info', 'Salida del comando de sincronización capturada.');
+            // 3. Procesar según dataset
+            if ($pending->dataset === 'dashboard_snapshot') {
+                return $this->processDashboardSnapshot($pending);
             }
 
-            if ($exitCode === self::SUCCESS) {
-                $this->workerLog('info', 'Worker finalizó correctamente.');
-            } else {
-                $this->workerLog('warn', "Worker finalizó con código de salida {$exitCode}.");
+            if ($pending->dataset === 'sales') {
+                return $this->processSales($pending);
             }
 
-            return $exitCode;
+            $this->workerLog('warn', "Dataset no soportado: {$pending->dataset}");
+            return self::SUCCESS;
         } catch (\Throwable $e) {
             $this->workerLog('error', 'Excepción en worker: ' . $e->getMessage());
             $this->error('Excepción en worker: ' . $e->getMessage());
@@ -68,13 +67,108 @@ class RiberaProcessSyncRequests extends Command
         }
     }
 
-    private function releaseTimedOutRequests(string $dataset): void
+    private function processDashboardSnapshot(object $pending): int
+    {
+        $this->workerLog('info', "Marcando solicitud {$pending->id} como running...");
+
+        // Marcar como running
+        DB::connection('supabase')
+            ->table('sync_requests')
+            ->where('id', $pending->id)
+            ->update([
+                'status' => 'running',
+                'started_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+        try {
+            // Ejecutar publicación del snapshot completo (reutiliza buildDashboardData)
+            $exitCode = Artisan::call('ribera:publish-dashboard-snapshot', [
+                '--year' => 2026,
+                '--period' => 'year',
+                '--anio-ant' => 'todos',
+            ]);
+
+            $output = Artisan::output();
+            if ($output) {
+                $this->line($output);
+            }
+
+            if ($exitCode === self::SUCCESS) {
+                DB::connection('supabase')
+                    ->table('sync_requests')
+                    ->where('id', $pending->id)
+                    ->update([
+                        'status' => 'success',
+                        'finished_at' => now(),
+                        'error_message' => null,
+                        'updated_at' => now(),
+                    ]);
+
+                $this->workerLog('info', "Solicitud {$pending->id} de dashboard_snapshot completada con éxito.");
+                return self::SUCCESS;
+            }
+
+            DB::connection('supabase')
+                ->table('sync_requests')
+                ->where('id', $pending->id)
+                ->update([
+                    'status' => 'failed',
+                    'finished_at' => now(),
+                    'error_message' => 'ribera:publish-dashboard-snapshot retornó código de error ' . $exitCode,
+                    'updated_at' => now(),
+                ]);
+
+            $this->workerLog('warn', "Solicitud {$pending->id} falló con código {$exitCode}.");
+            return $exitCode;
+        } catch (\Throwable $e) {
+            DB::connection('supabase')
+                ->table('sync_requests')
+                ->where('id', $pending->id)
+                ->update([
+                    'status' => 'failed',
+                    'finished_at' => now(),
+                    'error_message' => $e->getMessage(),
+                    'updated_at' => now(),
+                ]);
+
+            $this->workerLog('error', "Excepción procesando snapshot para {$pending->id}: " . $e->getMessage());
+            return self::FAILURE;
+        }
+    }
+
+    private function processSales(object $pending): int
+    {
+        $this->workerLog('info', "Lanzando quick sync de ventas con lock para {$pending->id}...");
+
+        $exitCode = Artisan::call('ribera:sync-sales-locked', [
+            '--source' => 'manual',
+            '--request-id' => $pending->id,
+            '--quick' => true,
+        ]);
+
+        $output = Artisan::output();
+        if ($output) {
+            $this->line($output);
+            $this->workerLog('info', 'Salida del comando de sincronización de ventas capturada.');
+        }
+
+        if ($exitCode === self::SUCCESS) {
+            $this->workerLog('info', 'Worker de ventas finalizó correctamente.');
+        } else {
+            $this->workerLog('warn', "Worker de ventas finalizó con código {$exitCode}.");
+        }
+
+        return $exitCode;
+    }
+
+    private function releaseTimedOutRequests(array $datasets): void
     {
         $timeout = now()->subMinutes(self::TIMEOUT_MINUTES);
 
         $affected = DB::connection('supabase')
             ->table('sync_requests')
-            ->where('dataset', $dataset)
+            ->whereIn('dataset', $datasets)
             ->where('status', 'running')
             ->where('started_at', '<', $timeout)
             ->update([

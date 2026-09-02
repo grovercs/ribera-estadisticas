@@ -8,6 +8,7 @@ import { Search } from 'lucide-react'
 import { getCurrentFortnightRange } from '@/lib/salesPeriods'
 import { createDashboardMobileSections } from '@/lib/dashboardMobileSections'
 import { getDashboardData } from '@/lib/data-provider'
+import { fmtEur, fmtPct, fmtCount } from '@/lib/formatters'
 
 export const dynamic = 'force-dynamic'
 
@@ -146,20 +147,6 @@ function buildPage({
   const getStoreCount = (arr: any[] | undefined, storeCode: string | number, key: string) => {
     const item = findStore(arr || [], storeCode)
     return toInt(item?.[key])
-  }
-
-  const fmtEur = (val: number) =>
-    new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(Number.isFinite(val) ? val : 0)
-  const fmtNum = (val: number) =>
-    new Intl.NumberFormat('es-ES').format(Number.isFinite(val) ? val : 0)
-  const fmtPct = (val: number) => {
-    const safeValue = Number.isFinite(val) ? val : 0
-
-    return new Intl.NumberFormat('es-ES', {
-      style: 'percent',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(safeValue / 100)
   }
 
   // --- VENTAS (Hoy / Ayer / Quincena Actual / Anteriores) ---
@@ -873,9 +860,9 @@ function buildPage({
                       </Link>
                     </div>
                   </td>
-                  <td className="text-right">{albVielhaCnt}</td>
-                  <td className="text-right">{albPontCnt}</td>
-                  <td className="text-right font-bold">{albTotalCnt}</td>
+                  <td className="text-right">{fmtCount(albVielhaCnt)}</td>
+                  <td className="text-right">{fmtCount(albPontCnt)}</td>
+                  <td className="text-right font-bold">{fmtCount(albTotalCnt)}</td>
                 </tr>
                 <tr className="hover:bg-[#f8f9fc]/60">
                   <td><div className="text-sm font-bold text-[#191c1e]">Importe</div></td>

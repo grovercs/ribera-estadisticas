@@ -72,7 +72,6 @@ export async function fetchFromSupabase(options: DataProviderOptions = {}): Prom
     supabase.rpc('get_store_dashboard_payables'),
     supabase.from('sync_requests')
       .select('id, status, source, requested_at, started_at, finished_at, error_message')
-      .eq('dataset', 'sales')
       .in('status', ['pending', 'running'])
       .order('requested_at', { ascending: false })
       .maybeSingle(),

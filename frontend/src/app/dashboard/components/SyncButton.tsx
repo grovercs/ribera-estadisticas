@@ -153,7 +153,7 @@ export default function SyncButton({ initialActiveRequest, userId, variant = 'de
       const { data, error } = await supabase
         .from('sync_requests')
         .insert({
-          dataset: 'sales',
+          dataset: 'dashboard_snapshot',
           source: 'manual',
           requested_by: userId,
         })
