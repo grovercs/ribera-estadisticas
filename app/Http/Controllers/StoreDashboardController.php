@@ -255,7 +255,8 @@ class StoreDashboardController extends Controller
                 SUM(v.importe_impuestos) as importe
             FROM hist_ventas_cabecera v
             WHERE $whereAnteriores
-                AND v.tipo_venta IN (2, 4, 5)
+                AND v.tipo_venta IN (2, 3, 4, 5)
+                AND v.cod_empresa = 1
                 AND ISNULL(v.anulada, '') <> 'S'
             GROUP BY v.cod_almacen
         ", $bindsAnteriores);
