@@ -460,25 +460,25 @@ class StoreDashboardController extends Controller
 
         $margenesYearRaw = $erp->select("
             SELECT
-                v.cod_almacen,
-                SUM(v.importe) as venta,
-                ISNULL((SELECT SUM(l.precio_coste * l.cantidad)
-                        FROM hist_ventas_linea l
-                        INNER JOIN hist_ventas_cabecera vc ON l.cod_venta = vc.cod_venta
-                            AND l.tipo_venta = vc.tipo_venta
-                            AND l.cod_empresa = vc.cod_empresa
-                            AND l.cod_caja = vc.cod_caja
-                        WHERE YEAR(vc.fecha_venta) = ?
-                            AND vc.tipo_venta IN (2, 4, 5)
-                            AND vc.cod_almacen = v.cod_almacen
-                            AND l.precio_coste IS NOT NULL
-                            AND ISNULL(vc.anulada,'') <> 'S'), 0) as coste
-            FROM hist_ventas_cabecera v
-            WHERE YEAR(v.fecha_venta) = ?
-                AND v.tipo_venta IN (2, 4, 5)
-                AND ISNULL(v.anulada, '') <> 'S'
-            GROUP BY v.cod_almacen
-        ", [$year, $year]);
+                vc.cod_almacen,
+                SUM(l.importe) as venta,
+                SUM(
+                    CASE
+                        WHEN l.precio_coste IS NOT NULL
+                        THEN l.precio_coste * l.cantidad
+                        ELSE 0
+                    END
+                ) as coste
+            FROM hist_ventas_linea l
+            INNER JOIN hist_ventas_cabecera vc ON l.cod_venta = vc.cod_venta
+                AND l.tipo_venta = vc.tipo_venta
+                AND l.cod_empresa = vc.cod_empresa
+                AND l.cod_caja = vc.cod_caja
+            WHERE YEAR(vc.fecha_venta) = ?
+                AND vc.tipo_venta IN (2, 4, 5)
+                AND ISNULL(vc.anulada, '') <> 'S'
+            GROUP BY vc.cod_almacen
+        ", [$year]);
 
         $margenesYear = array_map(function($m) {
             $m = (array)$m;
