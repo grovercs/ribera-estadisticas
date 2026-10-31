@@ -7,6 +7,10 @@
   command = "npm run build"
   publish = ".next"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
 [build.environment]
   # Pin a stable Node.js LTS version for reproducible builds.
   NODE_VERSION = "22"
@@ -23,3 +27,4 @@
 
 # Netlify's Next.js runtime handles SSR/ISR routes automatically.
 # Do NOT add a catch-all redirect to /index.html here; it would break SSR.
+
