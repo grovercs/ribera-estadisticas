@@ -6,6 +6,9 @@
   base = "frontend"
   command = "npm run build"
   publish = ".next"
+  # Functions also import shared code from ../monitoring. Check both paths.
+  # Netlify: exit 0 skips the build; nonzero continues (also on missing refs).
+  ignore = 'if [ -z "$CACHED_COMMIT_REF" ] || [ -z "$COMMIT_REF" ]; then exit 1; fi; git diff --quiet "$CACHED_COMMIT_REF" "$COMMIT_REF" -- . ../monitoring ../netlify.toml'
 
 [functions]
   directory = "netlify/functions"
