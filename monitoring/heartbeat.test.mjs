@@ -81,3 +81,16 @@ test('mailer uses server-only key and rejects unsuccessful provider response', a
   assert.deepEqual(JSON.parse(captured.options.body).to, ['test@example.com']);
   await assert.rejects(sendAlert(message, { env, fetchImpl: async () => new Response('', { status: 429 }) }));
 });
+
+test('five-minute beats remain healthy; alert starts at fifteen minutes of silence', async () => {
+  assert.equal(MAX_SILENCE_MS, 15 * 60_000);
+  const f = fixture();
+  for (const minute of [0, 5, 10]) {
+    await receiveHeartbeat(request(), { ...f, now: () => base + minute * 60_000 });
+    assert.equal((await monitorHeartbeat({ ...f, now: () => base + minute * 60_000 })).status, 'healthy');
+  }
+  assert.equal((await monitorHeartbeat({ ...f, now: () => base + 25 * 60_000 - 1 })).status, 'healthy');
+  assert.equal(f.sent.length, 0);
+  assert.equal((await monitorHeartbeat({ ...f, now: () => base + 25 * 60_000 })).status, 'offline');
+  assert.match(f.sent[0].subject, /quince minutos/);
+});

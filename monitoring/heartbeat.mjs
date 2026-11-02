@@ -1,6 +1,6 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
-export const MAX_SILENCE_MS = 5 * 60 * 1000;
+export const MAX_SILENCE_MS = 15 * 60 * 1000;
 export const HEARTBEAT_KEY = 'direccion1/heartbeat';
 export const STATE_KEY = 'direccion1/notification-state';
 
@@ -91,7 +91,7 @@ export async function monitorHeartbeat({ store, env, now = Date.now, send = send
     const incident = state.incident;
     await send({
       key: `ribera-direccion1-offline-${incident.id}`,
-      subject: 'Ribera: Direccion1 lleva cinco minutos sin señal',
+      subject: 'Ribera: Direccion1 lleva quince minutos sin señal',
       text: `No llega la señal periodica de la tarea de sincronizacion de Direccion1.\nUltima señal o inicio de vigilancia (UTC): ${incident.lastSeen}\nComprueba alimentacion, conexion a Internet y la tarea Ribera Sync - Process Manual Requests.\nEste aviso detecta ausencia de señal; no determina por si solo la causa ni el estado de Integral.`,
     }, { env });
     await store.setJSON(STATE_KEY, { ...state, incident: { ...state.incident, notified: true } });

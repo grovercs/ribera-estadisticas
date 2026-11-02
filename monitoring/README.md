@@ -7,19 +7,21 @@ los archivos. El monitor permanece deshabilitado salvo que
 ## Qué comprueba
 
 La tarea existente `Ribera Sync - Process Manual Requests` ejecuta un pequeño
-emisor al terminar cada ciclo. No requiere abrir el móvil. Netlify recibe un
+emisor al terminar cada ciclo; solo envía si han pasado cinco minutos desde el
+último envío confirmado. Los fallos se reintentan en el siguiente ciclo. No requiere abrir el móvil. Netlify recibe un
 POST autenticado y guarda **su propia hora** en un almacén persistente de
 Netlify Blobs, separado del snapshot y de Supabase. Una función programada cada
-minuto consulta ese almacén con consistencia fuerte.
+cinco minutos consulta ese almacén con consistencia fuerte.
 
-Tras cinco minutos sin señal, envía un correo de incidencia. Envía un segundo
-correo al recibir de nuevo la señal. La comprobación por minuto añade hasta un
-minuto al umbral: la detección nominal será entre cinco y seis minutos, más el
+Tras quince minutos sin señal, envía un correo de incidencia. Envía un segundo
+correo al recibir de nuevo la señal. La comprobación cada cinco minutos añade hasta cinco
+minutos al umbral: desde la última señal, el aviso tarda entre quince y veinte
+minutos, más el
 tiempo de entrega del correo. Un fallo explícito del proveedor de correo se
 reintenta en la siguiente comprobación. El identificador de cada envío es
 estable para reducir duplicados ante reintentos.
 
-La primera comprobación habilitada inicia un margen de cinco minutos aunque
+La primera comprobación habilitada inicia un margen de quince minutos aunque
 nunca se haya recibido señal; no puede permanecer sin configurar indefinidamente
 mostrándose sano. Durante ese margen, sin señal, el estado es `arming`.
 
@@ -90,7 +92,7 @@ capturas, parámetros de línea de comandos ni control de versiones.
    y administradores. El lanzador previo se respalda en la misma carpeta.
    Si una ejecución está activa, el instalador aborta y vuelve a habilitar la
    tarea; esperar a que termine y repetir.
-4. Esperar dos ciclos. Verificar en Netlify Blobs que
+4. Esperar al menos seis minutos. Verificar en Netlify Blobs que
    `ribera-availability / direccion1/heartbeat` avanza sin pulsar el móvil.
    Consultar `storage\logs\heartbeat.log` si no avanza. No dar por válida solo
    la señal inicial enviada por el instalador con la cuenta del administrador:
@@ -105,14 +107,29 @@ No apagar el ordenador del cliente ni detener el publicador. Para simular la
 ausencia de señal manteniendo la sincronización operativa, renombrar
 temporalmente `heartbeat.json` a `heartbeat.json.testpause` en ProgramData.
 El emisor no podrá enviar señales, pero su fallo no cambia el código de salida
-de la sincronización. Esperar seis minutos y confirmar la recepción del correo
+de la sincronización. Esperar veinte minutos y confirmar la recepción del correo
 de incidencia en el buzón indicado. Restaurar inmediatamente el nombre original
-y confirmar el correo de recuperación tras los siguientes ciclos.
+y confirmar el correo de recuperación en los siguientes diez minutos.
+Restaurar el archivo aunque no llegue el aviso.
 
 Comprobar además que no se repite el correo durante la misma incidencia y que
 un reinicio de Direccion1 recupera las señales. La prueba de correo y la
 ejecución como SYSTEM deben validarse en producción; las pruebas locales no
 demuestran entrega real. No activar un plan de pago para estas pruebas.
+
+## Actualizar una instalación existente a intervalos de cinco minutos
+
+Publicar primero el monitor con umbral de quince minutos y cron `*/5 * * * *`.
+Después actualizar únicamente `scripts/send-direccion1-heartbeat.ps1` en
+Direccion1. No hace falta reinstalar ni cambiar la clave, el lanzador o la tarea.
+El emisor guarda la hora del último envío confirmado en
+`%ProgramData%\VielhaComputer\Ribera\heartbeat-last-sent.txt`, dentro de la
+carpeta privada ya creada por el instalador. Si el reloj retrocede o el archivo
+no se puede interpretar, intenta enviar en vez de dejar de comunicar.
+La tarea de sincronización continúa cada minuto. Verificar que `seenAt` avanza
+aproximadamente cada cinco o seis minutos y que el monitor sigue `healthy`.
+El aviso mide el silencio desde la última señal, no desde el instante exacto
+de una caída. La recuperación puede tardar hasta diez minutos en notificarse.
 
 ## Reversión
 
