@@ -4,7 +4,9 @@
 [build]
   # The frontend lives in the `frontend/` subdirectory of this repository.
   base = "frontend"
-  command = "npm run build"
+  # The frontend does not need monitor credentials. Keep them out of Turbopack's
+  # build cache without changing the environment of deployed Netlify Functions.
+  command = "env -u RIBERA_RESEND_API_KEY -u RIBERA_HEARTBEAT_SECRET npm run build"
   publish = ".next"
   # Functions also import shared code from ../monitoring. Check both paths.
   # Netlify: exit 0 skips the build; nonzero continues (also on missing refs).
