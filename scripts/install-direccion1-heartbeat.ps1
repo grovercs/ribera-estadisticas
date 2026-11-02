@@ -24,8 +24,9 @@ $token = $credential.Password
 if ($token.Length -lt 32) { throw 'La clave debe tener al menos 32 caracteres aleatorios.' }
 
 # Validate the endpoint before changing the running task or launcher.
-Invoke-WebRequest -UseBasicParsing -Method Post -Uri $HeartbeatUrl.AbsoluteUri `
-    -Headers @{ Authorization = 'Bearer ' + $token } -TimeoutSec 10 | Out-Null
+$heartbeatResponse = Invoke-WebRequest -UseBasicParsing -MaximumRedirection 0 -Method Post -Uri $HeartbeatUrl.AbsoluteUri `
+    -Headers @{ Authorization = 'Bearer ' + $token } -TimeoutSec 10
+if ($heartbeatResponse.StatusCode -ne 204) { throw 'El receptor no confirmo la senal con HTTP 204. No se modifica el lanzador.' }
 
 $directory = Join-Path $env:ProgramData 'VielhaComputer\Ribera'
 New-Item -ItemType Directory -Force -Path $directory | Out-Null
